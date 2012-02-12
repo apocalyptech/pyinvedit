@@ -91,13 +91,13 @@ class Item(object):
     An item we're capable of having in our inventory.
     """
 
-    def __init__(self, id, name, texfile, cx, cy, damage=None, max_damage=None, max_quantity=None):
+    def __init__(self, id, name, texfile, cx, cy, data=None, max_damage=None, max_quantity=None):
         self.id = id
         self.name = name
         self.texfile = texfile
         self.cx = cx
         self.cy = cy
-        self.damage = damage
+        self.data = data
         self.max_damage = max_damage
         self.max_quantity = max_quantity
         self.group = None
@@ -105,7 +105,7 @@ class Item(object):
     def __cmp__(self, other):
         first = cmp(self.id, other.id)
         if first == 0:
-            return cmp(self.damage, other.damage)
+            return cmp(self.data, other.data)
         return first
 
     def toyaml(self):
@@ -115,14 +115,14 @@ class Item(object):
         lines.append('    name: %s' % (self.name))
         lines.append('    texfile: %s' % (self.texfile))
         lines.append('    coords: [%d, %d]' % (self.cx, self.cy))
-        if self.damage is not None:
-            lines.append('    damage: %d' % (self.damage))
+        if self.data is not None:
+            lines.append('    data: %d' % (self.data))
         if self.max_damage is not None:
             lines.append('    max_damage: %d' % (self.max_damage))
         if self.max_quantity is not None:
             lines.append('    max_quantity: %d' % (self.max_quantity))
         if self.group is not None:
-            lines.append('    group: %s' % (self.group.name))
+            lines.append('    groups: [%s]' % (self.group.name))
         lines.append('')
         lines.append('')
         return "\n".join(lines)
@@ -145,7 +145,7 @@ if __name__ == '__main__':
                 cx = int(match.group(4))
                 cy = int(match.group(5))
                 mult_col = match.group(6)
-                damage = None
+                data = None
                 max_damage = None
                 max_quantity = None
 
@@ -163,10 +163,13 @@ if __name__ == '__main__':
                         max_quantity = int(mult_col[2:-1])
                     elif prefix == '+':
                         max_damage = int(mult_col[1:])
+                        # Anything that takes damage would only let you have one at
+                        # a time.
+                        max_quantity = 1
                     else:
-                        damage = int(mult_col)
-                        if damage == 0:
-                            damage = None
+                        data = int(mult_col)
+                        if data == 0:
+                            data = None
 
                 # Get rid of the underscores
                 name = name.replace('_', ' ')
@@ -176,6 +179,7 @@ if __name__ == '__main__':
 
                 # Various potion special processing
                 if id == 373:
+                    max_quantity = 1
                     if name.startswith('Splash '):
                         name = name[7:]
                     if name.lower().find('potion') == -1 and name.lower() != 'water bottle':
@@ -183,15 +187,15 @@ if __name__ == '__main__':
                     itemmatch = timere.search(name)
                     if itemmatch:
                         name = '%s (%s)' % (itemmatch.group(1), itemmatch.group(2))
-                    if damage is not None and (damage & 0x4000 == 0x4000):
+                    if data is not None and (data & 0x4000 == 0x4000):
                         name = 'Splash %s' % (name)
 
                 # Store the item
-                if damage is not None and damage != 0:
-                    dictid = '%d~%d' % (id, damage)
+                if data is not None and data != 0:
+                    dictid = '%d~%d' % (id, data)
                 else:
                     dictid = str(id)
-                items[dictid] = Item(id, name, texfile, cx, cy, damage, max_damage, max_quantity)
+                items[dictid] = Item(id, name, texfile, cx, cy, data, max_damage, max_quantity)
 
             # Grouping
             match = groupre.search(line)

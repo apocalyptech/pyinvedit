@@ -1,0 +1,2727 @@
+---
+#
+# YAML Definition for player's inventory
+#
+# There are three sets of lists in here:
+# 
+# 1) texfiles
+#    This defines which texture definition files are available to the
+#    inventory editor, and what their dimensions are.
+#
+#    Required fields:
+#
+#       filename - The filename of the texture
+#
+#       dimensions - How many textures there are, not actual image
+#          resolution
+#
+# 2) groups
+#    These are the groups that the various items can be grouped into via
+#    the GUI.
+#
+#    Required fields:
+#
+#       name - This is the name you'll use in the item definitions
+#
+#       texfile - The filename of the texture for the icon
+#
+#       coords - Texture coordinates of the icon in the GUI
+#
+# 2) items
+#    These are the actual items which the GUI will make available
+#
+#    Required fields:
+#
+#       id - The internal Minecraft ID of the item
+#
+#       name - Human-readable name of the item
+#
+#       texfile - Texture file to use for the icon
+#
+#       coords - Texture coordinates for the icon
+#
+#    Optional fields:
+#    
+#       groups - A list of all groups this item can reside in.  If it
+#          isn't added to any group, it'll only be available on the "main"
+#          list.
+#
+#       data - The data value for this item.  Originally Minecraft
+#          just used this field to determine the damage for armor, weapons,
+#          and tools, but over time it's come to distinguish between item
+#          types as well.  If unspecified, a value of zero is assumed.
+#          Inside the Minecraft data structure, this is still called "damage"
+#
+#       max_damage - Generally just used for tools, weapons, and armor.
+#          This defines the maximum amount of damage the item can sustain
+#          before it breaks and disappears.
+#
+#       max_quantity - How many of this item can be stacked.  If not
+#          specified, 64 is assumed.
+#    
+
+texfiles:
+
+  - texfile: terrain.png
+    dimensions: [16, 16]
+
+  - texfile: items.png
+    dimensions: [16, 16]
+
+  - texfile: special.png
+    dimensions: [6, 6]
+
+groups:
+
+  - name: Natural
+    texfile: terrain.png
+    coords: [3, 0]
+
+  - name: Stone
+    texfile: terrain.png
+    coords: [1, 0]
+
+  - name: Wood
+    texfile: terrain.png
+    coords: [4, 0]
+
+  - name: Mushroom
+    texfile: terrain.png
+    coords: [13, 4]
+
+  - name: Nether
+    texfile: terrain.png
+    coords: [7, 6]
+
+  - name: TheEnd
+    texfile: terrain.png
+    coords: [15, 10]
+
+  - name: Ores
+    texfile: terrain.png
+    coords: [2, 3]
+
+  - name: Plants1
+    texfile: terrain.png
+    coords: [6, 4]
+
+  - name: Plants2
+    texfile: terrain.png
+    coords: [15, 0]
+
+  - name: Farming
+    texfile: items.png
+    coords: [9, 1]
+
+  - name: Dye
+    texfile: items.png
+    coords: [14, 4]
+
+  - name: Wool
+    texfile: terrain.png
+    coords: [0, 4]
+
+  - name: Shovels
+    texfile: items.png
+    coords: [2, 5]
+
+  - name: Pickaxes
+    texfile: items.png
+    coords: [2, 6]
+
+  - name: Axes
+    texfile: items.png
+    coords: [2, 7]
+
+  - name: Hoes
+    texfile: items.png
+    coords: [2, 8]
+
+  - name: Swords
+    texfile: items.png
+    coords: [2, 4]
+
+  - name: Tools
+    texfile: items.png
+    coords: [5, 1]
+
+  - name: Potions
+    texfile: items.png
+    coords: [0, 14]
+
+  - name: Logic
+    texfile: items.png
+    coords: [8, 3]
+
+  - name: Food
+    texfile: items.png
+    coords: [9, 2]
+
+  - name: Items
+    texfile: items.png
+    coords: [6, 0]
+
+  - name: SpawnEggs
+    texfile: items.png
+    coords: [0, 10]
+
+  - name: Music
+    texfile: items.png
+    coords: [1, 15]
+
+  - name: Head
+    texfile: items.png
+    coords: [15, 0]
+
+  - name: Chest
+    texfile: items.png
+    coords: [15, 1]
+
+  - name: Legs
+    texfile: items.png
+    coords: [15, 2]
+
+  - name: Feet
+    texfile: items.png
+    coords: [15, 3]
+
+  - name: Buckets
+    texfile: items.png
+    coords: [10, 4]
+
+  - name: Special
+    texfile: terrain.png
+    coords: [11, 1]
+
+  - name: SplashPotions
+    texfile: items.png
+    coords: [0, 13]
+
+  - name: Transport
+    texfile: items.png
+    coords: [7, 8]
+
+  - name: Drops
+    texfile: items.png
+    coords: [14, 1]
+
+items:
+
+  - id: 1
+    name: Stone
+    texfile: terrain.png
+    coords: [1, 0]
+    groups: [Stone]
+
+  - id: 2
+    name: Grass
+    texfile: terrain.png
+    coords: [3, 0]
+    groups: [Natural]
+
+  - id: 3
+    name: Dirt
+    texfile: terrain.png
+    coords: [2, 0]
+    groups: [Natural]
+
+  - id: 4
+    name: Cobblestone
+    texfile: terrain.png
+    coords: [0, 1]
+    groups: [Stone]
+
+  - id: 5
+    name: Wooden Planks
+    texfile: terrain.png
+    coords: [4, 0]
+    groups: [Wood]
+
+  - id: 6
+    name: Sapling
+    texfile: terrain.png
+    coords: [15, 0]
+    data: 0
+    groups: [Plants2]
+
+  - id: 6
+    name: Spruce Sapling
+    texfile: terrain.png
+    coords: [15, 3]
+    data: 1
+
+  - id: 6
+    name: Birch Sapling
+    texfile: terrain.png
+    coords: [15, 4]
+    data: 2
+
+  - id: 7
+    name: Bedrock
+    texfile: terrain.png
+    coords: [1, 1]
+
+  - id: 8
+    name: Water
+    texfile: terrain.png
+    coords: [15, 13]
+
+  - id: 9
+    name: Still Water
+    texfile: terrain.png
+    coords: [15, 13]
+
+  - id: 10
+    name: Lava
+    texfile: terrain.png
+    coords: [15, 15]
+
+  - id: 11
+    name: Still Lava
+    texfile: terrain.png
+    coords: [15, 15]
+
+  - id: 12
+    name: Sand
+    texfile: terrain.png
+    coords: [2, 1]
+    groups: [Natural]
+
+  - id: 13
+    name: Gravel
+    texfile: terrain.png
+    coords: [3, 1]
+    groups: [Natural]
+
+  - id: 14
+    name: Gold Ore
+    texfile: terrain.png
+    coords: [0, 2]
+    groups: [Ores]
+
+  - id: 15
+    name: Iron Ore
+    texfile: terrain.png
+    coords: [1, 2]
+    groups: [Ores]
+
+  - id: 16
+    name: Coal Ore
+    texfile: terrain.png
+    coords: [2, 2]
+    groups: [Ores]
+
+  - id: 17
+    name: Wood
+    texfile: terrain.png
+    coords: [4, 1]
+    data: 0
+    groups: [Wood]
+
+  - id: 17
+    name: Dark Wood
+    texfile: terrain.png
+    coords: [4, 7]
+    data: 1
+
+  - id: 17
+    name: Birch Wood
+    texfile: terrain.png
+    coords: [5, 7]
+    data: 2
+
+  - id: 18
+    name: Leaves
+    texfile: special.png
+    coords: [5, 0]
+    data: 0
+    groups: [Plants1]
+
+  - id: 18
+    name: Dark Leaves
+    texfile: special.png
+    coords: [5, 1]
+    data: 1
+
+  - id: 18
+    name: Birch Leaves
+    texfile: special.png
+    coords: [5, 2]
+    data: 2
+
+  - id: 19
+    name: Sponge
+    texfile: terrain.png
+    coords: [0, 3]
+
+  - id: 20
+    name: Glass
+    texfile: terrain.png
+    coords: [1, 3]
+    groups: [Wood]
+
+  - id: 21
+    name: Lapis Lazuli Ore
+    texfile: terrain.png
+    coords: [0, 10]
+    groups: [Ores]
+
+  - id: 22
+    name: Lapis Lazuli Block
+    texfile: terrain.png
+    coords: [0, 9]
+    groups: [Ores]
+
+  - id: 23
+    name: Dispenser
+    texfile: terrain.png
+    coords: [14, 2]
+    groups: [Special]
+
+  - id: 24
+    name: Sandstone
+    texfile: terrain.png
+    coords: [0, 12]
+    groups: [Natural]
+
+  - id: 25
+    name: Note Block
+    texfile: terrain.png
+    coords: [10, 4]
+    groups: [Special]
+
+  - id: 26
+    name: Bed Block
+    texfile: terrain.png
+    coords: [6, 8]
+
+  - id: 27
+    name: Powered Rail
+    texfile: terrain.png
+    coords: [3, 10]
+    groups: [Transport]
+
+  - id: 28
+    name: Detector Rail
+    texfile: terrain.png
+    coords: [3, 12]
+    groups: [Transport]
+
+  - id: 29
+    name: Sticky Piston
+    texfile: terrain.png
+    coords: [10, 6]
+    groups: [Logic]
+
+  - id: 30
+    name: Cobweb
+    texfile: terrain.png
+    coords: [11, 0]
+    groups: [Wood]
+
+  - id: 31
+    name: Dead Bush
+    texfile: terrain.png
+    data: 0
+    coords: [7, 3]
+
+  - id: 31
+    name: Tall Grass
+    texfile: special.png
+    coords: [5, 3]
+    data: 1
+    groups: [Plants1]
+
+  - id: 31
+    name: Fern
+    texfile: special.png
+    coords: [4, 5]
+    data: 2
+    groups: [Plants1]
+
+  - id: 32
+    name: Dead Bush
+    texfile: terrain.png
+    coords: [7, 3]
+    groups: [Plants2]
+
+  - id: 33
+    name: Piston
+    texfile: terrain.png
+    coords: [11, 6]
+    groups: [Logic]
+
+  - id: 34
+    name: Piston (head)
+    texfile: terrain.png
+    coords: [11, 6]
+
+  - id: 35
+    name: Wool
+    texfile: terrain.png
+    coords: [0, 4]
+    data: 0
+    groups: [Wool]
+
+  - id: 35
+    name: Orange Wool
+    texfile: terrain.png
+    coords: [2, 13]
+    data: 1
+    groups: [Wool]
+
+  - id: 35
+    name: Magenta Wool
+    texfile: terrain.png
+    coords: [2, 12]
+    data: 2
+    groups: [Wool]
+
+  - id: 35
+    name: Light Blue Wool
+    texfile: terrain.png
+    coords: [2, 11]
+    data: 3
+    groups: [Wool]
+
+  - id: 35
+    name: Yellow Wool
+    texfile: terrain.png
+    coords: [2, 10]
+    data: 4
+    groups: [Wool]
+
+  - id: 35
+    name: Lime Wool
+    texfile: terrain.png
+    coords: [2, 9]
+    data: 5
+    groups: [Wool]
+
+  - id: 35
+    name: Pink Wool
+    texfile: terrain.png
+    coords: [2, 8]
+    data: 6
+    groups: [Wool]
+
+  - id: 35
+    name: Gray Wool
+    texfile: terrain.png
+    coords: [2, 7]
+    data: 7
+    groups: [Wool]
+
+  - id: 35
+    name: Light Gray Wool
+    texfile: terrain.png
+    coords: [1, 14]
+    data: 8
+    groups: [Wool]
+
+  - id: 35
+    name: Cyan Wool
+    texfile: terrain.png
+    coords: [1, 13]
+    data: 9
+    groups: [Wool]
+
+  - id: 35
+    name: Purple Wool
+    texfile: terrain.png
+    coords: [1, 12]
+    data: 10
+    groups: [Wool]
+
+  - id: 35
+    name: Blue Wool
+    texfile: terrain.png
+    coords: [1, 11]
+    data: 11
+    groups: [Wool]
+
+  - id: 35
+    name: Brown Wool
+    texfile: terrain.png
+    coords: [1, 10]
+    data: 12
+    groups: [Wool]
+
+  - id: 35
+    name: Green Wool
+    texfile: terrain.png
+    coords: [1, 9]
+    data: 13
+    groups: [Wool]
+
+  - id: 35
+    name: Red Wool
+    texfile: terrain.png
+    coords: [1, 8]
+    data: 14
+    groups: [Wool]
+
+  - id: 35
+    name: Black Wool
+    texfile: terrain.png
+    coords: [1, 7]
+    data: 15
+    groups: [Wool]
+
+  - id: 37
+    name: Flower
+    texfile: terrain.png
+    coords: [13, 0]
+    groups: [Plants2]
+
+  - id: 38
+    name: Rose
+    texfile: terrain.png
+    coords: [12, 0]
+    groups: [Plants2]
+
+  - id: 39
+    name: Brown Mushroom
+    texfile: terrain.png
+    coords: [13, 1]
+    groups: [Mushroom]
+
+  - id: 40
+    name: Red Mushroom
+    texfile: terrain.png
+    coords: [12, 1]
+    groups: [Mushroom]
+
+  - id: 41
+    name: Block of Gold
+    texfile: terrain.png
+    coords: [7, 1]
+    groups: [Ores]
+
+  - id: 42
+    name: Block of Iron
+    texfile: terrain.png
+    coords: [6, 1]
+    groups: [Ores]
+
+  - id: 43
+    name: Double Stone Slab
+    texfile: terrain.png
+    coords: [5, 0]
+    data: 0
+
+  - id: 43
+    name: Double Sandstone Slab
+    texfile: terrain.png
+    coords: [0, 12]
+    data: 1
+
+  - id: 43
+    name: Double Wooden Slab
+    texfile: terrain.png
+    coords: [4, 0]
+    data: 2
+
+  - id: 43
+    name: Double Stone Slab
+    texfile: terrain.png
+    coords: [0, 1]
+    data: 3
+
+  - id: 44
+    name: Stone Slab
+    texfile: special.png
+    coords: [2, 2]
+    data: 0
+    groups: [Stone]
+
+  - id: 44
+    name: Sandstone Slab
+    texfile: special.png
+    coords: [1, 2]
+    data: 1
+    groups: [Natural]
+
+  - id: 44
+    name: Wooden Slab
+    texfile: special.png
+    coords: [3, 0]
+    data: 2
+    groups: [Wood]
+
+  - id: 44
+    name: Stone Slab
+    texfile: special.png
+    coords: [1, 0]
+    data: 3
+    groups: [Stone]
+
+  - id: 44
+    name: Bricks Slab
+    texfile: special.png
+    coords: [0, 0]
+    data: 4
+    groups: [Stone]
+
+  - id: 44
+    name: Stone Bricks Slab
+    texfile: special.png
+    coords: [2, 0]
+    data: 5
+    groups: [Stone]
+
+  - id: 45
+    name: Bricks
+    texfile: terrain.png
+    coords: [7, 0]
+    groups: [Stone]
+
+  - id: 46
+    name: TNT
+    texfile: terrain.png
+    coords: [8, 0]
+    groups: [Special]
+
+  - id: 47
+    name: Bookshelf
+    texfile: terrain.png
+    coords: [3, 2]
+    groups: [Wood]
+
+  - id: 48
+    name: Moss Stone
+    texfile: terrain.png
+    coords: [4, 2]
+    groups: [Stone]
+
+  - id: 49
+    name: Obsidian
+    texfile: terrain.png
+    coords: [5, 2]
+    groups: [Ores]
+
+  - id: 50
+    name: Torch
+    texfile: terrain.png
+    coords: [0, 5]
+    groups: [Tools]
+
+  - id: 51
+    name: Fire
+    texfile: special.png
+    coords: [4, 0]
+
+  - id: 52
+    name: Monster Spawner
+    texfile: terrain.png
+    coords: [1, 4]
+    groups: [Special]
+
+  - id: 53
+    name: Wooden Stairs
+    texfile: special.png
+    coords: [3, 1]
+    groups: [Wood]
+
+  - id: 54
+    name: Chest
+    texfile: terrain.png
+    coords: [11, 1]
+    groups: [Special]
+
+  - id: 55
+    name: Redstone Dust
+    texfile: terrain.png
+    coords: [4, 5]
+
+  - id: 56
+    name: Diamond Ore
+    texfile: terrain.png
+    coords: [2, 3]
+    groups: [Ores]
+
+  - id: 57
+    name: Block of Diamond
+    texfile: terrain.png
+    coords: [8, 1]
+    groups: [Ores]
+
+  - id: 58
+    name: Workbench
+    texfile: terrain.png
+    coords: [12, 3]
+    groups: [Special]
+
+  - id: 59
+    name: Crops
+    texfile: terrain.png
+    coords: [15, 5]
+
+  - id: 60
+    name: Farmland
+    texfile: terrain.png
+    coords: [7, 5]
+
+  - id: 61
+    name: Furnace
+    texfile: terrain.png
+    coords: [12, 2]
+    groups: [Special]
+
+  - id: 62
+    name: Lit Furnace
+    texfile: terrain.png
+    coords: [13, 3]
+
+  - id: 63
+    name: Sign Block
+    texfile: terrain.png
+    coords: [0, 0]
+
+  - id: 64
+    name: Wooden Door Block
+    texfile: terrain.png
+    coords: [1, 6]
+
+  - id: 65
+    name: Ladder
+    texfile: terrain.png
+    coords: [3, 5]
+    groups: [Special]
+
+  - id: 66
+    name: Rail
+    texfile: terrain.png
+    coords: [0, 8]
+    groups: [Transport]
+
+  - id: 67
+    name: Stone Stairs
+    texfile: special.png
+    coords: [1, 1]
+    groups: [Stone]
+
+  - id: 68
+    name: Wall Sign
+    texfile: terrain.png
+    coords: [4, 0]
+
+  - id: 69
+    name: Lever
+    texfile: terrain.png
+    coords: [0, 6]
+    groups: [Logic]
+
+  - id: 70
+    name: Stone Pressure Plate
+    texfile: special.png
+    coords: [2, 4]
+    groups: [Logic]
+
+  - id: 71
+    name: Iron Door Block
+    texfile: terrain.png
+    coords: [2, 6]
+
+  - id: 72
+    name: Wooden Pressure Plate
+    texfile: special.png
+    coords: [3, 4]
+    groups: [Logic]
+
+  - id: 73
+    name: Redstone Ore
+    texfile: terrain.png
+    coords: [3, 3]
+    groups: [Ores]
+
+  - id: 74
+    name: Glowing Redstone Ore
+    texfile: terrain.png
+    coords: [3, 3]
+
+  - id: 75
+    name: Redstone Torch (off)
+    texfile: terrain.png
+    coords: [3, 7]
+
+  - id: 76
+    name: Redstone Torch
+    texfile: terrain.png
+    coords: [3, 6]
+    groups: [Logic]
+
+  - id: 77
+    name: Button
+    texfile: special.png
+    coords: [2, 3]
+    groups: [Logic]
+
+  - id: 78
+    name: Snow Layer
+    texfile: special.png
+    coords: [1, 4]
+    groups: [Natural]
+
+  - id: 79
+    name: Ice
+    texfile: terrain.png
+    coords: [3, 4]
+    groups: [Natural]
+
+  - id: 80
+    name: Snow
+    texfile: terrain.png
+    coords: [2, 4]
+    groups: [Natural]
+
+  - id: 81
+    name: Cactus
+    texfile: terrain.png
+    coords: [6, 4]
+    groups: [Plants1]
+
+  - id: 82
+    name: Clay
+    texfile: terrain.png
+    coords: [8, 4]
+    groups: [Natural]
+
+  - id: 83
+    name: Sugar cane
+    texfile: terrain.png
+    coords: [9, 4]
+
+  - id: 84
+    name: Jukebox
+    texfile: terrain.png
+    coords: [10, 4]
+    groups: [Special]
+
+  - id: 85
+    name: Fence
+    texfile: special.png
+    coords: [3, 2]
+    groups: [Wood]
+
+  - id: 86
+    name: Pumpkin
+    texfile: terrain.png
+    coords: [7, 7]
+    groups: [Farming]
+
+  - id: 87
+    name: Netherrack
+    texfile: terrain.png
+    coords: [7, 6]
+    groups: [Nether]
+
+  - id: 88
+    name: Soul Sand
+    texfile: terrain.png
+    coords: [8, 6]
+    groups: [Nether]
+
+  - id: 89
+    name: Glowstone
+    texfile: terrain.png
+    coords: [9, 6]
+    groups: [Nether]
+
+  - id: 90
+    name: Portal
+    texfile: special.png
+    coords: [0, 5]
+
+  - id: 91
+    name: Jack-o-lantern
+    texfile: terrain.png
+    coords: [8, 7]
+    groups: [Farming]
+
+  - id: 92
+    name: Cake
+    texfile: special.png
+    coords: [0, 2]
+
+  - id: 93
+    name: Repeater Block (off)
+    texfile: terrain.png
+    coords: [3, 8]
+
+  - id: 94
+    name: Repeater Block
+    texfile: terrain.png
+    coords: [3, 9]
+
+  - id: 95
+    name: Locked Chest
+    texfile: terrain.png
+    coords: [11, 1]
+
+  - id: 96
+    name: Trapdoor
+    texfile: terrain.png
+    coords: [4, 5]
+    groups: [Special]
+
+  - id: 97
+    name: Silverfish Block
+    texfile: terrain.png
+    coords: [1, 0]
+
+  - id: 98
+    name: Stone Bricks
+    texfile: terrain.png
+    coords: [6, 3]
+    data: 0
+    groups: [Stone]
+
+  - id: 98
+    name: Mossy Stone Bricks
+    texfile: terrain.png
+    coords: [4, 6]
+    data: 1
+
+  - id: 98
+    name: Damaged Stone Bricks
+    texfile: terrain.png
+    coords: [5, 6]
+    data: 2
+
+  - id: 99
+    name: Brown Mushroom Block
+    texfile: terrain.png
+    coords: [13, 7]
+
+  - id: 100
+    name: Red Mushroom Block
+    texfile: terrain.png
+    coords: [14, 7]
+
+  - id: 101
+    name: Iron Bars
+    texfile: terrain.png
+    coords: [5, 5]
+    groups: [Stone]
+
+  - id: 102
+    name: Glass Pane
+    texfile: special.png
+    coords: [1, 3]
+    groups: [Wood]
+
+  - id: 103
+    name: Melon
+    texfile: terrain.png
+    coords: [8, 8]
+    groups: [Farming]
+
+  - id: 104
+    name: Pumpkin Stem
+    texfile: terrain.png
+    coords: [5, 5]
+
+  - id: 105
+    name: Melon Stem
+    texfile: terrain.png
+    coords: [5, 5]
+
+  - id: 106
+    name: Vines
+    texfile: special.png
+    coords: [5, 4]
+    groups: [Plants1]
+
+  - id: 107
+    name: Fence Gate
+    texfile: special.png
+    coords: [3, 3]
+    groups: [Wood]
+
+  - id: 108
+    name: Brick Stairs
+    texfile: special.png
+    coords: [0, 1]
+    groups: [Stone]
+
+  - id: 109
+    name: Stone Brick Stairs
+    texfile: special.png
+    coords: [2, 1]
+    groups: [Stone]
+
+  - id: 110
+    name: Mycelium
+    texfile: terrain.png
+    coords: [13, 4]
+    groups: [Mushroom]
+
+  - id: 111
+    name: Lily Pad
+    texfile: special.png
+    coords: [4, 4]
+    groups: [Plants1]
+
+  - id: 112
+    name: Nether Brick
+    texfile: terrain.png
+    coords: [0, 14]
+    groups: [Nether]
+
+  - id: 113
+    name: Nether Brick Fence
+    texfile: special.png
+    coords: [4, 2]
+    groups: [Nether]
+
+  - id: 114
+    name: Nether Brick Stairs
+    texfile: special.png
+    coords: [4, 1]
+    groups: [Nether]
+
+  - id: 115
+    name: Nether Wart
+    texfile: terrain.png
+    coords: [2, 14]
+
+  - id: 116
+    name: Enchantment Table
+    texfile: terrain.png
+    coords: [6, 11]
+    groups: [Special]
+
+  - id: 117
+    name: Brewing Stand
+    texfile: terrain.png
+    coords: [13, 9]
+
+  - id: 118
+    name: Cauldron
+    texfile: terrain.png
+    coords: [10, 9]
+
+  - id: 119
+    name: Air Portal
+    texfile: special.png
+    coords: [1, 5]
+    groups: [TheEnd]
+
+  - id: 120
+    name: Air Portal Frame
+    texfile: terrain.png
+    coords: [15, 9]
+    groups: [TheEnd]
+
+  - id: 121
+    name: End Stone
+    texfile: terrain.png
+    coords: [15, 10]
+    groups: [TheEnd]
+
+  - id: 122
+    name: Dragon Egg
+    texfile: terrain.png
+    coords: [7, 10]
+    groups: [TheEnd]
+
+  - id: 256
+    name: Iron Shovel
+    texfile: items.png
+    coords: [2, 5]
+    max_damage: 250
+    max_quantity: 1
+    groups: [Shovels]
+
+  - id: 257
+    name: Iron Pickaxe
+    texfile: items.png
+    coords: [2, 6]
+    max_damage: 250
+    max_quantity: 1
+    groups: [Pickaxes]
+
+  - id: 258
+    name: Iron Axe
+    texfile: items.png
+    coords: [2, 7]
+    max_damage: 250
+    max_quantity: 1
+    groups: [Axes]
+
+  - id: 259
+    name: Flint and Steel
+    texfile: items.png
+    coords: [5, 0]
+    max_damage: 64
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 260
+    name: Apple
+    texfile: items.png
+    coords: [10, 0]
+    max_quantity: 1
+    groups: [Food]
+
+  - id: 261
+    name: Bow
+    texfile: items.png
+    coords: [5, 1]
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 262
+    name: Arrow
+    texfile: items.png
+    coords: [5, 2]
+    groups: [Tools]
+
+  - id: 263
+    name: Coal
+    texfile: items.png
+    coords: [7, 0]
+    data: 0
+    groups: [Ores]
+
+  - id: 263
+    name: Charcoal
+    texfile: items.png
+    coords: [7, 0]
+    data: 1
+
+  - id: 264
+    name: Diamond
+    texfile: items.png
+    coords: [7, 3]
+    groups: [Ores]
+
+  - id: 265
+    name: Iron Ingot
+    texfile: items.png
+    coords: [7, 1]
+    groups: [Ores]
+
+  - id: 266
+    name: Gold Ingot
+    texfile: items.png
+    coords: [7, 2]
+    groups: [Ores]
+
+  - id: 267
+    name: Iron Sword
+    texfile: items.png
+    coords: [2, 4]
+    max_damage: 250
+    max_quantity: 1
+    groups: [Swords]
+
+  - id: 268
+    name: Wooden Sword
+    texfile: items.png
+    coords: [0, 4]
+    max_damage: 59
+    max_quantity: 1
+    groups: [Swords]
+
+  - id: 269
+    name: Wooden Shovel
+    texfile: items.png
+    coords: [0, 5]
+    max_damage: 59
+    max_quantity: 1
+    groups: [Shovels]
+
+  - id: 270
+    name: Wooden Pickaxe
+    texfile: items.png
+    coords: [0, 6]
+    max_damage: 59
+    max_quantity: 1
+    groups: [Pickaxes]
+
+  - id: 271
+    name: Wooden Axe
+    texfile: items.png
+    coords: [0, 7]
+    max_damage: 59
+    max_quantity: 1
+    groups: [Axes]
+
+  - id: 272
+    name: Stone Sword
+    texfile: items.png
+    coords: [1, 4]
+    max_damage: 131
+    max_quantity: 1
+    groups: [Swords]
+
+  - id: 273
+    name: Stone Shovel
+    texfile: items.png
+    coords: [1, 5]
+    max_damage: 131
+    max_quantity: 1
+    groups: [Shovels]
+
+  - id: 274
+    name: Stone Pickaxe
+    texfile: items.png
+    coords: [1, 6]
+    max_damage: 131
+    max_quantity: 1
+    groups: [Pickaxes]
+
+  - id: 275
+    name: Stone Axe
+    texfile: items.png
+    coords: [1, 7]
+    max_damage: 131
+    max_quantity: 1
+    groups: [Axes]
+
+  - id: 276
+    name: Diamond Sword
+    texfile: items.png
+    coords: [3, 4]
+    max_damage: 1561
+    max_quantity: 1
+    groups: [Swords]
+
+  - id: 277
+    name: Diamond Shovel
+    texfile: items.png
+    coords: [3, 5]
+    max_damage: 1561
+    max_quantity: 1
+    groups: [Shovels]
+
+  - id: 278
+    name: Diamond Pickaxe
+    texfile: items.png
+    coords: [3, 6]
+    max_damage: 1561
+    max_quantity: 1
+    groups: [Pickaxes]
+
+  - id: 279
+    name: Diamond Axe
+    texfile: items.png
+    coords: [3, 7]
+    max_damage: 1561
+    max_quantity: 1
+    groups: [Axes]
+
+  - id: 280
+    name: Stick
+    texfile: items.png
+    coords: [5, 3]
+    groups: [Items]
+
+  - id: 281
+    name: Bowl
+    texfile: items.png
+    coords: [7, 4]
+    max_quantity: 1
+    groups: [Items]
+
+  - id: 282
+    name: Mushroom Stew
+    texfile: items.png
+    coords: [8, 4]
+    max_quantity: 1
+    groups: [Food]
+
+  - id: 283
+    name: Golden Sword
+    texfile: items.png
+    coords: [4, 4]
+    max_damage: 32
+    max_quantity: 1
+    groups: [Swords]
+
+  - id: 284
+    name: Golden Shovel
+    texfile: items.png
+    coords: [4, 5]
+    max_damage: 32
+    max_quantity: 1
+    groups: [Shovels]
+
+  - id: 285
+    name: Golden Pickaxe
+    texfile: items.png
+    coords: [4, 6]
+    max_damage: 32
+    max_quantity: 1
+    groups: [Pickaxes]
+
+  - id: 286
+    name: Golden Axe
+    texfile: items.png
+    coords: [4, 7]
+    max_damage: 32
+    max_quantity: 1
+    groups: [Axes]
+
+  - id: 287
+    name: String
+    texfile: items.png
+    coords: [8, 0]
+    groups: [Drops]
+
+  - id: 288
+    name: Feather
+    texfile: items.png
+    coords: [8, 1]
+    groups: [Drops]
+
+  - id: 289
+    name: Gunpowder
+    texfile: items.png
+    coords: [8, 2]
+    groups: [Drops]
+
+  - id: 290
+    name: Wooden Hoe
+    texfile: items.png
+    coords: [0, 8]
+    max_damage: 59
+    max_quantity: 1
+    groups: [Hoes]
+
+  - id: 291
+    name: Stone Hoe
+    texfile: items.png
+    coords: [1, 8]
+    max_damage: 131
+    max_quantity: 1
+    groups: [Hoes]
+
+  - id: 292
+    name: Iron Hoe
+    texfile: items.png
+    coords: [2, 8]
+    max_damage: 250
+    max_quantity: 1
+    groups: [Hoes]
+
+  - id: 293
+    name: Diamond Hoe
+    texfile: items.png
+    coords: [3, 8]
+    max_damage: 1561
+    max_quantity: 1
+    groups: [Hoes]
+
+  - id: 294
+    name: Golden Hoe
+    texfile: items.png
+    coords: [4, 8]
+    max_damage: 32
+    max_quantity: 1
+    groups: [Hoes]
+
+  - id: 295
+    name: Seeds
+    texfile: items.png
+    coords: [9, 0]
+    groups: [Farming]
+
+  - id: 296
+    name: Wheat
+    texfile: items.png
+    coords: [9, 1]
+    groups: [Farming]
+
+  - id: 297
+    name: Bread
+    texfile: items.png
+    coords: [9, 2]
+    groups: [Food]
+
+  - id: 298
+    name: Leather Cap
+    texfile: items.png
+    coords: [0, 0]
+    max_damage: 34
+    max_quantity: 1
+    groups: [Head]
+
+  - id: 299
+    name: Leather Tunic
+    texfile: items.png
+    coords: [0, 1]
+    max_damage: 48
+    max_quantity: 1
+    groups: [Chest]
+
+  - id: 300
+    name: Leather Pants
+    texfile: items.png
+    coords: [0, 2]
+    max_damage: 46
+    max_quantity: 1
+    groups: [Legs]
+
+  - id: 301
+    name: Leather Boots
+    texfile: items.png
+    coords: [0, 3]
+    max_damage: 40
+    max_quantity: 1
+    groups: [Feet]
+
+  - id: 302
+    name: Chainmail Helmet
+    texfile: items.png
+    coords: [1, 0]
+    max_damage: 68
+    max_quantity: 1
+    groups: [Head]
+
+  - id: 303
+    name: Chainmail Chestplate
+    texfile: items.png
+    coords: [1, 1]
+    max_damage: 96
+    max_quantity: 1
+    groups: [Chest]
+
+  - id: 304
+    name: Chainmail Leggings
+    texfile: items.png
+    coords: [1, 2]
+    max_damage: 92
+    max_quantity: 1
+    groups: [Legs]
+
+  - id: 305
+    name: Chainmail Boots
+    texfile: items.png
+    coords: [1, 3]
+    max_damage: 80
+    max_quantity: 1
+    groups: [Feet]
+
+  - id: 306
+    name: Iron Helmet
+    texfile: items.png
+    coords: [2, 0]
+    max_damage: 136
+    max_quantity: 1
+    groups: [Head]
+
+  - id: 307
+    name: Iron Chestplate
+    texfile: items.png
+    coords: [2, 1]
+    max_damage: 192
+    max_quantity: 1
+    groups: [Chest]
+
+  - id: 308
+    name: Iron Leggings
+    texfile: items.png
+    coords: [2, 2]
+    max_damage: 184
+    max_quantity: 1
+    groups: [Legs]
+
+  - id: 309
+    name: Iron Boots
+    texfile: items.png
+    coords: [2, 3]
+    max_damage: 160
+    max_quantity: 1
+    groups: [Feet]
+
+  - id: 310
+    name: Diamond Helmet
+    texfile: items.png
+    coords: [3, 0]
+    max_damage: 272
+    max_quantity: 1
+    groups: [Head]
+
+  - id: 311
+    name: Diamond Chestplate
+    texfile: items.png
+    coords: [3, 1]
+    max_damage: 384
+    max_quantity: 1
+    groups: [Chest]
+
+  - id: 312
+    name: Diamond Leggings
+    texfile: items.png
+    coords: [3, 2]
+    max_damage: 368
+    max_quantity: 1
+    groups: [Legs]
+
+  - id: 313
+    name: Diamond Boots
+    texfile: items.png
+    coords: [3, 3]
+    max_damage: 320
+    max_quantity: 1
+    groups: [Feet]
+
+  - id: 314
+    name: Golden Helmet
+    texfile: items.png
+    coords: [4, 0]
+    max_damage: 68
+    max_quantity: 1
+    groups: [Head]
+
+  - id: 315
+    name: Golden Chestplate
+    texfile: items.png
+    coords: [4, 1]
+    max_damage: 96
+    max_quantity: 1
+    groups: [Chest]
+
+  - id: 316
+    name: Golden Leggings
+    texfile: items.png
+    coords: [4, 2]
+    max_damage: 92
+    max_quantity: 1
+    groups: [Legs]
+
+  - id: 317
+    name: Golden Boots
+    texfile: items.png
+    coords: [4, 3]
+    max_damage: 80
+    max_quantity: 1
+    groups: [Feet]
+
+  - id: 318
+    name: Flint
+    texfile: items.png
+    coords: [6, 0]
+    groups: [Items]
+
+  - id: 319
+    name: Raw Porkchop
+    texfile: items.png
+    coords: [7, 5]
+    groups: [Food]
+
+  - id: 320
+    name: Cooked Porkchop
+    texfile: items.png
+    coords: [8, 5]
+    groups: [Food]
+
+  - id: 321
+    name: Painting
+    texfile: items.png
+    coords: [10, 1]
+    groups: [Special]
+
+  - id: 322
+    name: Golden Apple
+    texfile: items.png
+    coords: [11, 0]
+    max_quantity: 1
+    groups: [Food]
+
+  - id: 323
+    name: Sign
+    texfile: items.png
+    coords: [10, 2]
+    max_quantity: 1
+    groups: [Special]
+
+  - id: 324
+    name: Wooden Door
+    texfile: items.png
+    coords: [11, 2]
+    max_quantity: 1
+    groups: [Special]
+
+  - id: 325
+    name: Bucket
+    texfile: items.png
+    coords: [10, 4]
+    max_quantity: 1
+    groups: [Buckets]
+
+  - id: 326
+    name: Water Bucket
+    texfile: items.png
+    coords: [11, 4]
+    max_quantity: 1
+    groups: [Buckets]
+
+  - id: 327
+    name: Lava Bucket
+    texfile: items.png
+    coords: [12, 4]
+    max_quantity: 1
+    groups: [Buckets]
+
+  - id: 328
+    name: Minecart
+    texfile: items.png
+    coords: [7, 8]
+    max_quantity: 1
+    groups: [Transport]
+
+  - id: 329
+    name: Saddle
+    texfile: items.png
+    coords: [8, 6]
+    max_quantity: 1
+    groups: [Transport]
+
+  - id: 330
+    name: Iron Door
+    texfile: items.png
+    coords: [12, 2]
+    max_quantity: 1
+    groups: [Special]
+
+  - id: 331
+    name: Redstone
+    texfile: items.png
+    coords: [8, 3]
+    groups: [Logic]
+
+  - id: 332
+    name: Snowball
+    texfile: items.png
+    coords: [14, 0]
+    max_quantity: 16
+    groups: [Items]
+
+  - id: 333
+    name: Boat
+    texfile: items.png
+    coords: [8, 8]
+    max_quantity: 1
+    groups: [Transport]
+
+  - id: 334
+    name: Leather
+    texfile: items.png
+    coords: [7, 6]
+    groups: [Drops]
+
+  - id: 335
+    name: Milk
+    texfile: items.png
+    coords: [13, 4]
+    groups: [Buckets]
+
+  - id: 336
+    name: Brick
+    texfile: items.png
+    coords: [6, 1]
+    groups: [Items]
+
+  - id: 337
+    name: Clay
+    texfile: items.png
+    coords: [9, 3]
+    groups: [Items]
+
+  - id: 338
+    name: Sugar Canes
+    texfile: items.png
+    coords: [11, 1]
+    groups: [Farming]
+
+  - id: 339
+    name: Paper
+    texfile: items.png
+    coords: [10, 3]
+    groups: [Items]
+
+  - id: 340
+    name: Book
+    texfile: items.png
+    coords: [11, 3]
+    groups: [Items]
+
+  - id: 341
+    name: Slimeball
+    texfile: items.png
+    coords: [14, 1]
+    groups: [Drops]
+
+  - id: 342
+    name: Minecart with Chest
+    texfile: items.png
+    coords: [7, 9]
+    max_quantity: 1
+    groups: [Transport]
+
+  - id: 343
+    name: Minecart with Furnace
+    texfile: items.png
+    coords: [7, 10]
+    max_quantity: 1
+    groups: [Transport]
+
+  - id: 344
+    name: Egg
+    texfile: items.png
+    coords: [12, 0]
+    max_quantity: 16
+    groups: [Drops]
+
+  - id: 345
+    name: Compass
+    texfile: items.png
+    coords: [6, 3]
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 346
+    name: Fishing Rod
+    texfile: items.png
+    coords: [5, 4]
+    max_damage: 64
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 347
+    name: Clock
+    texfile: items.png
+    coords: [6, 4]
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 348
+    name: Glowstone Dust
+    texfile: items.png
+    coords: [9, 4]
+    groups: [Nether]
+
+  - id: 349
+    name: Raw Fish
+    texfile: items.png
+    coords: [9, 5]
+    groups: [Food]
+
+  - id: 350
+    name: Cooked Fish
+    texfile: items.png
+    coords: [10, 5]
+    groups: [Food]
+
+  - id: 351
+    name: Ink Sack
+    texfile: items.png
+    coords: [14, 4]
+    data: 0
+    groups: [Dye]
+
+  - id: 351
+    name: Rose Red
+    texfile: items.png
+    coords: [14, 5]
+    data: 1
+    groups: [Dye]
+
+  - id: 351
+    name: Cactus Green
+    texfile: items.png
+    coords: [14, 6]
+    data: 2
+    groups: [Dye]
+
+  - id: 351
+    name: Coco Beans
+    texfile: items.png
+    coords: [14, 7]
+    data: 3
+    groups: [Dye]
+
+  - id: 351
+    name: Lapis Lazuli
+    texfile: items.png
+    coords: [14, 8]
+    data: 4
+    groups: [Dye]
+
+  - id: 351
+    name: Purple Dye
+    texfile: items.png
+    coords: [14, 9]
+    data: 5
+    groups: [Dye]
+
+  - id: 351
+    name: Cyan Dye
+    texfile: items.png
+    coords: [14, 10]
+    data: 6
+    groups: [Dye]
+
+  - id: 351
+    name: Light Gray Dye
+    texfile: items.png
+    coords: [14, 11]
+    data: 7
+    groups: [Dye]
+
+  - id: 351
+    name: Gray Dye
+    texfile: items.png
+    coords: [15, 4]
+    data: 8
+    groups: [Dye]
+
+  - id: 351
+    name: Pink Dye
+    texfile: items.png
+    coords: [15, 5]
+    data: 9
+    groups: [Dye]
+
+  - id: 351
+    name: Lime Dye
+    texfile: items.png
+    coords: [15, 6]
+    data: 10
+    groups: [Dye]
+
+  - id: 351
+    name: Dandelion Yellow
+    texfile: items.png
+    coords: [15, 7]
+    data: 11
+    groups: [Dye]
+
+  - id: 351
+    name: Light Blue Dye
+    texfile: items.png
+    coords: [15, 8]
+    data: 12
+    groups: [Dye]
+
+  - id: 351
+    name: Magenta Dye
+    texfile: items.png
+    coords: [15, 9]
+    data: 13
+    groups: [Dye]
+
+  - id: 351
+    name: Orange Dye
+    texfile: items.png
+    coords: [15, 10]
+    data: 14
+    groups: [Dye]
+
+  - id: 351
+    name: Bone Meal
+    texfile: items.png
+    coords: [15, 11]
+    data: 15
+    groups: [Dye]
+
+  - id: 352
+    name: Bone
+    texfile: items.png
+    coords: [12, 1]
+    groups: [Drops]
+
+  - id: 353
+    name: Sugar
+    texfile: items.png
+    coords: [13, 0]
+    groups: [Items]
+
+  - id: 354
+    name: Cake
+    texfile: items.png
+    coords: [13, 1]
+    max_quantity: 1
+    groups: [Food]
+
+  - id: 355
+    name: Bed
+    texfile: items.png
+    coords: [13, 2]
+    max_quantity: 1
+    groups: [Special]
+
+  - id: 356
+    name: Redstone Repeater
+    texfile: items.png
+    coords: [6, 5]
+    groups: [Logic]
+
+  - id: 357
+    name: Cookie
+    texfile: items.png
+    coords: [12, 5]
+    groups: [Food]
+
+  - id: 358
+    name: Map
+    texfile: items.png
+    coords: [12, 3]
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 359
+    name: Shears
+    texfile: items.png
+    coords: [13, 5]
+    max_damage: 238
+    max_quantity: 1
+    groups: [Tools]
+
+  - id: 360
+    name: Melon
+    texfile: items.png
+    coords: [13, 6]
+    groups: [Food]
+
+  - id: 361
+    name: Pumpkin Seeds
+    texfile: items.png
+    coords: [13, 3]
+    groups: [Farming]
+
+  - id: 362
+    name: Melon Seeds
+    texfile: items.png
+    coords: [14, 3]
+    groups: [Farming]
+
+  - id: 363
+    name: Raw Beef
+    texfile: items.png
+    coords: [9, 6]
+    groups: [Food]
+
+  - id: 364
+    name: Steak
+    texfile: items.png
+    coords: [10, 6]
+    groups: [Food]
+
+  - id: 365
+    name: Raw Chicken
+    texfile: items.png
+    coords: [9, 7]
+    groups: [Food]
+
+  - id: 366
+    name: Cooked Chicken
+    texfile: items.png
+    coords: [10, 7]
+    groups: [Food]
+
+  - id: 367
+    name: Rotten Flesh
+    texfile: items.png
+    coords: [11, 5]
+    groups: [Drops]
+
+  - id: 368
+    name: Ender Pearl
+    texfile: items.png
+    coords: [11, 6]
+    groups: [Drops]
+
+  - id: 369
+    name: Blaze Rod
+    texfile: items.png
+    coords: [12, 6]
+    groups: [Drops]
+
+  - id: 370
+    name: Ghast Tear
+    texfile: items.png
+    coords: [11, 7]
+    groups: [Drops]
+
+  - id: 371
+    name: Gold Nugget
+    texfile: items.png
+    coords: [12, 7]
+    groups: [Drops]
+
+  - id: 372
+    name: Nether Wart
+    texfile: items.png
+    coords: [13, 7]
+    groups: [Nether]
+
+  - id: 373
+    name: Water Bottle
+    texfile: items.png
+    coords: [0, 14]
+    data: 0
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Awkward Potion
+    texfile: items.png
+    coords: [1, 14]
+    data: 16
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Thick Potion
+    texfile: items.png
+    coords: [1, 14]
+    data: 32
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Mundane Potion
+    texfile: items.png
+    coords: [1, 14]
+    data: 8192
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Regeneration (0:45)
+    texfile: items.png
+    coords: [2, 14]
+    data: 8193
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Swiftness (3:00)
+    texfile: items.png
+    coords: [3, 14]
+    data: 8194
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Fire Resistance (3:00)
+    texfile: items.png
+    coords: [4, 14]
+    data: 8195
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Poison (0:45)
+    texfile: items.png
+    coords: [5, 14]
+    data: 8196
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Healing I
+    texfile: items.png
+    coords: [6, 14]
+    data: 8197
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Weakness (1:30)
+    texfile: items.png
+    coords: [7, 14]
+    data: 8200
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Strength (3:00)
+    texfile: items.png
+    coords: [8, 14]
+    data: 8201
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Slowness (1:30)
+    texfile: items.png
+    coords: [9, 14]
+    data: 8202
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Harming I
+    texfile: items.png
+    coords: [10, 14]
+    data: 8204
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Regeneration II
+    texfile: items.png
+    coords: [2, 14]
+    data: 8225
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Swiftness II
+    texfile: items.png
+    coords: [3, 14]
+    data: 8226
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Poison II
+    texfile: items.png
+    coords: [5, 14]
+    data: 8228
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Healing II
+    texfile: items.png
+    coords: [6, 14]
+    data: 8229
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Strength II
+    texfile: items.png
+    coords: [8, 14]
+    data: 8233
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Harming II
+    texfile: items.png
+    coords: [10, 14]
+    data: 8236
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Regeneration (2:00)
+    texfile: items.png
+    coords: [2, 14]
+    data: 8257
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Swiftness (8:00)
+    texfile: items.png
+    coords: [3, 14]
+    data: 8258
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Fire Resistance (8:00)
+    texfile: items.png
+    coords: [4, 14]
+    data: 8259
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Poison (2:00)
+    texfile: items.png
+    coords: [5, 14]
+    data: 8260
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Weakness (4:00)
+    texfile: items.png
+    coords: [7, 14]
+    data: 8264
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Strength (8:00)
+    texfile: items.png
+    coords: [8, 14]
+    data: 8265
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Potion of Slowness (4:00)
+    texfile: items.png
+    coords: [9, 14]
+    data: 8266
+    max_quantity: 1
+    groups: [Potions]
+
+  - id: 373
+    name: Splash Potion of Mundane
+    texfile: items.png
+    coords: [1, 13]
+    data: 16384
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Regeneration (0:33)
+    texfile: items.png
+    coords: [2, 13]
+    data: 16385
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Swiftness (2:15)
+    texfile: items.png
+    coords: [3, 13]
+    data: 16386
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Fire Resistance (2:15)
+    texfile: items.png
+    coords: [4, 13]
+    data: 16387
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Poison (0:33)
+    texfile: items.png
+    coords: [5, 13]
+    data: 16388
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Healing I
+    texfile: items.png
+    coords: [6, 13]
+    data: 16389
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Weakness (1:07)
+    texfile: items.png
+    coords: [7, 13]
+    data: 16392
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Strength (2:15)
+    texfile: items.png
+    coords: [8, 13]
+    data: 16393
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Slowness (1:07)
+    texfile: items.png
+    coords: [9, 13]
+    data: 16394
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Harming I
+    texfile: items.png
+    coords: [10, 13]
+    data: 16396
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Regeneration II
+    texfile: items.png
+    coords: [2, 13]
+    data: 16417
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Swiftness II
+    texfile: items.png
+    coords: [3, 13]
+    data: 16418
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Poison II
+    texfile: items.png
+    coords: [5, 13]
+    data: 16420
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Healing II
+    texfile: items.png
+    coords: [6, 13]
+    data: 16421
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Strength II
+    texfile: items.png
+    coords: [8, 13]
+    data: 16425
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Harming II
+    texfile: items.png
+    coords: [10, 13]
+    data: 16428
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Swiftness (6:00)
+    texfile: items.png
+    coords: [3, 13]
+    data: 16450
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Fire Resistance (6:00)
+    texfile: items.png
+    coords: [4, 13]
+    data: 16451
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Poison (1:30)
+    texfile: items.png
+    coords: [5, 13]
+    data: 16452
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Weakness (3:00)
+    texfile: items.png
+    coords: [7, 13]
+    data: 16456
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Strength (6:00)
+    texfile: items.png
+    coords: [8, 13]
+    data: 16457
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Slowness (3:00)
+    texfile: items.png
+    coords: [9, 13]
+    data: 16458
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 373
+    name: Splash Potion of Regeneration (1:30)
+    texfile: items.png
+    coords: [2, 13]
+    data: 16499
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - id: 374
+    name: Glass Bottle
+    texfile: items.png
+    coords: [12, 8]
+
+  - id: 375
+    name: Spider Eye
+    texfile: items.png
+    coords: [11, 8]
+    groups: [Drops]
+
+  - id: 376
+    name: Fermented Spider Eye
+    texfile: items.png
+    coords: [10, 8]
+    groups: [Drops]
+
+  - id: 377
+    name: Blaze Powder
+    texfile: items.png
+    coords: [13, 9]
+    groups: [Drops]
+
+  - id: 378
+    name: Magma Cream
+    texfile: items.png
+    coords: [13, 10]
+    groups: [Drops]
+
+  - id: 379
+    name: Brewing Stand
+    texfile: items.png
+    coords: [12, 10]
+    max_quantity: 1
+    groups: [Special]
+
+  - id: 380
+    name: Cauldron
+    texfile: items.png
+    coords: [12, 9]
+    max_quantity: 1
+    groups: [Special]
+
+  - id: 381
+    name: Eye of Ender
+    texfile: items.png
+    coords: [11, 9]
+    groups: [Drops]
+
+  - id: 382
+    name: Glistening Melon
+    texfile: items.png
+    coords: [9, 8]
+    groups: [Food]
+
+  - id: 383
+    name: Spawn Creeper
+    texfile: items.png
+    coords: [0, 9]
+    data: 50
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Skeleton
+    texfile: items.png
+    coords: [1, 9]
+    data: 51
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Spider
+    texfile: items.png
+    coords: [2, 9]
+    data: 52
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Zombie
+    texfile: items.png
+    coords: [3, 9]
+    data: 54
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Slime
+    texfile: items.png
+    coords: [4, 9]
+    data: 55
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Ghast
+    texfile: items.png
+    coords: [0, 10]
+    data: 56
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Zombie Pigmen
+    texfile: items.png
+    coords: [1, 10]
+    data: 57
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Enderman
+    texfile: items.png
+    coords: [2, 10]
+    data: 58
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Cave Spider
+    texfile: items.png
+    coords: [3, 10]
+    data: 59
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Silverfish
+    texfile: items.png
+    coords: [4, 10]
+    data: 60
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Blaze
+    texfile: items.png
+    coords: [0, 11]
+    data: 61
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Magma Cube
+    texfile: items.png
+    coords: [1, 11]
+    data: 62
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Pig
+    texfile: items.png
+    coords: [2, 11]
+    data: 90
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Sheep
+    texfile: items.png
+    coords: [3, 11]
+    data: 91
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Cow
+    texfile: items.png
+    coords: [4, 11]
+    data: 92
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Chicken
+    texfile: items.png
+    coords: [0, 12]
+    data: 93
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Squid
+    texfile: items.png
+    coords: [1, 12]
+    data: 94
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Wolf
+    texfile: items.png
+    coords: [2, 12]
+    data: 95
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Mooshroom
+    texfile: items.png
+    coords: [3, 12]
+    data: 96
+    groups: [SpawnEggs]
+
+  - id: 383
+    name: Spawn Villager
+    texfile: items.png
+    coords: [4, 12]
+    data: 120
+    groups: [SpawnEggs]
+
+  - id: 2256
+    name: C418 - 13
+    texfile: items.png
+    coords: [0, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2257
+    name: C418 - cat
+    texfile: items.png
+    coords: [1, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2258
+    name: C418 - blocks
+    texfile: items.png
+    coords: [2, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2259
+    name: C418 - chirp
+    texfile: items.png
+    coords: [3, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2260
+    name: C418 - far
+    texfile: items.png
+    coords: [4, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2261
+    name: C418 - mall
+    texfile: items.png
+    coords: [5, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2262
+    name: C418 - mellohi
+    texfile: items.png
+    coords: [6, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2263
+    name: C418 - stal
+    texfile: items.png
+    coords: [7, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2264
+    name: C418 - strad
+    texfile: items.png
+    coords: [8, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2265
+    name: C418 - ward
+    texfile: items.png
+    coords: [9, 15]
+    max_quantity: 1
+    groups: [Music]
+
+  - id: 2266
+    name: C418 - 11
+    texfile: items.png
+    coords: [10, 15]
+    max_quantity: 1
+    groups: [Music]
+
+...
