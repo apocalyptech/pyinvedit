@@ -18,14 +18,70 @@ class Group(object):
     A group that items can live in
     """
 
-    def __init__(self, name, icon):
+    class IconMapping(object):
+        """
+        I didn't see a sane way to convert these from the given format.
+        """
+        def __init__(self, texfile, x, y):
+            self.texfile = texfile
+            self.x = x
+            self.y = y
+
+        def toyaml(self):
+            lines = []
+            lines.append('    texfile: %s' % (self.texfile))
+            lines.append('    coords: [%d, %d]' % (self.x, self.y))
+            return lines
+
+    mappings = {
+            'Natural': IconMapping('terrain.png', 3, 0),
+            'Stone': IconMapping('terrain.png', 1, 0),
+            'Wood': IconMapping('terrain.png', 4, 0),
+            'Mushroom': IconMapping('terrain.png', 13, 4),
+            'Nether': IconMapping('terrain.png', 7, 6),
+            'TheEnd': IconMapping('terrain.png', 15, 10),
+            'Ores': IconMapping('terrain.png', 2, 3),
+            'Plants1': IconMapping('terrain.png', 6, 4),
+            'Plants2': IconMapping('terrain.png', 15, 0),
+            'Farming': IconMapping('items.png', 9, 1),
+            'Dye': IconMapping('items.png', 14, 4),
+            'Wool': IconMapping('terrain.png', 0, 4),
+            'Shovels': IconMapping('items.png', 2, 5),
+            'Pickaxes': IconMapping('items.png', 2, 6),
+            'Axes': IconMapping('items.png', 2, 7),
+            'Hoes': IconMapping('items.png', 2, 8),
+            'Swords': IconMapping('items.png', 2, 4),
+            'Tools': IconMapping('items.png', 5, 1),
+            'Potions': IconMapping('items.png', 0, 14),
+            'Logic': IconMapping('items.png', 8, 3),
+            'Food': IconMapping('items.png', 9, 2),
+            'Items': IconMapping('items.png', 6, 0),
+            'SpawnEggs': IconMapping('items.png', 0, 10),
+            'Music': IconMapping('items.png', 1, 15),
+            'Head': IconMapping('items.png', 15, 0),
+            'Chest': IconMapping('items.png', 15, 1),
+            'Legs': IconMapping('items.png', 15, 2),
+            'Feet': IconMapping('items.png', 15, 3),
+            'Buckets': IconMapping('items.png', 10, 4),
+            'Special': IconMapping('terrain.png', 11, 1),
+            'SplashPotions': IconMapping('items.png', 0, 13),
+            'Transport': IconMapping('items.png', 7, 8),
+            'Drops': IconMapping('items.png', 14, 1),
+        }
+
+    def __init__(self, name):
         self.name = name
-        self.icon = icon
+        if name in self.mappings:
+            self.mapping = self.mappings[name]
+        else:
+            print 'Unknown category: %s' % (name)
+            self.mapping = None
 
     def toyaml(self):
         lines = []
         lines.append('  - name: %s' % (self.name))
-        lines.append('    icon: %s' % (self.icon))
+        if self.mapping is not None:
+            lines.extend(self.mapping.toyaml())
         lines.append('')
         lines.append('')
         return "\n".join(lines)
@@ -93,6 +149,10 @@ if __name__ == '__main__':
                 max_damage = None
                 max_quantity = None
 
+                # Skip some "special" items which aren't really items at all
+                if id > 12340:
+                    continue
+
                 # Process the last column
                 if mult_col is not None and mult_col != '':
                     prefix = mult_col[0].lower()
@@ -139,13 +199,17 @@ if __name__ == '__main__':
                 name = match.group(1)
                 icon = int(match.group(2))
                 groupitems = match.group(3)
-                group = Group(name, icon)
+                if name.startswith('Empty'):
+                    continue
+                group = Group(name)
                 groups.append(group)
                 for dictid in groupitems.split(','):
                     dictmatch = dictre.search(dictid)
                     if dictmatch:
                         dictid = dictmatch.group(1)
                     if dictid in items:
+                        if items[dictid].group is not None:
+                            print 'Duplicate group for %s: %s vs. %s' % (items[dictid].name, items[dictid].group.name, group.name)
                         items[dictid].group = group
                     else:
                         print 'Unknown dictid in group %s: %s' % (group.name, dictid)
