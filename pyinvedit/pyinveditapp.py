@@ -416,7 +416,8 @@ class InvImage(gtk.DrawingArea):
         """
         Re-queue an update for ourselves
         """
-        pass
+        self.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, self.size, self.size), True)
+        self.window.process_updates(True)
 
 class LoaderDialog(gtk.FileChooserDialog):
     """
@@ -463,6 +464,13 @@ class InvButton(gtk.RadioButton):
         self.inventoryslot = None
         self.image = InvImage(self)
         self.add(self.image)
+
+    def clear(self):
+        """
+        Clears out our stored inventory slot
+        """
+        self.inventoryslot = None
+        self.update_graphics()
 
     def update_slot(self, inventoryslot):
         """
@@ -517,10 +525,18 @@ class InvTable(gtk.Table):
         self.buttons[slot] = button
         self.attach(button, x, x+1, y, y+1, gtk.FILL, gtk.FILL, ypadding=ypadding)
 
+    def clear_buttons(self):
+        """
+        Removes all data from our buttons
+        """
+        for button in self.buttons.values():
+            button.clear()
+
     def populate_from(self, inventory):
         """
-        Populates all of our buttons from the given inventory object
+        Populates all of our buttons from the given inventory object.
         """
+        self.clear_buttons()
         for item in inventory.get_items():
             if item.slot in self.buttons:
                 self.buttons[item.slot].update_slot(item)
