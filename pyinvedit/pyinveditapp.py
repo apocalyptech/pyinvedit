@@ -273,6 +273,19 @@ class InvImage(gtk.DrawingArea):
     # Our size
     size = 50
 
+    # Corner constants
+    CORNER_NW = 0
+    CORNER_NE = 1
+    CORNER_SE = 2
+    CORNER_SW = 3
+    CORNER_CENTER = 4
+
+    # Damage bar constants
+    DAMAGE_X = 3
+    DAMAGE_Y = size-6
+    DAMAGE_W = size-6
+    DAMAGE_H = 3
+
     # We define our own expose behavior
     __gsignals__ = { 'expose_event': 'override' }
 
@@ -305,16 +318,24 @@ class InvImage(gtk.DrawingArea):
         """
         The meat of the rendering
         """
-        if self.button.inventoryslot is None:
+        slotinfo = self.button.inventoryslot
+
+        if slotinfo is None:
+            # Nothing in this inventory slot
             self.cr.set_source_rgba(0, 0, 0, 0)
             self.cr.rectangle(0, 0, self.size, self.size)
             self.cr.fill()
         else:
+            # Get information about the item, if we can
             imgsurf = None
-            for uniqueid in self.button.inventoryslot.try_ids():
+            item = None
+            for uniqueid in slotinfo.try_ids():
                 if uniqueid in self.button.items:
-                    imgsurf = self.button.items[uniqueid].get_image(True)
+                    item = self.button.items[uniqueid]
+                    imgsurf = item.get_image(True)
                     break
+
+            # Now get the "base" image
             if imgsurf is None:
                 # TODO: Something more graceful
                 self.cr.set_source_rgba(1, 0, 0, 1)
@@ -327,30 +348,69 @@ class InvImage(gtk.DrawingArea):
                 self.cr.rectangle(offset, offset, imgsurf.get_width(), imgsurf.get_width())
                 self.cr.fill()
 
-        # Testing, box with number
-        #self.cr.set_line_width(3)
-        #self.cr.set_source_rgba(1, 0, 0, 1)
-        #self.cr.rectangle(10, 10, 30, 30)
-        #self.cr.stroke()
-        #self.pangolayout.set_markup('%d' % (self.button.slot))
-        #self.cr.move_to(20, 20)
-        #self.cr.set_source_rgba(0, 0, 1, 1)
-        #self.cairoctx.show_layout(self.pangolayout)
+            # Now the quantity
+            if slotinfo.count > 1:
+                if item is None:
+                    max_quantity = 64
+                else:
+                    max_quantity = item.max_quantity
 
-        # Testing, previous stuff
-        #self.cr.set_source_surface(self.surf)
-        #self.cr.rectangle(0, 0, self.size, self.size)
-        #self.cr.fill()
-        #if self.cur_num > 0:
-        #    self.pangolayout.set_markup('%d' % (self.cur_num))
-        #    self.cr.move_to(8, 8)
-        #    self.cairocontext.layout_path(self.pangolayout)
-        #    self.cr.set_source_rgba(0, 0, 1, 1)
-        #    self.cr.set_line_width(3)
-        #    self.cr.stroke()
-        #    self.cr.move_to(8, 8)
-        #    self.cr.set_source_rgba(1, 1, 1, 1)
-        #    self.cairocontext.show_layout(self.pangolayout)
+                if slotinfo.count <= max_quantity:
+                    outlinecolor = [0, 0, 0, 1]
+                else:
+                    outlinecolor = [1, 0, 0, 1]
+
+                self._text_at('%d' % (slotinfo.count), [1, 1, 1, 1], outlinecolor, self.CORNER_SE)
+
+            # Damage (either bar or number)
+            if slotinfo.damage > 0:
+                if item is None or item.max_damage is None or slotinfo.damage > item.max_damage:
+                    self._text_at('%d' % (slotinfo.damage), [1, 0, 0, 1], [0, 0, 0, 1], self.CORNER_NW)
+                else:
+                    percent = 1 - (slotinfo.damage / float(item.max_damage))
+
+                    # The base (black) bar
+                    self.cr.set_source_rgba(0, 0, 0, 1)
+                    self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W, self.DAMAGE_H)
+                    self.cr.fill()
+
+                    # The actual damage notifier
+                    self.cr.set_source_rgba(1*(1-percent), 1*percent, 0, 1)
+                    self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
+                    self.cr.fill()
+
+    def _text_at(self, text, textcolor, outlinecolor, corner):
+        """
+        Draws some text to our surface at the given location, using the given colors
+        
+        """
+        self.pangolayout.set_markup(text)
+        (width, height) = map(lambda x: x/pango.SCALE, self.pangolayout.get_size())
+        if corner == self.CORNER_NW:
+            x = 1
+            y = 1
+        elif corner == self.CORNER_NE:
+            x = self.size-1-width
+            y = 1
+        elif corner == self.CORNER_SE:
+            x = self.size-1-width
+            y = self.size-1-height
+        elif corner == self.CORNER_SW:
+            x = 1
+            y = self.size-1-height
+        else:
+            x = (self.size-width)/2
+            y = (self.size-height)/2
+
+        # Now the actual rendering
+        self.cr.move_to(x, y)
+        self.cairoctx.layout_path(self.pangolayout)
+        self.cr.set_source_rgba(*outlinecolor)
+        self.cr.set_line_width(2)
+        self.cr.stroke()
+        self.cr.move_to(x, y)
+        self.cr.set_source_rgba(*textcolor)
+        self.cairoctx.show_layout(self.pangolayout)
 
     def update(self):
         """
@@ -393,7 +453,8 @@ class InvButton(gtk.RadioButton):
     def __init__(self, slot, items):
         super(InvButton, self).__init__()
         self.set_mode(False)
-        self.set_size_request(55, 55)
+        # TODO: Get the button size down properly
+        self.set_size_request(63, 63)
         self.set_border_width(0)
         self.set_relief(gtk.RELIEF_HALF)
         self.set_active(False)
