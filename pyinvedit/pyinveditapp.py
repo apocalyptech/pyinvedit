@@ -289,7 +289,7 @@ class InvImage(gtk.DrawingArea):
     # We define our own expose behavior
     __gsignals__ = { 'expose_event': 'override' }
 
-    def __init__(self, button):
+    def __init__(self, button, empty=None):
         super(InvImage, self).__init__()
         self.surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.size, self.size)
         self.set_size_request(self.size, self.size)
@@ -297,6 +297,7 @@ class InvImage(gtk.DrawingArea):
         self.cr = None
         self.pangoctx = None
         self.cairoctx = None
+        self.empty = empty
 
     def do_expose_event(self, event):
         """
@@ -322,9 +323,16 @@ class InvImage(gtk.DrawingArea):
 
         if slotinfo is None:
             # Nothing in this inventory slot
-            self.cr.set_source_rgba(0, 0, 0, 0)
-            self.cr.rectangle(0, 0, self.size, self.size)
-            self.cr.fill()
+            if self.empty is None:
+                self.cr.set_source_rgba(0, 0, 0, 0)
+                self.cr.rectangle(0, 0, self.size, self.size)
+                self.cr.fill()
+            else:
+                offset = (self.size - self.empty.get_width()) / 2
+                self.cr.set_source_surface(self.empty, offset, offset)
+                self.cr.move_to(0, 0)
+                self.cr.rectangle(offset, offset, self.empty.get_width(), self.empty.get_width())
+                self.cr.fill()
         else:
             # Get information about the item, if we can
             imgsurf = None
@@ -451,7 +459,7 @@ class InvButton(gtk.RadioButton):
     Class for an individual button on our inventory screen
     """
 
-    def __init__(self, slot, items):
+    def __init__(self, slot, items, empty=None):
         super(InvButton, self).__init__()
         self.set_mode(False)
         # TODO: Get the button size down properly
@@ -462,7 +470,7 @@ class InvButton(gtk.RadioButton):
         self.slot = slot
         self.items = items
         self.inventoryslot = None
-        self.image = InvImage(self)
+        self.image = InvImage(self, empty)
         self.add(self.image)
 
     def clear(self):
@@ -490,7 +498,7 @@ class InvTable(gtk.Table):
     Table to store inventory info
     """
 
-    def __init__(self, items):
+    def __init__(self, items, icon_head, icon_torso, icon_legs, icon_feet):
         super(InvTable, self).__init__(5, 9)
 
         self.buttons = {}
@@ -498,10 +506,10 @@ class InvTable(gtk.Table):
         self.items = items
 
         # Armor slots
-        self._new_button(0, 0, 103, 7)
-        self._new_button(1, 0, 102, 7)
-        self._new_button(2, 0, 101, 7)
-        self._new_button(3, 0, 100, 7)
+        self._new_button(0, 0, 103, 7, empty=icon_head)
+        self._new_button(1, 0, 102, 7, empty=icon_torso)
+        self._new_button(2, 0, 101, 7, empty=icon_legs)
+        self._new_button(3, 0, 100, 7, empty=icon_feet)
 
         # Ordinary inventory slots
         for i in range(9):
@@ -510,14 +518,14 @@ class InvTable(gtk.Table):
             self._new_button(i, 3, 27+i)
             self._new_button(i, 4, i, 7)
 
-    def _new_button(self, x, y, slot, ypadding=0):
+    def _new_button(self, x, y, slot, ypadding=0, empty=None):
         """
         Adds a new button at the specified coordinates, representing the specified
         inventory slot.
         """
         if slot in self.buttons:
             raise Exception("Inventory slot %d already exists" % (slot))
-        button = InvButton(slot, self.items)
+        button = InvButton(slot, self.items, empty)
         if self.group is None:
             self.group = button
         else:
@@ -580,7 +588,12 @@ class PyInvEdit(gtk.Window):
         mainhbox.add(self.itembox)
 
         # The first world page
-        self.invtable = InvTable(self.items)
+        self.invtable = InvTable(self.items,
+                self.texfiles['items.png'].get_tex(15, 0, True),
+                self.texfiles['items.png'].get_tex(15, 1, True),
+                self.texfiles['items.png'].get_tex(15, 2, True),
+                self.texfiles['items.png'].get_tex(15, 3, True),
+                )
         self.worldbook.append_page(self.invtable, gtk.Label('Test'))
 
         # Testing stuff
