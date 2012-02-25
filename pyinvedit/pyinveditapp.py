@@ -375,7 +375,7 @@ class InvImage(gtk.DrawingArea):
                     self.cr.fill()
 
                     # The actual damage notifier
-                    self.cr.set_source_rgba(1*(1-percent), 1*percent, 0, 1)
+                    self.cr.set_source_rgba(1-percent, percent, 0, 1)
                     self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
                     self.cr.fill()
 
