@@ -3,6 +3,7 @@
 
 import os
 import sys
+import math
 import yaml
 import collections
 from pymclevel import nbt
@@ -341,10 +342,21 @@ class InvImage(gtk.DrawingArea):
 
             # Now get the "base" image
             if imgsurf is None:
-                # TODO: Something more graceful
-                self.cr.set_source_rgba(1, 0, 0, 1)
-                self.cr.rectangle(0, 0, self.size, self.size)
+                center = self.size/2
+
+                self.cr.set_source_rgba(0, 0, 0, 1)
+                self.cr.arc(center, center, center-10, 0, math.pi*2)
                 self.cr.fill()
+
+                self.cr.set_source_rgba(1, 1, 1, 1)
+                self.cr.arc(center, center, center-12, 0, math.pi*2)
+                self.cr.fill()
+
+                self.cr.set_source_rgba(.4196, .596, .7725, 1)
+                self.cr.arc(center, center, center-14, 0, math.pi*2)
+                self.cr.fill()
+
+                self._text_at('%d' % (slotinfo.num), [1, 1, 1, 1], [0, 0, 0, 1], self.CORNER_CENTER)
             else:
                 self._surface_center(imgsurf)
 
