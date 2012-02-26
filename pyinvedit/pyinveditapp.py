@@ -207,6 +207,29 @@ class Item(object):
         """
         return self.texfile.get_tex(self.x, self.y, large)
 
+class ItemCollection(object):
+    """
+    Class to hold our collection of items.  We do this rather than
+    just an OrderedDict so that we can abstract the ridiculous
+    uniqueid stuff, so that we can match on the data values we
+    get from the Minecraft file, or from the user.
+    """
+
+    def __init__(self):
+        self.items = collections.OrderedDict()
+
+    def add_item(self, item):
+        self.items[item.unique_id] = item
+
+    def get_item(self, num, damage):
+        """
+        Gets an item with the given ID and damage
+        """
+        for unique in ['%d~%d' % (num, damage), num]:
+            if unique in self.items:
+                return self.items[unique]
+        return None
+
 class InventorySlot(object):
     """
     Holds information about a particular inventory slot
@@ -218,12 +241,6 @@ class InventorySlot(object):
         self.count = count
         self.slot = slot
         self.extratags = extratags
-
-    def try_ids(self):
-        """
-        Returns a list of IDs to check against our item registry
-        """
-        return ['%d~%d' % (self.num, self.damage), self.num]
 
     def __cmp__(self, other):
         """
@@ -263,6 +280,89 @@ class Inventory(object):
         Gets a list of all items in this inventory set
         """
         return self.inventory.values()
+
+class InvDetails(gtk.Table):
+    """
+    Class to show our inventory item details
+    """
+    def __init__(self, items):
+        super(InvDetails, self).__init__(2, 3)
+
+        self.items = items
+        self.itemtitle = gtk.Label()
+        align = gtk.Alignment(.5, .5, 1, 1)
+        align.add(self.itemtitle)
+        self.attach(align, 0, 2, 0, 1, gtk.FILL, gtk.FILL)
+        self.var_cache = {}
+
+        self._rowlabel(1, 'ID')
+        self._rowspinner(1, 'num', 0, 4095)
+
+        self._rowlabel(2, 'Damage/Data')
+        self._rowspinner(2, 'damage', 0, 65535)
+
+        self._rowlabel(3, 'Count')
+        self._rowspinner(3, 'count', 1, 255)
+
+        self._rowlabel(4, 'Slot Number')
+        self.slotdisplay = gtk.Label()
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(3, 3, 5, 0)
+        align.add(self.slotdisplay)
+        self.attach(align, 1, 2, 4, 5, gtk.FILL, gtk.FILL)
+
+    def _rowlabel(self, row, text):
+        """
+        A label on the given row
+        """
+        label = gtk.Label()
+        label.set_markup('<b>%s:</b>' % (text))
+        align = gtk.Alignment(1, .5, 0, 0)
+        align.add(label)
+        self.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
+
+    def _rowspinner(self, row, var, val_min, val_max):
+        """
+        Adds a spinner to the given row
+        """
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(3, 3, 5, 0)
+        adjust = gtk.Adjustment(0, val_min, val_max, 1, 1)
+        spinner = gtk.SpinButton(adjust)
+        self.var_cache[var] = spinner
+        align.add(spinner)
+        self.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
+
+    def _get_var(self, var):
+        """
+        Returns a GTK Widget from our var cache
+        """
+        if var in self.var_cache:
+            return self.var_cache[var]
+        else:
+            return None
+
+    def update_from_button(self, button):
+        """
+        Updates all our information given a button
+        """
+        if button.inventoryslot is None:
+            self._get_var('num').set_value(0)
+            self._get_var('damage').set_value(0)
+            self._get_var('count').set_value(1)
+            self.slotdisplay.set_text('hurr...')
+            self.itemtitle.set_text('No Item')
+        else:
+            self._get_var('num').set_value(button.inventoryslot.num)
+            self._get_var('damage').set_value(button.inventoryslot.damage)
+            self._get_var('count').set_value(button.inventoryslot.count)
+            self.slotdisplay.set_text(str(button.inventoryslot.slot))
+            item = self.items.get_item(button.inventoryslot.num, button.inventoryslot.damage)
+            if item:
+                self.itemtitle.set_text(item.name)
+            else:
+                self.itemtitle.set_text('Unknown Item')
+
 
 class InvImage(gtk.DrawingArea):
     """
@@ -333,12 +433,9 @@ class InvImage(gtk.DrawingArea):
         else:
             # Get information about the item, if we can
             imgsurf = None
-            item = None
-            for uniqueid in slotinfo.try_ids():
-                if uniqueid in self.button.items:
-                    item = self.button.items[uniqueid]
-                    imgsurf = item.get_image(True)
-                    break
+            item = self.button.items.get_item(slotinfo.num, slotinfo.damage)
+            if item is not None:
+                imgsurf = item.get_image(True)
 
             # Now get the "base" image
             if imgsurf is None:
@@ -473,7 +570,7 @@ class InvButton(gtk.RadioButton):
     Class for an individual button on our inventory screen
     """
 
-    def __init__(self, slot, items, empty=None):
+    def __init__(self, slot, items, detail, empty=None):
         super(InvButton, self).__init__()
         self.set_mode(False)
         # TODO: Get the button size down properly
@@ -483,9 +580,11 @@ class InvButton(gtk.RadioButton):
         self.set_active(False)
         self.slot = slot
         self.items = items
+        self.detail = detail
         self.inventoryslot = None
         self.image = InvImage(self, empty)
         self.add(self.image)
+        self.connect('clicked', self.on_clicked)
 
     def clear(self):
         """
@@ -507,17 +606,24 @@ class InvButton(gtk.RadioButton):
         """
         self.image.update()
 
+    def on_clicked(self, button, params=None):
+        """
+        What to do when we're clicked
+        """
+        self.detail.update_from_button(self)
+
 class InvTable(gtk.Table):
     """
     Table to store inventory info
     """
 
-    def __init__(self, items, icon_head, icon_torso, icon_legs, icon_feet):
+    def __init__(self, items, detail, icon_head, icon_torso, icon_legs, icon_feet):
         super(InvTable, self).__init__(5, 9)
 
         self.buttons = {}
         self.group = None
         self.items = items
+        self.detail = detail
 
         # Armor slots
         self._new_button(0, 0, 103, 7, empty=icon_head)
@@ -539,7 +645,7 @@ class InvTable(gtk.Table):
         """
         if slot in self.buttons:
             raise Exception("Inventory slot %d already exists" % (slot))
-        button = InvButton(slot, self.items, empty)
+        button = InvButton(slot, self.items, self.detail, empty)
         if self.group is None:
             self.group = button
         else:
@@ -571,7 +677,7 @@ class PyInvEdit(gtk.Window):
     def __init__(self, yamlfile):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
         self.set_title('PyInvEdit - Minecraft Inventory Editor')
-        self.set_size_request(800, 400)
+        self.set_size_request(800, 600)
         self.connect("destroy", self.action_quit)
         
         # Load our YAML
@@ -588,34 +694,32 @@ class PyInvEdit(gtk.Window):
         mainhbox = gtk.HBox()
         self.mainvbox.add(mainhbox)
 
-        # First the world notebook
+        # First the world notebook (leftmost pane)
         self.worldbook = gtk.Notebook()
-        self.worldbook.set_size_request(500, 350)
+        self.worldbook.set_size_request(600, 350)
         mainhbox.pack_start(self.worldbook, False, False)
 
-        # Now our group icons
+        # Now our group icons (middle pane)
         grouptable = gtk.Table()
         mainhbox.pack_start(grouptable, False, False)
 
-        # And finally our actual item area
+        # And finally our actual item area (rightmost pane)
         self.itembox = gtk.VBox()
         mainhbox.add(self.itembox)
 
         # The first world page
-        self.invtable = InvTable(self.items,
+        self.itemdetails = InvDetails(self.items)
+        self.invtable = InvTable(self.items, self.itemdetails,
                 self.texfiles['items.png'].get_tex(15, 0, True),
                 self.texfiles['items.png'].get_tex(15, 1, True),
                 self.texfiles['items.png'].get_tex(15, 2, True),
                 self.texfiles['items.png'].get_tex(15, 3, True),
                 )
-        self.worldbook.append_page(self.invtable, gtk.Label('Test'))
-
-        # Testing stuff
-        #button = gtk.Button()
-        #mybox.pack_start(button, False, False)
-        #self.image = TestImage()
-        #button.add(self.image)
-        #button.connect('clicked', self.clickbutton)
+        worldvbox = gtk.VBox()
+        worldvbox.pack_start(self.invtable, False, True)
+        worldvbox.pack_start(gtk.HSeparator(), False, True)
+        worldvbox.pack_start(self.itemdetails, False, True)
+        self.worldbook.append_page(worldvbox, gtk.Label('Test'))
 
         # Make sure everything's shown
         self.show_all()
@@ -623,9 +727,6 @@ class PyInvEdit(gtk.Window):
         # Set up some data
         self.leveldat = None
         self.inventory = None
-
-    #def clickbutton(self, button):
-    #    self.image.update()
 
     def menu(self, widget, data):
         print 'hoo'
@@ -706,10 +807,9 @@ class PyInvEdit(gtk.Window):
                 self.groups[group.name] = group
 
             # And finally our items
-            self.items = collections.OrderedDict()
+            self.items = ItemCollection()
             for yamlobj in yaml_dict['items']:
-                item = Item(yamlobj, self.texfiles, self.groups)
-                self.items[item.unique_id] = item
+                self.items.add_item(Item(yamlobj, self.texfiles, self.groups))
         else:
             raise Exception('No data found from YAML file %s' %
                     (filename))
