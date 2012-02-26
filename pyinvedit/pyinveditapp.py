@@ -286,30 +286,34 @@ class InvDetails(gtk.Table):
     Class to show our inventory item details
     """
     def __init__(self, items):
-        super(InvDetails, self).__init__(2, 3)
+        super(InvDetails, self).__init__(3, 5)
 
         self.items = items
         self.itemtitle = gtk.Label()
         align = gtk.Alignment(.5, .5, 1, 1)
         align.add(self.itemtitle)
         self.attach(align, 0, 2, 0, 1, gtk.FILL, gtk.FILL)
+        self.button = None
+        self.updating = True
         self.var_cache = {}
 
-        self._rowlabel(1, 'ID')
-        self._rowspinner(1, 'num', 0, 4095)
-
-        self._rowlabel(2, 'Damage/Data')
-        self._rowspinner(2, 'damage', 0, 65535)
-
-        self._rowlabel(3, 'Count')
-        self._rowspinner(3, 'count', 1, 255)
-
-        self._rowlabel(4, 'Slot Number')
+        self._rowlabel(1, 'Slot Number')
         self.slotdisplay = gtk.Label()
         align = gtk.Alignment(0, .5, 0, 0)
         align.set_padding(3, 3, 5, 0)
         align.add(self.slotdisplay)
-        self.attach(align, 1, 2, 4, 5, gtk.FILL, gtk.FILL)
+        self.attach(align, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
+
+        self._rowlabel(2, 'ID')
+        self._rowspinner(2, 'num', 0, 4095)
+
+        self._rowlabel(3, 'Damage/Data')
+        self._rowspinner(3, 'damage', 0, 65535)
+        self._rowextra(3, 'damage_ext')
+
+        self._rowlabel(4, 'Count')
+        self._rowspinner(4, 'count', 1, 255)
+        self._rowextra(4, 'count_ext')
 
     def _rowlabel(self, row, text):
         """
@@ -332,6 +336,18 @@ class InvDetails(gtk.Table):
         self.var_cache[var] = spinner
         align.add(spinner)
         self.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
+        spinner.connect('value-changed', self.new_values)
+
+    def _rowextra(self, row, var):
+        """
+        An extra gtk.Label to put after our data value
+        """
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(3, 3, 5, 0)
+        label = gtk.Label()
+        self.var_cache[var] = label
+        align.add(label)
+        self.attach(align, 2, 3, row, row+1, gtk.FILL, gtk.FILL)
 
     def _get_var(self, var):
         """
@@ -346,23 +362,64 @@ class InvDetails(gtk.Table):
         """
         Updates all our information given a button
         """
-        if button.inventoryslot is None:
+        self.button = button
+        self._update_info()
+
+    def _update_info(self):
+        """
+        Updates all our information with our loaded button
+        """
+        self.updating = True
+        self.slotdisplay.set_text(str(self.button.slot))
+        if self.button.inventoryslot is None:
             self._get_var('num').set_value(0)
             self._get_var('damage').set_value(0)
+            self._get_var('damage_ext').set_text('')
             self._get_var('count').set_value(1)
-            self.slotdisplay.set_text('hurr...')
+            self._get_var('count_ext').set_text('')
             self.itemtitle.set_text('No Item')
+            self._get_var('damage').set_sensitive(False)
+            self._get_var('count').set_sensitive(False)
         else:
-            self._get_var('num').set_value(button.inventoryslot.num)
-            self._get_var('damage').set_value(button.inventoryslot.damage)
-            self._get_var('count').set_value(button.inventoryslot.count)
-            self.slotdisplay.set_text(str(button.inventoryslot.slot))
-            item = self.items.get_item(button.inventoryslot.num, button.inventoryslot.damage)
+            self._get_var('damage').set_sensitive(True)
+            self._get_var('count').set_sensitive(True)
+            self._get_var('num').set_value(self.button.inventoryslot.num)
+            self._get_var('damage').set_value(self.button.inventoryslot.damage)
+            self._get_var('count').set_value(self.button.inventoryslot.count)
+            item = self.items.get_item(self.button.inventoryslot.num, self.button.inventoryslot.damage)
             if item:
                 self.itemtitle.set_text(item.name)
+                self._get_var('count_ext').set_markup('<i>(maximum quanity: %d)</i>' % (item.max_quantity))
+                if item.max_damage is None:
+                    self._get_var('damage_ext').set_text('')
+                else:
+                    self._get_var('damage_ext').set_markup('<i>(maximum damage: %d)</i>' % (item.max_damage))
             else:
                 self.itemtitle.set_text('Unknown Item')
+                self._get_var('damage_ext').set_text('')
+                self._get_var('count_ext').set_text('')
+        self.updating = False
 
+    def new_values(self, button, param=None):
+        """
+        One of our user-settable values has changed.  Update our button's inventory slot
+        """
+        if self.updating:
+            return
+
+        if self.button is None:
+            print 'Error: no button'
+            return
+
+        if self.button.inventoryslot is None:
+            print 'Error: no InventorySlot in our button'
+            return
+
+        self.button.inventoryslot.num = self._get_var('num').get_value()
+        self.button.inventoryslot.damage = self._get_var('damage').get_value()
+        self.button.inventoryslot.count = self._get_var('count').get_value()
+        self._update_info()
+        self.button.update_graphics()
 
 class InvImage(gtk.DrawingArea):
     """
