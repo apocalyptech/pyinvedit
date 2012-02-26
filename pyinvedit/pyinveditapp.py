@@ -328,11 +328,7 @@ class InvImage(gtk.DrawingArea):
                 self.cr.rectangle(0, 0, self.size, self.size)
                 self.cr.fill()
             else:
-                offset = (self.size - self.empty.get_width()) / 2
-                self.cr.set_source_surface(self.empty, offset, offset)
-                self.cr.move_to(0, 0)
-                self.cr.rectangle(offset, offset, self.empty.get_width(), self.empty.get_width())
-                self.cr.fill()
+                self._surface_center(self.empty)
         else:
             # Get information about the item, if we can
             imgsurf = None
@@ -350,11 +346,7 @@ class InvImage(gtk.DrawingArea):
                 self.cr.rectangle(0, 0, self.size, self.size)
                 self.cr.fill()
             else:
-                offset = (self.size - imgsurf.get_width()) / 2
-                self.cr.set_source_surface(imgsurf, offset, offset)
-                self.cr.move_to(0, 0)
-                self.cr.rectangle(offset, offset, imgsurf.get_width(), imgsurf.get_width())
-                self.cr.fill()
+                self._surface_center(imgsurf)
 
             # Now the quantity
             if slotinfo.count > 1:
@@ -387,10 +379,20 @@ class InvImage(gtk.DrawingArea):
                     self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
                     self.cr.fill()
 
+    def _surface_center(self, surface):
+        """
+        Draws a cairo surface to the center of the image.
+        """
+        offset = (self.size - surface.get_width()) / 2
+        self.cr.set_source_surface(surface, offset, offset)
+        self.cr.move_to(0, 0)
+        self.cr.rectangle(offset, offset, surface.get_width(), surface.get_width())
+        self.cr.fill()
+
     def _text_at(self, text, textcolor, outlinecolor, corner):
         """
         Draws some text to our surface at the given location, using the given colors
-        
+        for the text and the outline.
         """
         self.pangolayout.set_markup(text)
         (width, height) = map(lambda x: x/pango.SCALE, self.pangolayout.get_size())
