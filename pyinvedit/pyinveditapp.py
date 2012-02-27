@@ -538,20 +538,36 @@ class InvImage(gtk.DrawingArea):
 
             # Damage (either bar or number)
             if slotinfo.damage > 0:
-                if item is None or item.max_damage is None or slotinfo.damage > item.max_damage:
+                if item is None:
+                    # No item data to compare against, assume that it's wrong, I guess
                     self._text_at('%d' % (slotinfo.damage), [1, 0, 0, 1], [0, 0, 0, 1], self.CORNER_NW)
+                elif item.max_damage is None:
+                    # No max damage defined, so check for the Unique ID to see if we're a known data
+                    # type or not.
+                    if item.data == slotinfo.damage:
+                        # We're good, show nothing
+                        pass
+                    else:
+                        # Invalid data, apparently!  Red text.
+                        self._text_at('%d' % (slotinfo.damage), [1, 0, 0, 1], [0, 0, 0, 1], self.CORNER_NW)
                 else:
-                    percent = 1 - (slotinfo.damage / float(item.max_damage))
+                    # We have a max damage definition; check against it
+                    if (slotinfo.damage > item.max_damage):
+                        # Damage value is over our known max
+                        self._text_at('%d' % (slotinfo.damage), [1, 0, 0, 1], [0, 0, 0, 1], self.CORNER_NW)
+                    else:
+                        # Damage is in the proper range - draw a damage bar
+                        percent = 1 - (slotinfo.damage / float(item.max_damage))
 
-                    # The base (black) bar
-                    self.cr.set_source_rgba(0, 0, 0, 1)
-                    self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W, self.DAMAGE_H)
-                    self.cr.fill()
+                        # The base (black) bar
+                        self.cr.set_source_rgba(0, 0, 0, 1)
+                        self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W, self.DAMAGE_H)
+                        self.cr.fill()
 
-                    # The actual damage notifier
-                    self.cr.set_source_rgba(1-percent, percent, 0, 1)
-                    self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
-                    self.cr.fill()
+                        # The actual damage notifier
+                        self.cr.set_source_rgba(1-percent, percent, 0, 1)
+                        self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
+                        self.cr.fill()
 
     def _surface_center(self, surface):
         """
