@@ -479,12 +479,20 @@ class InvImage(gtk.DrawingArea):
         """
         slotinfo = self.button.inventoryslot
 
+        done_bg = False
+        if self.button.get_active():
+            done_bg = True
+            self.cr.set_source_rgba(.8, .8, .8, 1)
+            self.cr.rectangle(0, 0, self.size, self.size)
+            self.cr.fill()
+
         if slotinfo is None:
             # Nothing in this inventory slot
             if self.empty is None:
-                self.cr.set_source_rgba(0, 0, 0, 0)
-                self.cr.rectangle(0, 0, self.size, self.size)
-                self.cr.fill()
+                if not done_bg:
+                    self.cr.set_source_rgba(0, 0, 0, 0)
+                    self.cr.rectangle(0, 0, self.size, self.size)
+                    self.cr.fill()
             else:
                 self._surface_center(self.empty)
         else:
@@ -592,8 +600,9 @@ class InvImage(gtk.DrawingArea):
         """
         Re-queue an update for ourselves
         """
-        self.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, self.size, self.size), True)
-        self.window.process_updates(True)
+        if self.window is not None:
+            self.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, self.size, self.size), True)
+            self.window.process_updates(True)
 
 class LoaderDialog(gtk.FileChooserDialog):
     """
@@ -667,6 +676,7 @@ class InvButton(gtk.RadioButton):
         """
         What to do when we're clicked
         """
+        self.update_graphics()
         self.detail.update_from_button(self)
 
 class InvTable(gtk.Table):
