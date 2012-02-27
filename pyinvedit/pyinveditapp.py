@@ -667,6 +667,7 @@ class InvButton(gtk.RadioButton):
         self.image = InvImage(self, empty)
         self.add(self.image)
         self.connect('clicked', self.on_clicked)
+        self.connect('button-release-event', self.on_mouse)
 
     def clear(self):
         """
@@ -700,6 +701,23 @@ class InvButton(gtk.RadioButton):
         """
         self.update_graphics()
         self.detail.update_from_button(self)
+
+    def on_mouse(self, widget, event):
+        """
+        Process a mouse click (other than our "main" mouse click, which
+        will trigger the on_clicked action.
+        """
+        if event.button == 3:
+            self.set_active(True)
+            # Right-click, fill stack or repair damage
+            if self.inventoryslot is not None:
+                item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
+                if item is not None:
+                    if item.max_damage is not None:
+                        self.inventoryslot.damage = 0
+                    elif self.inventoryslot.count < item.max_quantity:
+                        self.inventoryslot.count = item.max_quantity
+                self.set_active_state()
 
 class InvTable(gtk.Table):
     """
