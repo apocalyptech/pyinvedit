@@ -676,6 +676,12 @@ class InvButton(gtk.RadioButton):
         """
         What to do when we're clicked
         """
+        self.set_active_state()
+
+    def set_active_state(self):
+        """
+        What to do when we become the active button
+        """
         self.update_graphics()
         self.detail.update_from_button(self)
 
@@ -704,6 +710,9 @@ class InvTable(gtk.Table):
             self._new_button(i, 2, 18+i)
             self._new_button(i, 3, 27+i)
             self._new_button(i, 4, i, 7)
+        
+        # Make sure that all is well here
+        self.update_active_button()
 
     def _new_button(self, x, y, slot, ypadding=0, empty=None):
         """
@@ -735,6 +744,17 @@ class InvTable(gtk.Table):
         for item in inventory.get_items():
             if item.slot in self.buttons:
                 self.buttons[item.slot].update_slot(item)
+        self.update_active_button()
+
+    def update_active_button(self):
+        """
+        Loops through all our buttons and makes sure that the proper one is
+        set as the fully-active button.
+        """
+        for button in self.buttons.values():
+            if button.get_active():
+                button.set_active_state()
+                break
 
 class PyInvEdit(gtk.Window):
     """
