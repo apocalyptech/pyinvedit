@@ -427,6 +427,15 @@ class InvImage(gtk.DrawingArea):
     Class to show an image inside one of our inventory slot buttons.
     This is actually a DrawingArea which uses Cairo to do all the lower-level
     rendering stuff.
+
+    Note that rather than render directly to the window immediately, we
+    cache our own ImageSurface and then draw to the window at the end.  This
+    might possibly be more efficient, but we're actually doing it that way
+    because that way we can easily copy the image data when doing drag-and-
+    drop, to set the drag icon.  We can't just call get_target() on the
+    context returned from self.window.cairo_create() because that surface
+    is an XlibSurface, which apparently contains the entire app window, not
+    just our one widget.
     """
 
     # Our size
@@ -450,9 +459,9 @@ class InvImage(gtk.DrawingArea):
 
     def __init__(self, button, empty=None):
         super(InvImage, self).__init__()
-        self.surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.size, self.size)
         self.set_size_request(self.size, self.size)
         self.button = button
+        self.surf = None
         self.cr = None
         self.pangoctx = None
         self.cairoctx = None
@@ -466,7 +475,8 @@ class InvImage(gtk.DrawingArea):
         """
         # TODO: huh, something in here needs to be generated each time.
         if True or self.cr is None:
-            self.cr = self.window.cairo_create()
+            self.surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.size, self.size)
+            self.cr = cairo.Context(self.surf)
             self.pangoctx = self.get_parent().get_pango_context()
             self.pangolayout = pango.Layout(self.pangoctx)
             self.pangolayout.set_font_description(pango.FontDescription('sans bold 9'))
@@ -570,6 +580,13 @@ class InvImage(gtk.DrawingArea):
                         self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
                         self.cr.fill()
 
+        # Finally, at the very end, copy our stored ImageSurface to our
+        # actual DrawingArea window
+        wincr = self.window.cairo_create()
+        wincr.set_source_surface(self.surf)
+        wincr.rectangle(0, 0, self.size, self.size)
+        wincr.fill()
+
     def _surface_center(self, surface):
         """
         Draws a cairo surface to the center of the image.
@@ -625,10 +642,8 @@ class InvImage(gtk.DrawingArea):
         """
         Returns our currently-displayed image as a gtk.gdk.Pixbuf
         """
-        self.do_expose_event(None)
         df = cStringIO.StringIO()
-        self.cr.get_target().write_to_png('cjtesting.png')
-        self.cr.get_target().write_to_png(df)
+        self.surf.write_to_png(df)
         loader = gtk.gdk.PixbufLoader()
         loader.write(df.getvalue())
         loader.close()
@@ -693,8 +708,7 @@ class InvButton(gtk.RadioButton):
         self.connect('drag_motion', self.target_drag_motion)
 
     def drag_begin(self, widget, context):
-        #self.drag_source_set_icon_pixbuf(self.image.get_pixbuf())
-        pass
+        self.drag_source_set_icon_pixbuf(self.image.get_pixbuf())
 
     def target_drag_drop(self, img, context, x, y, time):
         print 'Got a drag from slot %d to %d' % (context.get_source_widget().slot, self.slot)
