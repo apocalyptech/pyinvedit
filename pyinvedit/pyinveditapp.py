@@ -425,12 +425,14 @@ class InvDetails(gtk.Table):
             return
 
         if self.button.inventoryslot is None:
-            print 'Error: no InventorySlot in our button'
-            return
+            self.button.add_item()
 
-        self.button.inventoryslot.num = self._get_var('num').get_value()
-        self.button.inventoryslot.damage = self._get_var('damage').get_value()
-        self.button.inventoryslot.count = self._get_var('count').get_value()
+        if self._get_var('num').get_value() == 0:
+            self.button.clear_item()
+        else:
+            self.button.inventoryslot.num = self._get_var('num').get_value()
+            self.button.inventoryslot.damage = self._get_var('damage').get_value()
+            self.button.inventoryslot.count = self._get_var('count').get_value()
         self._update_info()
         self.button.update_graphics()
 
@@ -742,6 +744,20 @@ class InvButton(gtk.RadioButton):
     def target_drag_motion(self, img, context, x, y, time):
         context.drag_status(context.suggested_action, time)
         return True
+
+    def add_item(self):
+        """
+        Adds a blank item to this button; used when creating an item via the details
+        area.
+        """
+        self.inventoryslot = InventorySlot(slot=self.slot)
+
+    def clear_item(self):
+        """
+        Gets rid of our InventorySlot object.  Used when deleting an item via the
+        details area.
+        """
+        self.inventoryslot = None
 
     def clear(self):
         """
