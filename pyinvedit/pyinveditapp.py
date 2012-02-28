@@ -5,6 +5,7 @@ import os
 import sys
 import math
 import yaml
+import cStringIO
 import collections
 from pymclevel import nbt
 
@@ -620,6 +621,20 @@ class InvImage(gtk.DrawingArea):
             self.window.invalidate_rect(gtk.gdk.Rectangle(0, 0, self.size, self.size), True)
             self.window.process_updates(True)
 
+    def get_pixbuf(self):
+        """
+        Returns our currently-displayed image as a gtk.gdk.Pixbuf
+        """
+        self.do_expose_event(None)
+        df = cStringIO.StringIO()
+        self.cr.get_target().write_to_png('cjtesting.png')
+        self.cr.get_target().write_to_png(df)
+        loader = gtk.gdk.PixbufLoader()
+        loader.write(df.getvalue())
+        loader.close()
+        df.close()
+        return loader.get_pixbuf()
+
 class LoaderDialog(gtk.FileChooserDialog):
     """
     A class to load a new minecraft save.
@@ -668,6 +683,25 @@ class InvButton(gtk.RadioButton):
         self.add(self.image)
         self.connect('clicked', self.on_clicked)
         self.connect('button-release-event', self.on_mouse)
+
+        # Set up drag and drop inbetween items
+        target = [ ('', 0, 0) ]
+        self.drag_source_set(gtk.gdk.BUTTON1_MASK, target, gtk.gdk.ACTION_COPY)
+        self.connect('drag_begin', self.drag_begin)
+        self.drag_dest_set(gtk.DEST_DEFAULT_DROP, target, gtk.gdk.ACTION_COPY)
+        self.connect('drag_drop', self.target_drag_drop)
+        self.connect('drag_motion', self.target_drag_motion)
+
+    def drag_begin(self, widget, context):
+        #self.drag_source_set_icon_pixbuf(self.image.get_pixbuf())
+        pass
+
+    def target_drag_drop(self, img, context, x, y, time):
+        print 'Got a drag from slot %d to %d' % (context.get_source_widget().slot, self.slot)
+
+    def target_drag_motion(self, img, context, x, y, time):
+        context.drag_status(context.suggested_action, time)
+        return True
 
     def clear(self):
         """
