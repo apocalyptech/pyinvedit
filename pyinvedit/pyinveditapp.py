@@ -236,12 +236,24 @@ class InventorySlot(object):
     Holds information about a particular inventory slot
     """
 
-    def __init__(self, num=None, damage=None, count=None, slot=None, extratags=None):
-        self.num = num
-        self.damage = damage
-        self.count = count
+    def __init__(self, num=None, damage=None, count=None, slot=None, extratags=None, other=None):
+        """
+        Initializes a new object.  There are sort of two ways of doing this.
+        1) Pass in all of: num, damage, count, slot, and extratags
+        2) Pass in: slot and "other", other being an InventorySlot item to copy.  The one thing
+           that we won't copy is the slot parameter
+        """
         self.slot = slot
-        self.extratags = extratags
+        if other is None:
+            self.num = num
+            self.damage = damage
+            self.count = count
+            self.extratags = extratags
+        else:
+            self.num = other.num
+            self.damage = other.damage
+            self.count = other.count
+            self.extratags = extratags
 
     def __cmp__(self, other):
         """
@@ -711,7 +723,21 @@ class InvButton(gtk.RadioButton):
         self.drag_source_set_icon_pixbuf(self.image.get_pixbuf())
 
     def target_drag_drop(self, img, context, x, y, time):
-        print 'Got a drag from slot %d to %d' % (context.get_source_widget().slot, self.slot)
+        """
+        What to do when we've received a drag request.  (Mostly just: copy the data)
+        """
+        #print 'Got a drag from slot %d to %d' % (context.get_source_widget().slot, self.slot)
+        other = context.get_source_widget()
+        if other.inventoryslot is None:
+            self.inventoryslot = None
+        else:
+            self.inventoryslot = InventorySlot(slot=self.slot, other=other.inventoryslot)
+
+        # Update our graphics and potentially the details area
+        if self.get_active():
+            self.set_active_state()
+        else:
+            self.update_graphics()
 
     def target_drag_motion(self, img, context, x, y, time):
         context.drag_status(context.suggested_action, time)
