@@ -22,6 +22,21 @@ except Exception, e:
     sys.stdin.readline()
     sys.exit(1)
 
+def get_pixbuf_from_surface(surface):
+    """
+    Returns our currently-displayed image as a gtk.gdk.Pixbuf
+    We ended up needing to call this from various places, and
+    cairo.ImageSurface isn't subclassable, as it turns out.  So,
+    out here as global function it went.
+    """
+    df = cStringIO.StringIO()
+    surface.write_to_png(df)
+    loader = gtk.gdk.PixbufLoader()
+    loader.write(df.getvalue())
+    loader.close()
+    df.close()
+    return loader.get_pixbuf()
+
 class TexFile(object):
     """
     Class to provide information about a specific texture file we have
@@ -125,7 +140,6 @@ class TexFile(object):
             return self.grid_large[x][y]
         else:
             return self.grid_small[x][y]
-
 
 class Group(object):
     """
@@ -656,13 +670,7 @@ class InvImage(gtk.DrawingArea):
         """
         Returns our currently-displayed image as a gtk.gdk.Pixbuf
         """
-        df = cStringIO.StringIO()
-        self.surf.write_to_png(df)
-        loader = gtk.gdk.PixbufLoader()
-        loader.write(df.getvalue())
-        loader.close()
-        df.close()
-        return loader.get_pixbuf()
+        return get_pixbuf_from_surface(self.surf)
 
 class LoaderDialog(gtk.FileChooserDialog):
     """
@@ -690,6 +698,41 @@ class LoaderDialog(gtk.FileChooserDialog):
             else:
                 print 'zomg error'
         return None
+
+class TrashButton(gtk.Button):
+    """
+    Class for our trash button
+    """
+
+    def __init__(self, surf):
+        super(TrashButton, self).__init__()
+        self.set_size_request(63, 63)
+        self.set_border_width(0)
+        self.set_relief(gtk.RELIEF_HALF)
+        self.image = gtk.Image()
+        self.image.set_from_pixbuf(get_pixbuf_from_surface(surf))
+        self.add(self.image)
+
+        # Set up drag and drop inbetween items
+        target = [ ('', 0, 0) ]
+        self.drag_dest_set(gtk.DEST_DEFAULT_DROP, target, gtk.gdk.ACTION_COPY)
+        self.connect('drag_drop', self.target_drag_drop)
+        self.connect('drag_motion', self.target_drag_motion)
+
+    def target_drag_drop(self, img, context, x, y, time):
+        """
+        What to do when we've received a drag request.  (ie: delete the data)
+        """
+        other = context.get_source_widget()
+        other.clear_item()
+        if other.get_active():
+            other.set_active_state()
+        else:
+            other.update_graphics()
+
+    def target_drag_motion(self, img, context, x, y, time):
+        context.drag_status(context.suggested_action, time)
+        return True
 
 class InvButton(gtk.RadioButton):
     """
@@ -814,7 +857,7 @@ class InvTable(gtk.Table):
     Table to store inventory info
     """
 
-    def __init__(self, items, detail, icon_head, icon_torso, icon_legs, icon_feet):
+    def __init__(self, items, detail, gui_sheet):
         super(InvTable, self).__init__(5, 9)
 
         self.buttons = {}
@@ -823,10 +866,10 @@ class InvTable(gtk.Table):
         self.detail = detail
 
         # Armor slots
-        self._new_button(0, 0, 103, 7, empty=icon_head)
-        self._new_button(1, 0, 102, 7, empty=icon_torso)
-        self._new_button(2, 0, 101, 7, empty=icon_legs)
-        self._new_button(3, 0, 100, 7, empty=icon_feet)
+        self._new_button(0, 0, 103, 7, empty=gui_sheet.get_tex(0, 0, True))
+        self._new_button(1, 0, 102, 7, empty=gui_sheet.get_tex(0, 1, True))
+        self._new_button(2, 0, 101, 7, empty=gui_sheet.get_tex(0, 2, True))
+        self._new_button(3, 0, 100, 7, empty=gui_sheet.get_tex(0, 3, True))
 
         # Ordinary inventory slots
         for i in range(9):
@@ -834,6 +877,9 @@ class InvTable(gtk.Table):
             self._new_button(i, 2, 18+i)
             self._new_button(i, 3, 27+i)
             self._new_button(i, 4, i, 7)
+
+        # Trash button
+        self.attach(TrashButton(gui_sheet.get_tex(1, 0, True)), 8, 9, 0, 1, gtk.FILL, gtk.FILL, ypadding=7)
         
         # Make sure that all is well here
         self.update_active_button()
@@ -920,12 +966,7 @@ class PyInvEdit(gtk.Window):
 
         # The first world page
         self.itemdetails = InvDetails(self.items)
-        self.invtable = InvTable(self.items, self.itemdetails,
-                self.texfiles['items.png'].get_tex(15, 0, True),
-                self.texfiles['items.png'].get_tex(15, 1, True),
-                self.texfiles['items.png'].get_tex(15, 2, True),
-                self.texfiles['items.png'].get_tex(15, 3, True),
-                )
+        self.invtable = InvTable(self.items, self.itemdetails, self.texfiles['gui.png'])
         worldvbox = gtk.VBox()
         worldvbox.pack_start(self.invtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
@@ -1010,6 +1051,11 @@ class PyInvEdit(gtk.Window):
             for yamlobj in yaml_dict['texfiles']:
                 texfile = TexFile(yamlobj)
                 self.texfiles[texfile.texfile] = texfile
+
+            # Inject our own GUI yaml file
+            texfile = TexFile({ 'texfile': 'gui.png',
+                    'dimensions': [16, 16] })
+            self.texfiles[texfile.texfile] = texfile
 
             # Now our groups
             self.groups = collections.OrderedDict()
