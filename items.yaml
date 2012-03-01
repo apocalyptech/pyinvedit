@@ -1007,6 +1007,12 @@ items:
     coords: [5, 6]
     data: 2
 
+  - num: 98
+    name: Circular Stone Bricks
+    texfile: terrain.png
+    coords: [5, 13]
+    data: 3
+
   - num: 99
     name: Brown Mushroom Block
     texfile: terrain.png
@@ -1143,6 +1149,18 @@ items:
     texfile: terrain.png
     coords: [7, 10]
     groups: [TheEnd]
+
+  - num: 123
+    name: Redstone Lamp (off)
+    texfile: terrain.png
+    coords: [3, 13]
+    groups: [Logic]
+
+  - num: 124
+    name: Redstone Lamp (on)
+    texfile: terrain.png
+    coords: [4, 13]
+    groups: [Logic]
 
   - num: 256
     name: Iron Shovel
@@ -2520,7 +2538,7 @@ items:
     groups: [Drops]
 
   - num: 382
-    name: Glistening Melon
+    name: Glistering Melon
     texfile: items.png
     coords: [9, 8]
     groups: [Food]
@@ -2659,11 +2677,30 @@ items:
     groups: [SpawnEggs]
 
   - num: 383
+    name: Spawn Ocelot
+    texfile: items.png
+    coords: [5, 12]
+    data: 98
+    groups: [SpawnEggs]
+
+  - num: 383
     name: Spawn Villager
     texfile: items.png
     coords: [4, 12]
     data: 120
     groups: [SpawnEggs]
+
+  - num: 384
+    name: Bottle o Enchanting
+    texfile: items.png
+    coords: [11, 10]
+    groups: [SplashPotions]
+
+  - num: 385
+    name: Fire Charge
+    texfile: items.png
+    coords: [14, 2]
+    groups: [Nether]
 
   - num: 2256
     name: C418 - 13
