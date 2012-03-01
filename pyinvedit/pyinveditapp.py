@@ -56,12 +56,15 @@ class TexFile(object):
         self.y = yamlobj['dimensions'][1]
         self.grid_large = []
         self.grid_small = []
+        self.grid_pixbuf = []
         for x in range(0, self.x):
             self.grid_large.append([])
             self.grid_small.append([])
+            self.grid_pixbuf.append([])
             for y in range(0, self.y):
                 self.grid_large[x].append(None)
                 self.grid_small[x].append(None)
+                self.grid_pixbuf[x].append(None)
 
         # Make sure the file is present
         if not os.path.exists(self.texfile):
@@ -109,6 +112,10 @@ class TexFile(object):
                 ctx.paint()
                 self.grid_small[x][y] = ind_surf
 
+                # Convert "small" to a pixbuf, for ease of putting it in
+                # our item selection area
+                self.grid_pixbuf[x][y] = get_pixbuf_from_surface(ind_surf)
+
                 # Resize for large icons (in the main inventory area)
                 ind_surf = cairo.ImageSurface(mainsurface.get_format(), self.size_large, self.size_large)
                 scaler = cairo.Matrix()
@@ -140,6 +147,14 @@ class TexFile(object):
             return self.grid_large[x][y]
         else:
             return self.grid_small[x][y]
+
+    def get_pixbuf(self, x, y):
+        """
+        Returns a gtk.gtk.Pixbuf of the requested texture.  Note that
+        this will always be the "small" version
+        """
+        self.check_bounds(x, y)
+        return self.grid_pixbuf[x][y]
 
 class Group(object):
     """
@@ -222,6 +237,25 @@ class Item(object):
         """
         return self.texfile.get_tex(self.x, self.y, large)
 
+    def get_pixbuf(self):
+        """
+        Returns the small gtk.gdk.Pixbuf corresponding to this item
+        """
+        return self.texfile.get_pixbuf(self.x, self.y)
+
+    def get_new_inventoryslot(self, slot):
+        """
+        Returns a fresh InventorySlot object based on this abstract item.
+        Will fill to max quantity, etc.
+        """
+        return InventorySlot(self.num, self.data, self.max_quantity, slot)
+
+    def __cmp__(self, other):
+        """
+        Comparator for sorting
+        """
+        return cmp(self.name, other.name)
+
 class ItemCollection(object):
     """
     Class to hold our collection of items.  We do this rather than
@@ -244,6 +278,14 @@ class ItemCollection(object):
             if unique in self.items:
                 return self.items[unique]
         return None
+
+    def get_items(self):
+        """
+        Returns a list of all our items, ordered.
+        """
+        itemlist = self.items.values()
+        itemlist.sort()
+        return itemlist
 
 class InventorySlot(object):
     """
@@ -796,12 +838,16 @@ class InvButton(gtk.RadioButton):
         """
         What to do when we've received a drag request.  (Mostly just: copy the data)
         """
-        #print 'Got a drag from slot %d to %d' % (context.get_source_widget().slot, self.slot)
         other = context.get_source_widget()
-        if other.inventoryslot is None:
-            self.inventoryslot = None
-        else:
-            self.inventoryslot = InventorySlot(slot=self.slot, other=other.inventoryslot)
+        try:
+            # Our dragged object is a fellow InvButton
+            if other.inventoryslot is None:
+                self.inventoryslot = None
+            else:
+                self.inventoryslot = InventorySlot(slot=self.slot, other=other.inventoryslot)
+        except AttributeError:
+            # Our dragged object is a raw Item
+            self.inventoryslot = other.get_selected_item().get_new_inventoryslot(self.slot)
 
         # Update our graphics and potentially the details area
         if self.get_active():
@@ -972,6 +1018,90 @@ class InvTable(gtk.Table):
             inv_list.append(item_nbt)
         return inv_list
 
+class ItemView(gtk.TreeView):
+    """
+    TreeView class to actually store all the items
+    """
+
+    ( COL_ICON, COL_NAME, COL_OBJ ) = range(3)
+
+    def __init__(self, items):
+
+        self.items = items
+
+        model = gtk.ListStore(gtk.gdk.Pixbuf, str, object)
+        for item in self.items.get_items():
+            iteritem = model.append()
+            model.set(iteritem,
+                    self.COL_ICON, item.get_pixbuf(),
+                    self.COL_NAME, item.name,
+                    self.COL_OBJ, item)
+
+        super(ItemView, self).__init__(model)
+
+        self.set_rules_hint(False)
+        self.set_search_column(self.COL_NAME)
+        self.set_headers_visible(False)
+
+        column = gtk.TreeViewColumn('Icon', gtk.CellRendererPixbuf(), pixbuf=self.COL_ICON)
+        self.append_column(column)
+
+        column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text=self.COL_NAME)
+        self.append_column(column)
+
+        # Set up drag-and-drop
+        target = [ ('', 0, 0) ]
+        self.drag_source_set(gtk.gdk.BUTTON1_MASK, target, gtk.gdk.ACTION_COPY)
+        self.connect('drag_begin', self.drag_begin)
+
+    def get_selected_item(self):
+        """
+        Returns the Item that's currently selected
+        """
+        selection = self.get_selection()
+        model, iteritem = selection.get_selected()
+        if iteritem is None:
+            return None
+        else:
+            return model.get_value(iteritem, self.COL_OBJ)
+
+    def drag_begin(self, widget, context):
+        """
+        Change our drag icon when we start dragging
+        """
+        item = widget.get_selected_item()
+        self.drag_source_set_icon_pixbuf(get_pixbuf_from_surface(item.get_image(True)))
+
+class ItemScroll(gtk.ScrolledWindow):
+    """
+    Class that holds our list of items to choose from
+    """
+
+    ( COL_ICON, COL_NAME ) = range(2)
+
+    def __init__(self, items):
+        super(ItemScroll, self).__init__()
+
+        self.set_shadow_type(gtk.SHADOW_ETCHED_IN)
+        self.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+
+        self.tv = ItemView(items)
+        self.add(self.tv)
+
+class ItemSelector(gtk.VBox):
+    """
+    Class to show our item selection
+    """
+
+    def __init__(self, items):
+        super(ItemSelector, self).__init__()
+
+        self.entry = gtk.Entry()
+        self.pack_start(self.entry, False, True)
+
+        sw = ItemScroll(items)
+        self.pack_start(sw, True, True)
+
 class PyInvEdit(gtk.Window):
     """
     Main PyInvedit class
@@ -1007,7 +1137,7 @@ class PyInvEdit(gtk.Window):
         mainhbox.pack_start(grouptable, False, False)
 
         # And finally our actual item area (rightmost pane)
-        self.itembox = gtk.VBox()
+        self.itembox = ItemSelector(self.items)
         mainhbox.add(self.itembox)
 
         # The first world page
