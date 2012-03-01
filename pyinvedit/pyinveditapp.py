@@ -267,7 +267,9 @@ class InventorySlot(object):
             self.num = other.num
             self.damage = other.damage
             self.count = other.count
-            self.extratags = extratags
+            self.extratags = other.extratags
+        if self.extratags is None:
+            self.extratags = {}
 
     def __cmp__(self, other):
         """
@@ -313,7 +315,7 @@ class InvDetails(gtk.Table):
     Class to show our inventory item details
     """
     def __init__(self, items):
-        super(InvDetails, self).__init__(3, 5)
+        super(InvDetails, self).__init__(3, 6)
 
         self.items = items
         self.itemtitle = gtk.Label()
@@ -341,6 +343,9 @@ class InvDetails(gtk.Table):
         self._rowlabel(4, 'Count')
         self._rowspinner(4, 'count', 1, 255)
         self._rowextra(4, 'count_ext')
+
+        self.extrainfo = gtk.Label()
+        self.attach(self.extrainfo, 1, 3, 5, 6, gtk.FILL, gtk.FILL)
 
     def _rowlabel(self, row, text):
         """
@@ -407,6 +412,7 @@ class InvDetails(gtk.Table):
             self.itemtitle.set_text('No Item')
             self._get_var('damage').set_sensitive(False)
             self._get_var('count').set_sensitive(False)
+            self.extrainfo.set_text('')
         else:
             self._get_var('damage').set_sensitive(True)
             self._get_var('count').set_sensitive(True)
@@ -425,6 +431,10 @@ class InvDetails(gtk.Table):
                 self.itemtitle.set_text('Unknown Item')
                 self._get_var('damage_ext').set_text('')
                 self._get_var('count_ext').set_text('')
+            if len(self.button.inventoryslot.extratags) > 0:
+                self.extrainfo.set_markup('<i>Contains extra tag info</i>')
+            else:
+                self.extrainfo.set_text('')
         self.updating = False
 
     def new_values(self, button, param=None):
@@ -509,6 +519,9 @@ class InvImage(gtk.DrawingArea):
             self.pangolayout = pango.Layout(self.pangoctx)
             self.pangolayout.set_font_description(pango.FontDescription('sans bold 9'))
             self.pangolayout.set_width(self.size)
+            self.pangolayoutbigger = pango.Layout(self.pangoctx)
+            self.pangolayoutbigger.set_font_description(pango.FontDescription('sans bold 12'))
+            self.pangolayoutbigger.set_width(self.size)
             self.cairoctx = pangocairo.CairoContext(self.cr)
         self.draw()
 
@@ -608,6 +621,10 @@ class InvImage(gtk.DrawingArea):
                         self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
                         self.cr.fill()
 
+            # Extra tag info
+            if len(slotinfo.extratags) > 0:
+                self._text_at('+', [0, 1, 0, 1], [0, 0, 0, 1], self.CORNER_SW, True)
+
         # Finally, at the very end, copy our stored ImageSurface to our
         # actual DrawingArea window
         wincr = self.window.cairo_create()
@@ -625,13 +642,17 @@ class InvImage(gtk.DrawingArea):
         self.cr.rectangle(offset, offset, surface.get_width(), surface.get_width())
         self.cr.fill()
 
-    def _text_at(self, text, textcolor, outlinecolor, corner):
+    def _text_at(self, text, textcolor, outlinecolor, corner, bigger=False):
         """
         Draws some text to our surface at the given location, using the given colors
         for the text and the outline.
         """
-        self.pangolayout.set_markup(text)
-        (width, height) = map(lambda x: x/pango.SCALE, self.pangolayout.get_size())
+        if bigger:
+            layout = self.pangolayoutbigger
+        else:
+            layout = self.pangolayout
+        layout.set_markup(text)
+        (width, height) = map(lambda x: x/pango.SCALE, layout.get_size())
         if corner == self.CORNER_NW:
             x = 1
             y = 1
@@ -650,13 +671,13 @@ class InvImage(gtk.DrawingArea):
 
         # Now the actual rendering
         self.cr.move_to(x, y)
-        self.cairoctx.layout_path(self.pangolayout)
+        self.cairoctx.layout_path(layout)
         self.cr.set_source_rgba(*outlinecolor)
         self.cr.set_line_width(2)
         self.cr.stroke()
         self.cr.move_to(x, y)
         self.cr.set_source_rgba(*textcolor)
-        self.cairoctx.show_layout(self.pangolayout)
+        self.cairoctx.show_layout(layout)
 
     def update(self):
         """
@@ -690,14 +711,18 @@ class LoaderDialog(gtk.FileChooserDialog):
         self.add_filter(filter)
 
     def load(self):
+        """
+        Runs our dialog and loads the NBT, if possible.  Returns a tuple
+        with the filename and the NBT structure.
+        """
         resp = self.run()
         if resp == gtk.RESPONSE_OK:
             filename = self.get_filename()
             if os.path.exists(filename):
-                return nbt.load(filename)
+                return (filename, nbt.load(filename))
             else:
                 print 'zomg error'
-        return None
+        return (None, None)
 
 class TrashButton(gtk.Button):
     """
@@ -926,6 +951,27 @@ class InvTable(gtk.Table):
                 button.set_active_state()
                 break
 
+    def export_nbt(self):
+        """
+        Exports our current items to a new NBT Tag_Compound
+        """
+        inv_list = []
+        slots = []
+        for button in self.buttons.values():
+            if button.inventoryslot is not None:
+                slots.append(button.inventoryslot)
+        slots.sort()
+        for slot in slots:
+            item_nbt = nbt.TAG_Compound()
+            item_nbt['Count'] = nbt.TAG_Byte(slot.count)
+            item_nbt['Slot'] = nbt.TAG_Byte(slot.slot)
+            item_nbt['id'] = nbt.TAG_Short(slot.num)
+            item_nbt['Damage'] = nbt.TAG_Short(slot.damage)
+            for tagname, tagval in slot.extratags.iteritems():
+                item_nbt[tagname] = tagval
+            inv_list.append(item_nbt)
+        return inv_list
+
 class PyInvEdit(gtk.Window):
     """
     Main PyInvedit class
@@ -978,7 +1024,9 @@ class PyInvEdit(gtk.Window):
 
         # Set up some data
         self.leveldat = None
+        self.filename = None
         self.inventory = None
+        self.loaded = False
 
     def menu(self, widget, data):
         print 'hoo'
@@ -992,7 +1040,7 @@ class PyInvEdit(gtk.Window):
                 ('/_File',        None,           None,             0, '<Branch>'),
                 ('/File/_New',    '<control>N',   self.menu,        0, '<StockItem>', gtk.STOCK_NEW),
                 ('/File/_Open',   '<control>O',   self.load,        0, '<StockItem>', gtk.STOCK_OPEN),
-                ('/File/_Save',   '<control>S',   self.menu,        0, '<StockItem>', gtk.STOCK_SAVE),
+                ('/File/_Save',   '<control>S',   self.save,        0, '<StockItem>', gtk.STOCK_SAVE),
                 ('/File/Save _As', '<control>A',  self.menu,        0, '<StockItem>', gtk.STOCK_SAVE_AS),
                 ('/File/sep1',    None,           None,             0, '<Separator>'),
                 ('/File/_Quit',   '<control>Q',   self.action_quit, 0, '<StockItem>', gtk.STOCK_QUIT),
@@ -1021,10 +1069,20 @@ class PyInvEdit(gtk.Window):
         Load a new savefile
         """
         dialog = LoaderDialog(self)
-        self.leveldat = dialog.load()
+        (self.filename, self.leveldat) = dialog.load()
         dialog.destroy()
         self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
         self.invtable.populate_from(self.inventory)
+        self.loaded = True
+
+    def save(self, widget, data=None):
+        """
+        Save to the same file
+        """
+        if self.loaded:
+            self.leveldat['Data'].value['Player'].value['Inventory'].value = self.invtable.export_nbt()
+            self.leveldat.saveGzipped(self.filename)
+            print 'Saved'
 
     def load_from_yaml(self, filename):
         """
