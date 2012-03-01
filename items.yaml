@@ -1205,6 +1205,7 @@ items:
     name: Bow
     texfile: items.png
     coords: [5, 1]
+    max_damage: 384
     max_quantity: 1
     groups: [Tools]
 
