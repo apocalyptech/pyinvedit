@@ -1,1 +1,0 @@
- * "Repair All" button

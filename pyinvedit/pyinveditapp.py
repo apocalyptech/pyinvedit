@@ -986,14 +986,28 @@ class InvButton(gtk.RadioButton):
         if event.button == 3:
             self.set_active(True)
             # Right-click, fill stack or repair damage
+            self.repair()
             if self.inventoryslot is not None:
                 item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
                 if item is not None:
-                    if item.max_damage is not None:
-                        self.inventoryslot.damage = 0
-                    elif self.inventoryslot.count < item.max_quantity:
+                    if self.inventoryslot.count < item.max_quantity:
                         self.inventoryslot.count = item.max_quantity
                 self.set_active_state()
+
+    def repair(self):
+        """
+        Repairs our item, if we're the sort of item which can be
+        repaired.  Returns True if we actually performed a repair, and
+        False otherwise
+        """
+        if self.inventoryslot is not None:
+            item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
+            if item is not None:
+                if item.max_damage is not None:
+                    if self.inventoryslot.damage != 0:
+                        self.inventoryslot.damage = 0
+                        return True
+        return False
 
 class InvTable(gtk.Table):
     """
@@ -1089,6 +1103,14 @@ class InvTable(gtk.Table):
                 item_nbt[tagname] = tagval
             inv_list.append(item_nbt)
         return inv_list
+
+    def repair_all(self):
+        """
+        Repairs all items
+        """
+        for button in self.buttons.values():
+            if button.repair():
+                button.update_graphics()
 
 class ItemView(gtk.TreeView):
     """
@@ -1439,6 +1461,8 @@ class PyInvEdit(gtk.Window):
                 ('/_Edit',        None,           None,             0, '<Branch>'),
                 ('/Edit/_Undo',   '<control>Z',   self.menu,        0, '<StockItem>', gtk.STOCK_UNDO),
                 ('/Edit/_Redo',   '<control>Y',   self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
+                ('/Edit/sep2',    None,           None,             0, '<Separator>'),
+                ('/Edit/_Repair All', '<control>R', self.repair_all, 0, None),
                 ('/_Help',        None,           None,             0, '<Branch>'),
                 ('/Help/_About',  None,           self.menu,        0, '<StockItem>', gtk.STOCK_ABOUT),
             )
@@ -1477,6 +1501,13 @@ class PyInvEdit(gtk.Window):
             self.leveldat['Data'].value['Player'].value['Inventory'].value = self.invtable.export_nbt()
             self.leveldat.saveGzipped(self.filename)
             print 'Saved'
+
+    def repair_all(self, widget, data=None):
+        """
+        Repairs all items
+        """
+        if self.loaded:
+            self.invtable.repair_all()
 
     def load_from_yaml(self, filename):
         """
