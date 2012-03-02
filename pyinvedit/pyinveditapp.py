@@ -811,6 +811,7 @@ class TrashButton(gtk.Button):
         self.image = gtk.Image()
         self.image.set_from_pixbuf(get_pixbuf_from_surface(surf))
         self.add(self.image)
+        self.set_tooltip_markup('Trash <i>(Drag items here to delete)</i>')
 
         # Set up drag and drop inbetween items
         target = [ ('', 0, 0) ]
@@ -887,6 +888,39 @@ class InvButton(gtk.RadioButton):
         else:
             self.update_graphics()
 
+    def get_text(self):
+        """
+        Gets a textual representation of this inventory slot
+        """
+        slot = self.inventoryslot
+        if slot is not None:
+            if slot.num > 0:
+                item = self.items.get_item(slot.num, slot.damage)
+                if item is None:
+                    if slot.damage > 0:
+                        name = 'Unknown Item %d, %d damage' % (slot.num, slot.damage)
+                    else:
+                        name = 'Unknown Item %d' % (slot.num)
+                else:
+                    if item.max_damage is not None and slot.damage > 0:
+                        percent = int(100*(slot.damage / float(item.max_damage)))
+                        name = '%s, %d%% damaged' % (item.name, percent)
+                    else:
+                        name = item.name
+                if slot.count > 1:
+                    prefix = '%dx ' % (slot.count)
+                else:
+                    prefix = ''
+                if len(slot.extratags) > 0:
+                    suffix = ' (has extra tag info)'
+                else:
+                    suffix = ''
+                return '%s%s%s' % (prefix, name, suffix)
+            else:
+                return None
+        else:
+            return None
+
     def target_drag_motion(self, img, context, x, y, time):
         context.drag_status(context.suggested_action, time)
         return True
@@ -924,6 +958,12 @@ class InvButton(gtk.RadioButton):
         There have been changes to our object, update the graphics
         """
         self.image.update()
+        text = self.get_text()
+        if text is None:
+            self.set_has_tooltip(False)
+        else:
+            self.set_tooltip_text(text)
+            self.set_has_tooltip(True)
 
     def on_clicked(self, button, params=None):
         """
@@ -1225,6 +1265,7 @@ class GroupButton(gtk.ToggleButton):
         self.set_active(False)
         self.group = group
         self.table = table
+        self.set_tooltip_text(group.name)
         image = gtk.image_new_from_pixbuf(group.get_pixbuf())
         self.add(image)
         self.connect('clicked', self.on_clicked)
