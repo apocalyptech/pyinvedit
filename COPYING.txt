@@ -3,6 +3,15 @@ is below.
 
 PyInvEdit redistributes the following components:
 
+  * The NBT Processing libraries from pymclevel
+    https://github.com/codewarrior0/pymclevel
+    https://github.com/mcedit/pymclevel
+    http://www.minecraftforum.net/topic/26098-pymclevel-minecraft-levels-for-python/
+    Many thanks to codewarrior0 for providing that excellent library, and
+    to the various folks keeping the project alive after codewarrior0's
+    departure.  It's available under a BSDish license, see LICENSE-pymclevel.txt
+    for its full text.
+
   * Various files from Minecraft's builtin texturepack
     http://www.minecraft.net/
     Specifically: terrain.png and gui/items.png
