@@ -33,7 +33,7 @@ import math
 import yaml
 import cStringIO
 import collections
-from pymclevel import nbt
+from pymclevel import nbt, mclevelbase
 
 # Load GTK
 try:
@@ -1495,6 +1495,9 @@ class PyInvEdit(gtk.Window):
         # Load our YAML
         self.load_from_yaml(yamlfile)
 
+        # Figure out what single-player worlds we have available
+        avail_worlds = self.get_avail_worlds()
+
         # The main VBox
         self.mainvbox = gtk.VBox()
         self.add(self.mainvbox)
@@ -1544,6 +1547,11 @@ class PyInvEdit(gtk.Window):
         # ... but really don't actually show the main world notebook
         self.worldbook.hide()
 
+        # Populate our world submenus (and potentially hide, if we
+        # couldn't find any)
+        self.populate_world_submenu(self.menu_openfrom, self.load_known, avail_worlds)
+        self.populate_world_submenu(self.menu_saveto, self.save_known, avail_worlds)
+
         # Set up some data
         self.leveldat = None
         self.filename = None
@@ -1561,14 +1569,17 @@ class PyInvEdit(gtk.Window):
         menu_items = (
                 ('/_File',        None,           None,             0, '<Branch>'),
                 ('/File/_Open',   '<control>O',   self.load,        0, '<StockItem>', gtk.STOCK_OPEN),
+                ('/File/Open From', None,         None,             0, '<Branch>'),
+                ('/File/sep1',    None,           None,             0, '<Separator>'),
                 ('/File/_Save',   '<control>S',   self.save,        0, '<StockItem>', gtk.STOCK_SAVE),
                 ('/File/Save _As', '<control>A',  self.menu,        0, '<StockItem>', gtk.STOCK_SAVE_AS),
-                ('/File/sep1',    None,           None,             0, '<Separator>'),
+                ('/File/Save To', None,           None,             0, '<Branch>'),
+                ('/File/sep2',    None,           None,             0, '<Separator>'),
                 ('/File/_Quit',   '<control>Q',   self.action_quit, 0, '<StockItem>', gtk.STOCK_QUIT),
                 ('/_Edit',        None,           None,             0, '<Branch>'),
                 ('/Edit/_Undo',   '<control>Z',   self.menu,        0, '<StockItem>', gtk.STOCK_UNDO),
                 ('/Edit/_Redo',   '<control>Y',   self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
-                ('/Edit/sep2',    None,           None,             0, '<Separator>'),
+                ('/Edit/sep3',    None,           None,             0, '<Separator>'),
                 ('/Edit/_Repair All', '<control>R', self.repair_all, 0, None),
                 ('/_Help',        None,           None,             0, '<Branch>'),
                 ('/Help/_About',  None,           self.menu,        0, '<StockItem>', gtk.STOCK_ABOUT),
@@ -1579,13 +1590,68 @@ class PyInvEdit(gtk.Window):
         item_factory.create_items(menu_items)
         self.add_accel_group(accel_group)
         self.item_factory = item_factory
-        return item_factory.get_widget('<main>')
+
+        # Now construct the menu and modify for the stuff we
+        # can't do with our factory
+        menu = item_factory.get_widget('<main>')
+
+        # I had been trying to just loop through the menus and
+        # pull out the relevant items dynamically (based on label) but
+        # the instant you call .get_label() on one of our Factory'd
+        # Separator items, they stop rendering properly.  So here's
+        # a very stupid way of getting at what I want
+        self.menu_openfrom = menu.get_children()[0].get_submenu().get_children()[1]
+        self.menu_saveto = menu.get_children()[0].get_submenu().get_children()[5]
+
+        # Return
+        return menu
+
+    def get_avail_worlds(self):
+        """
+        Returns a dict of available singleplayer worlds that we could find on
+        this machine.  The key will be the name of the dir, the value will
+        be the full path
+        """
+        worlds = {}
+        savesdir = mclevelbase.saveFileDir
+        if os.path.exists(savesdir):
+            for dirent in os.listdir(savesdir):
+                dirent_path = os.path.join(savesdir, dirent)
+                if os.path.isdir(dirent_path):
+                    test_path = os.path.join(dirent_path, 'level.dat')
+                    if os.path.exists(test_path):
+                        worlds[dirent] = test_path
+        return worlds
+
+    def populate_world_submenu(self, menu, func, worlds):
+        """
+        Given a dict of worlds, populate a submenu
+        """
+        if len(worlds) > 0:
+            worldnames = worlds.keys()
+            worldnames.sort()
+            sub = menu.get_submenu()
+            for name in worldnames:
+                item = gtk.MenuItem(name)
+                item.connect('activate', func, name, worlds[name])
+                sub.append(item)
+            menu.show_all()
+        else:
+            menu.set_visible(False)
 
     def run(self):
         gtk.main()
 
     def action_quit(self, widget, data=None):
         gtk.main_quit()
+
+    def load_known(self, widget, name, path):
+        """
+        Load a savefile from our known singleplayer maps
+        """
+        self.filename = path
+        self.leveldat = nbt.load(path)
+        self.finish_load()
 
     def load(self, widget, data=None):
         """
@@ -1594,20 +1660,56 @@ class PyInvEdit(gtk.Window):
         dialog = LoaderDialog(self)
         (self.filename, self.leveldat) = dialog.load()
         dialog.destroy()
+        self.finish_load()
+
+    def finish_load(self):
+        """
+        Finishes our loading process, after having our filename and
+        leveldat vars populated
+        """
         self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
         self.invtable.populate_from(self.inventory)
         self.loaded = True
         self.loadmessage.hide()
+
+        if self.leveldat['Data'].value['LevelName'] is not None:
+            title = '%s Inventory' % (self.leveldat['Data'].value['LevelName'].value)
+        else:
+            title = 'Inventory'
+        self.worldbook.set_tab_label(self.worldbook.get_nth_page(0), gtk.Label(title))
         self.worldbook.show()
 
-    def save(self, widget, data=None):
+    def save_known(self, widget, name, path):
         """
-        Save to the same file
+        Saves to one of our known singleplayer paths
+        """
+        dialog = gtk.MessageDialog(self,
+                gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                gtk.MESSAGE_WARNING,
+                gtk.BUTTONS_YES_NO)
+        dialog.set_title('Confirm Overwrite')
+        dialog.set_markup('Really overwrite the savefile named "%s?"' % (name))
+        result = dialog.run()
+        dialog.destroy()
+        if result == gtk.RESPONSE_YES:
+            self.filename = path
+            self.save()
+
+    def save(self, widget=None, data=None):
+        """
+        Save our data
         """
         if self.loaded:
             self.leveldat['Data'].value['Player'].value['Inventory'].value = self.invtable.export_nbt()
             self.leveldat.saveGzipped(self.filename)
-            print 'Saved'
+            dialog = gtk.MessageDialog(self,
+                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_INFO,
+                    gtk.BUTTONS_OK)
+            dialog.set_title('Saved')
+            dialog.set_markup('This savefile has been saved to: <tt>%s</tt>' % (self.filename))
+            dialog.run()
+            dialog.destroy()
 
     def repair_all(self, widget, data=None):
         """
