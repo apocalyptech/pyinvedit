@@ -180,6 +180,12 @@ class Group(object):
         """
         self.items.append(item)
 
+    def get_pixbuf(self):
+        """
+        Returns the small gtk.gdk.Pixbuf corresponding to this item
+        """
+        return self.texfile.get_pixbuf(self.x, self.y)
+
 class Item(object):
     """
     Class to hold information about an inventory item.
@@ -1028,6 +1034,10 @@ class ItemView(gtk.TreeView):
     def __init__(self, items):
 
         self.items = items
+        self.filtergroup = None
+        self.text = None
+        self.filter_by_group = False
+        self.filter_by_text = False
 
         self.model = gtk.ListStore(gtk.gdk.Pixbuf, str, object, bool)
         for item in self.items.get_items():
@@ -1081,14 +1091,39 @@ class ItemView(gtk.TreeView):
         Filter our list of items based on the given text
         """
         if text is None or text == '':
-            for row in self.model:
-                row[self.COL_VISIBLE] = True
-            return
+            self.filter_by_text = False
+            self.text = ''
+        else:
+            self.filter_by_text = True
+            self.text = text.lower()
+        self.apply_filters()
+
+    def filter_group(self, group):
+        """
+        Sets our filter group
+        """
+        self.filtergroup = group
+        if group is None:
+            self.filter_by_group = False
+        else:
+            self.filter_by_group = True
+        self.apply_filters()
+
+    def apply_filters(self):
+        """
+        Applies any active filters that we have.
+        """
         for row in self.model:
-            if text.lower() in row[self.COL_NAME].lower():
-                row[self.COL_VISIBLE] = True
-            else:
-                row[self.COL_VISIBLE] = False
+            if self.filter_by_group:
+                item = row[self.COL_OBJ]
+                if self.filtergroup not in item.groups:
+                    row[self.COL_VISIBLE] = False
+                    continue
+            if self.filter_by_text:
+                if self.text not in row[self.COL_NAME].lower():
+                    row[self.COL_VISIBLE] = False
+                    continue
+            row[self.COL_VISIBLE] = True
 
 class ItemScroll(gtk.ScrolledWindow):
     """
@@ -1114,6 +1149,14 @@ class ItemScroll(gtk.ScrolledWindow):
         # TODO: why doesn't this adjustment work?
         self.get_vadjustment().set_value(0)
 
+    def filter_group(self, group):
+        """
+        Filter our list of items based on the given text
+        """
+        self.tv.filter_group(group)
+        # TODO: why doesn't this adjustment work?
+        self.get_vadjustment().set_value(0)
+
 class ItemSelector(gtk.VBox):
     """
     Class to show our item selection
@@ -1128,12 +1171,117 @@ class ItemSelector(gtk.VBox):
 
         self.itemscroll = ItemScroll(items)
         self.pack_start(self.itemscroll, True, True)
+        
+        self.filtergroup = None
 
     def update_scroll(self, widget, param=None):
         """
         Our entry text has changed; filter our list.
         """
         self.itemscroll.filter_text(widget.get_text())
+
+    def filter_group(self, group):
+        """
+        Apply a group of icons as a filter to our list
+        """
+        self.itemscroll.filter_group(group)
+
+class GroupButton(gtk.ToggleButton):
+    """
+    Class for an individual button in our Group-selection area
+    """
+
+    def __init__(self, table, group):
+        super(GroupButton, self).__init__()
+        self.set_mode(False)
+        self.set_border_width(0)
+        self.set_relief(gtk.RELIEF_HALF)
+        self.set_active(False)
+        self.group = group
+        self.table = table
+        image = gtk.image_new_from_pixbuf(group.get_pixbuf())
+        self.add(image)
+        self.connect('clicked', self.on_clicked)
+
+    def on_clicked(self, button):
+        """
+        Process a click
+        """
+        if self.get_active():
+            self.set_active(True)
+            self.table.notify_clicked(button)
+        else:
+            self.set_active(False)
+            self.table.notify_unclicked()
+
+class GroupTable(gtk.Table):
+    """
+    Table of Group icons which can be used to filter our
+    selection of items
+    """
+
+    MAX_IN_COLUMN = 22
+
+    def __init__(self, groups):
+
+        self.selector = None
+        self.buttons = []
+
+        # Figure out how many columns we need
+        self.cols = len(groups) / self.MAX_IN_COLUMN
+        if len(groups) % self.MAX_IN_COLUMN > 0:
+            self.cols += 1
+
+        # And now how many rows
+        self.rows = len(groups) / self.cols
+        if len(groups) % self.rows > 0:
+            self.rows += 1
+
+        # Call out to our parent constructor
+        super(GroupTable, self).__init__(self.rows, self.cols)
+
+        # Populate
+        cur_row = 0
+        cur_col = 0
+        for group in groups:
+            self.attach(self._new_button(group), cur_col, cur_col+1, cur_row, cur_row+1, 0, 0)
+            cur_row += 1
+            if cur_row == self.rows:
+                cur_row = 0
+                cur_col += 1
+
+    def _new_button(self, group):
+        """
+        Creates a new button
+        """
+        button = GroupButton(self, group)
+        self.buttons.append(button)
+        return button
+
+    def notify_clicked(self, clickedbutton):
+        """
+        Called by a button when it's clicked on.  This emulates the behavior
+        of a RadioButton but allows there to be no button selected at all.
+        """
+        for button in self.buttons:
+            if button != clickedbutton:
+                button.set_active(False)
+        if self.selector is not None:
+            self.selector.filter_group(clickedbutton.group)
+
+    def notify_unclicked(self):
+        """
+        A button has been un-clicked; we'll notify the selection list.
+        """
+        if self.selector is not None:
+            self.selector.filter_group(None)
+
+    def set_selector(self, selector):
+        """
+        Sets our "selector" object, where we'll call some methods
+        when our constituent buttons are pressed.
+        """
+        self.selector = selector
 
 class PyInvEdit(gtk.Window):
     """
@@ -1143,7 +1291,7 @@ class PyInvEdit(gtk.Window):
     def __init__(self, yamlfile):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
         self.set_title('PyInvEdit - Minecraft Inventory Editor')
-        self.set_size_request(800, 600)
+        self.set_size_request(900, 600)
         self.connect("destroy", self.action_quit)
         
         # Load our YAML
@@ -1166,11 +1314,12 @@ class PyInvEdit(gtk.Window):
         mainhbox.pack_start(self.worldbook, False, False)
 
         # Now our group icons (middle pane)
-        grouptable = gtk.Table()
-        mainhbox.pack_start(grouptable, False, False)
+        self.grouptable = GroupTable(self.groups.values())
+        mainhbox.pack_start(self.grouptable, False, False, 10)
 
         # And finally our actual item area (rightmost pane)
         self.itembox = ItemSelector(self.items)
+        self.grouptable.set_selector(self.itembox)
         mainhbox.add(self.itembox)
 
         # The first world page
