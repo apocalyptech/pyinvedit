@@ -1023,21 +1023,25 @@ class ItemView(gtk.TreeView):
     TreeView class to actually store all the items
     """
 
-    ( COL_ICON, COL_NAME, COL_OBJ ) = range(3)
+    ( COL_ICON, COL_NAME, COL_OBJ, COL_VISIBLE ) = range(4)
 
     def __init__(self, items):
 
         self.items = items
 
-        model = gtk.ListStore(gtk.gdk.Pixbuf, str, object)
+        self.model = gtk.ListStore(gtk.gdk.Pixbuf, str, object, bool)
         for item in self.items.get_items():
-            iteritem = model.append()
-            model.set(iteritem,
+            iteritem = self.model.append()
+            self.model.set(iteritem,
                     self.COL_ICON, item.get_pixbuf(),
                     self.COL_NAME, item.name,
-                    self.COL_OBJ, item)
+                    self.COL_OBJ, item,
+                    self.COL_VISIBLE, True)
 
-        super(ItemView, self).__init__(model)
+        self.filterobj = self.model.filter_new()
+        self.filterobj.set_visible_column(self.COL_VISIBLE)
+
+        super(ItemView, self).__init__(self.filterobj)
 
         self.set_rules_hint(False)
         self.set_search_column(self.COL_NAME)
@@ -1072,6 +1076,20 @@ class ItemView(gtk.TreeView):
         item = widget.get_selected_item()
         self.drag_source_set_icon_pixbuf(get_pixbuf_from_surface(item.get_image(True)))
 
+    def filter_text(self, text):
+        """
+        Filter our list of items based on the given text
+        """
+        if text is None or text == '':
+            for row in self.model:
+                row[self.COL_VISIBLE] = True
+            return
+        for row in self.model:
+            if text.lower() in row[self.COL_NAME].lower():
+                row[self.COL_VISIBLE] = True
+            else:
+                row[self.COL_VISIBLE] = False
+
 class ItemScroll(gtk.ScrolledWindow):
     """
     Class that holds our list of items to choose from
@@ -1088,6 +1106,14 @@ class ItemScroll(gtk.ScrolledWindow):
         self.tv = ItemView(items)
         self.add(self.tv)
 
+    def filter_text(self, text):
+        """
+        Filter our list of items based on the given text
+        """
+        self.tv.filter_text(text)
+        # TODO: why doesn't this adjustment work?
+        self.get_vadjustment().set_value(0)
+
 class ItemSelector(gtk.VBox):
     """
     Class to show our item selection
@@ -1098,9 +1124,16 @@ class ItemSelector(gtk.VBox):
 
         self.entry = gtk.Entry()
         self.pack_start(self.entry, False, True)
+        self.entry.connect('changed', self.update_scroll)
 
-        sw = ItemScroll(items)
-        self.pack_start(sw, True, True)
+        self.itemscroll = ItemScroll(items)
+        self.pack_start(self.itemscroll, True, True)
+
+    def update_scroll(self, widget, param=None):
+        """
+        Our entry text has changed; filter our list.
+        """
+        self.itemscroll.filter_text(widget.get_text())
 
 class PyInvEdit(gtk.Window):
     """
