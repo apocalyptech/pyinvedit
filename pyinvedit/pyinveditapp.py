@@ -1270,7 +1270,7 @@ class ItemSelector(gtk.VBox):
     Class to show our item selection
     """
 
-    def __init__(self, items):
+    def __init__(self, items, groups):
         super(ItemSelector, self).__init__()
 
         self.entry = gtk.Entry()
@@ -1279,6 +1279,11 @@ class ItemSelector(gtk.VBox):
 
         self.itemscroll = ItemScroll(items)
         self.pack_start(self.itemscroll, True, True)
+
+        self.grouptable = GroupTable(groups, self)
+        align = gtk.Alignment(1, 0, 1, 0)
+        align.add(self.grouptable)
+        self.pack_start(align, False, True)
         
         self.filtergroup = None
 
@@ -1329,21 +1334,16 @@ class GroupTable(gtk.Table):
     selection of items
     """
 
-    MAX_IN_COLUMN = 22
+    cols = 10
 
-    def __init__(self, groups):
+    def __init__(self, groups, selector):
 
-        self.selector = None
+        self.selector = selector
         self.buttons = []
 
-        # Figure out how many columns we need
-        self.cols = len(groups) / self.MAX_IN_COLUMN
-        if len(groups) % self.MAX_IN_COLUMN > 0:
-            self.cols += 1
-
-        # And now how many rows
+        # Figure out how many rows we're going to use
         self.rows = len(groups) / self.cols
-        if len(groups) % self.rows > 0:
+        if len(groups) % self.cols > 0:
             self.rows += 1
 
         # Call out to our parent constructor
@@ -1354,10 +1354,10 @@ class GroupTable(gtk.Table):
         cur_col = 0
         for group in groups:
             self.attach(self._new_button(group), cur_col, cur_col+1, cur_row, cur_row+1, 0, 0)
-            cur_row += 1
-            if cur_row == self.rows:
-                cur_row = 0
-                cur_col += 1
+            cur_col += 1
+            if cur_col == self.cols:
+                cur_col = 0
+                cur_row += 1
 
     def _new_button(self, group):
         """
@@ -1384,13 +1384,6 @@ class GroupTable(gtk.Table):
         """
         if self.selector is not None:
             self.selector.filter_group(None)
-
-    def set_selector(self, selector):
-        """
-        Sets our "selector" object, where we'll call some methods
-        when our constituent buttons are pressed.
-        """
-        self.selector = selector
 
 class PyInvEdit(gtk.Window):
     """
@@ -1433,13 +1426,8 @@ class PyInvEdit(gtk.Window):
         align.add(self.worldbook)
         mainhbox.pack_start(align, False, False)
 
-        # Now our group icons (middle pane)
-        self.grouptable = GroupTable(self.groups.values())
-        mainhbox.pack_start(self.grouptable, False, False, 10)
-
         # And finally our actual item area (rightmost pane)
-        self.itembox = ItemSelector(self.items)
-        self.grouptable.set_selector(self.itembox)
+        self.itembox = ItemSelector(self.items, self.groups.values())
         mainhbox.add(self.itembox)
 
         # The first world page
