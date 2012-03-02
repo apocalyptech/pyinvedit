@@ -1333,11 +1333,22 @@ class PyInvEdit(gtk.Window):
         # Now an HBox to hold our components
         mainhbox = gtk.HBox()
         self.mainvbox.add(mainhbox)
+        
+        # Big ol' label for when we haven't loaded anything yet
+        self.loadmessage = gtk.Alignment(.5, .5, 1, 1)
+        label = gtk.Label()
+        label.set_markup('<b>Open a Minecraft Level...</b>')
+        self.loadmessage.add(label)
+        self.loadmessage.set_size_request(600, 350)
+        mainhbox.pack_start(self.loadmessage, True, True)
 
-        # First the world notebook (leftmost pane)
+        # World Notebook
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 5, 5)
         self.worldbook = gtk.Notebook()
         self.worldbook.set_size_request(600, 350)
-        mainhbox.pack_start(self.worldbook, False, False)
+        align.add(self.worldbook)
+        mainhbox.pack_start(align, False, False)
 
         # Now our group icons (middle pane)
         self.grouptable = GroupTable(self.groups.values())
@@ -1355,10 +1366,13 @@ class PyInvEdit(gtk.Window):
         worldvbox.pack_start(self.invtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
         worldvbox.pack_start(self.itemdetails, False, True)
-        self.worldbook.append_page(worldvbox, gtk.Label('Test'))
+        self.worldbook.append_page(worldvbox, gtk.Label('Inventory'))
 
         # Make sure everything's shown
         self.show_all()
+
+        # ... but really don't actually show the main world notebook
+        self.worldbook.hide()
 
         # Set up some data
         self.leveldat = None
@@ -1376,7 +1390,6 @@ class PyInvEdit(gtk.Window):
 
         menu_items = (
                 ('/_File',        None,           None,             0, '<Branch>'),
-                ('/File/_New',    '<control>N',   self.menu,        0, '<StockItem>', gtk.STOCK_NEW),
                 ('/File/_Open',   '<control>O',   self.load,        0, '<StockItem>', gtk.STOCK_OPEN),
                 ('/File/_Save',   '<control>S',   self.save,        0, '<StockItem>', gtk.STOCK_SAVE),
                 ('/File/Save _As', '<control>A',  self.menu,        0, '<StockItem>', gtk.STOCK_SAVE_AS),
@@ -1412,6 +1425,8 @@ class PyInvEdit(gtk.Window):
         self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
         self.invtable.populate_from(self.inventory)
         self.loaded = True
+        self.loadmessage.hide()
+        self.worldbook.show()
 
     def save(self, widget, data=None):
         """
