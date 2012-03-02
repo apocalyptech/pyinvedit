@@ -1265,6 +1265,78 @@ class ItemScroll(gtk.ScrolledWindow):
         # TODO: why doesn't this adjustment work?
         self.get_vadjustment().set_value(0)
 
+class SearchEntry(gtk.Entry):
+    """
+    Class of our Entry box for searching our item list
+    """
+
+    def __init__(self, parentobj):
+        super(SearchEntry, self).__init__()
+        self.parentobj = parentobj
+        self.changing = False
+        self.empty = False
+
+        # Technically grabbing these right now and storing them isn't
+        # a good idea, because the user could change themes while we're
+        # running.  Whatever.
+        self.color_inactive = self.style.text[gtk.STATE_INSENSITIVE]
+        self.color_active = self.style.text[gtk.STATE_NORMAL]
+
+        self.set_empty()
+        self.connect('changed', self.on_changed)
+        self.connect('focus-in-event', self.on_focus_in)
+        self.connect('focus-out-event', self.on_focus_out)
+
+    def set_empty(self):
+        """
+        Sets ourselves to be "empty," which actually means
+        that we're going to have a greyed-out "search" text
+        in there
+        """
+        self.changing = True
+        font = pango.FontDescription()
+        font.set_style(pango.STYLE_ITALIC)
+        self.modify_font(font)
+        self.modify_text(gtk.STATE_NORMAL, self.color_inactive)
+        self.set_text('Type to Search Items...')
+        self.empty = True
+        self.changing = False
+
+    def set_active(self):
+        """
+        Sets ourselves to be "active" - ie: ready for user
+        input.
+        """
+        self.changing = True
+        font = pango.FontDescription()
+        font.set_style(pango.STYLE_NORMAL)
+        self.modify_font(font)
+        self.modify_text(gtk.STATE_NORMAL, self.color_active)
+        self.set_text('')
+        self.empty = False
+        self.changing = False
+
+    def on_changed(self, widget, param=None):
+        """
+        What to do when our input has been changed
+        """
+        if not self.changing:
+            self.parentobj.update_scroll(self)
+
+    def on_focus_in(self, widget, event, param=None):
+        """
+        Focus-in event
+        """
+        if self.empty:
+            self.set_active()
+
+    def on_focus_out(self, widget, event, param=None):
+        """
+        Focus-out event
+        """
+        if self.get_text_length() == 0:
+            self.set_empty()
+
 class ItemSelector(gtk.VBox):
     """
     Class to show our item selection
@@ -1273,9 +1345,8 @@ class ItemSelector(gtk.VBox):
     def __init__(self, items, groups):
         super(ItemSelector, self).__init__()
 
-        self.entry = gtk.Entry()
+        self.entry = SearchEntry(self)
         self.pack_start(self.entry, False, True)
-        self.entry.connect('changed', self.update_scroll)
 
         self.itemscroll = ItemScroll(items)
         self.pack_start(self.itemscroll, True, True)
