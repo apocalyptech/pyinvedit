@@ -392,34 +392,43 @@ class InvDetails(gtk.Table):
         super(InvDetails, self).__init__(3, 6)
 
         self.items = items
-        self.itemtitle = gtk.Label()
-        align = gtk.Alignment(.5, .5, 1, 1)
-        align.add(self.itemtitle)
-        self.attach(align, 0, 2, 0, 1, gtk.FILL, gtk.FILL)
         self.button = None
         self.updating = True
         self.var_cache = {}
 
-        self._rowlabel(1, 'Slot Number')
-        self.slotdisplay = gtk.Label()
-        align = gtk.Alignment(0, .5, 0, 0)
-        align.set_padding(3, 3, 5, 0)
-        align.add(self.slotdisplay)
-        self.attach(align, 1, 2, 1, 2, gtk.FILL, gtk.FILL)
+        cur_row = 0
+        align = gtk.Alignment(.5, .5, 1, 1)
+        align.set_padding(5, 5, 5, 5)
+        label = gtk.Label()
+        label.set_markup('<b>Inventory Slot Details</b>')
+        align.add(label)
+        self.attach(align, 0, 3, cur_row, cur_row+1, gtk.EXPAND|gtk.FILL, gtk.FILL)
 
-        self._rowlabel(2, 'ID')
-        self._rowspinner(2, 'num', 0, 4095)
+        cur_row += 1
+        self._rowlabel(cur_row, 'Slot Number')
+        self._rowinfo(cur_row, 'slot')
 
-        self._rowlabel(3, 'Damage/Data')
-        self._rowspinner(3, 'damage', 0, 65535)
-        self._rowextra(3, 'damage_ext')
+        cur_row += 1
+        self._rowlabel(cur_row, 'Item')
+        self._rowinfo(cur_row, 'item')
 
-        self._rowlabel(4, 'Count')
-        self._rowspinner(4, 'count', 1, 255)
-        self._rowextra(4, 'count_ext')
+        cur_row += 1
+        self._rowlabel(cur_row, 'ID')
+        self._rowspinner(cur_row, 'num', 0, 4095)
 
+        cur_row += 1
+        self._rowlabel(cur_row, 'Damage/Data')
+        self._rowspinner(cur_row, 'damage', 0, 65535)
+        self._rowextra(cur_row, 'damage_ext')
+
+        cur_row += 1
+        self._rowlabel(cur_row, 'Count')
+        self._rowspinner(cur_row, 'count', 1, 255)
+        self._rowextra(cur_row, 'count_ext')
+
+        cur_row += 1
         self.extrainfo = gtk.Label()
-        self.attach(self.extrainfo, 1, 3, 5, 6, gtk.FILL, gtk.FILL)
+        self.attach(self.extrainfo, 1, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
 
     def _rowlabel(self, row, text):
         """
@@ -430,6 +439,17 @@ class InvDetails(gtk.Table):
         align = gtk.Alignment(1, .5, 0, 0)
         align.add(label)
         self.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
+
+    def _rowinfo(self, row, var):
+        """
+        Adds an informative info field
+        """
+        label = gtk.Label()
+        self.var_cache[var] = label
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(3, 3, 5, 0)
+        align.add(label)
+        self.attach(align, 1, 3, row, row+1, gtk.FILL, gtk.FILL)
 
     def _rowspinner(self, row, var, val_min, val_max):
         """
@@ -453,7 +473,7 @@ class InvDetails(gtk.Table):
         label = gtk.Label()
         self.var_cache[var] = label
         align.add(label)
-        self.attach(align, 2, 3, row, row+1, gtk.FILL, gtk.FILL)
+        self.attach(align, 2, 3, row, row+1, gtk.EXPAND|gtk.FILL, gtk.FILL)
 
     def _get_var(self, var):
         """
@@ -476,14 +496,14 @@ class InvDetails(gtk.Table):
         Updates all our information with our loaded button
         """
         self.updating = True
-        self.slotdisplay.set_text(str(self.button.slot))
+        self._get_var('slot').set_text('%d' % (self.button.slot))
         if self.button.inventoryslot is None:
+            self._get_var('item').set_markup('<i>No Item</i>')
             self._get_var('num').set_value(0)
             self._get_var('damage').set_value(0)
             self._get_var('damage_ext').set_text('')
             self._get_var('count').set_value(1)
             self._get_var('count_ext').set_text('')
-            self.itemtitle.set_text('No Item')
             self._get_var('damage').set_sensitive(False)
             self._get_var('count').set_sensitive(False)
             self.extrainfo.set_text('')
@@ -495,14 +515,14 @@ class InvDetails(gtk.Table):
             self._get_var('count').set_value(self.button.inventoryslot.count)
             item = self.items.get_item(self.button.inventoryslot.num, self.button.inventoryslot.damage)
             if item:
-                self.itemtitle.set_text(item.name)
+                self._get_var('item').set_text(item.name)
                 self._get_var('count_ext').set_markup('<i>(maximum quanity: %d)</i>' % (item.max_quantity))
                 if item.max_damage is None:
                     self._get_var('damage_ext').set_text('')
                 else:
                     self._get_var('damage_ext').set_markup('<i>(maximum damage: %d)</i>' % (item.max_damage))
             else:
-                self.itemtitle.set_text('Unknown Item')
+                self._get_var('item').set_markup('<i>Unknown Item</i>')
                 self._get_var('damage_ext').set_text('')
                 self._get_var('count_ext').set_text('')
             if len(self.button.inventoryslot.extratags) > 0:
@@ -1423,12 +1443,15 @@ class PyInvEdit(gtk.Window):
         mainhbox.add(self.itembox)
 
         # The first world page
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 110, 110)
         self.itemdetails = InvDetails(self.items)
+        align.add(self.itemdetails)
         self.invtable = InvTable(self.items, self.itemdetails, self.texfiles['gui.png'])
         worldvbox = gtk.VBox()
         worldvbox.pack_start(self.invtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
-        worldvbox.pack_start(self.itemdetails, False, True)
+        worldvbox.pack_start(align, True, True)
         self.worldbook.append_page(worldvbox, gtk.Label('Inventory'))
 
         # Make sure everything's shown
