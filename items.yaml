@@ -260,7 +260,7 @@ items:
     name: Jungle Sapling
     texfile: terrain.png
     coords: [14, 1]
-    data: 2
+    data: 3
 
   - num: 7
     name: Bedrock
