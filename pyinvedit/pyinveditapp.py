@@ -900,7 +900,8 @@ class InvButton(gtk.RadioButton):
                 self.inventoryslot = InventorySlot(slot=self.slot, other=other.inventoryslot)
         except AttributeError:
             # Our dragged object is a raw Item
-            self.inventoryslot = other.get_selected_item().get_new_inventoryslot(self.slot)
+            if other.get_selected_item() is not None:
+                self.inventoryslot = other.get_selected_item().get_new_inventoryslot(self.slot)
 
         # Update our graphics and potentially the details area
         if self.get_active():
@@ -1146,6 +1147,7 @@ class ItemView(gtk.TreeView):
         self.text = None
         self.filter_by_group = False
         self.filter_by_text = False
+        self.items_visible = True;
 
         self.model = gtk.ListStore(gtk.gdk.Pixbuf, str, object, bool)
         for item in self.items.get_items():
@@ -1172,9 +1174,20 @@ class ItemView(gtk.TreeView):
         self.append_column(column)
 
         # Set up drag-and-drop
-        target = [ ('', 0, 0) ]
-        self.drag_source_set(gtk.gdk.BUTTON1_MASK, target, gtk.gdk.ACTION_COPY)
+        self.enable_drag_n_drop()
         self.connect('drag_begin', self.drag_begin)
+
+    def enable_drag_n_drop(self):
+        """
+        Turns drag-and-drop on
+        """
+        self.drag_source_set(gtk.gdk.BUTTON1_MASK, [ ('', 0, 0) ], gtk.gdk.ACTION_COPY)
+
+    def disable_drag_n_drop(self):
+        """
+        Turns drag-and-drop off
+        """
+        self.drag_source_unset()
 
     def get_selected_item(self):
         """
@@ -1192,7 +1205,10 @@ class ItemView(gtk.TreeView):
         Change our drag icon when we start dragging
         """
         item = widget.get_selected_item()
-        self.drag_source_set_icon_pixbuf(get_pixbuf_from_surface(item.get_image(True)))
+        if item is None:
+            self.drag_source_set_icon_stock(gtk.STOCK_DIALOG_ERROR)
+        else:
+            self.drag_source_set_icon_pixbuf(get_pixbuf_from_surface(item.get_image(True)))
 
     def filter_text(self, text):
         """
@@ -1221,6 +1237,7 @@ class ItemView(gtk.TreeView):
         """
         Applies any active filters that we have.
         """
+        found_active = False
         for row in self.model:
             if self.filter_by_group:
                 item = row[self.COL_OBJ]
@@ -1232,6 +1249,14 @@ class ItemView(gtk.TreeView):
                     row[self.COL_VISIBLE] = False
                     continue
             row[self.COL_VISIBLE] = True
+            found_active = True
+
+        if found_active and not self.items_visible:
+            self.items_visible = True
+            self.enable_drag_n_drop()
+        elif not found_active and self.items_visible:
+            self.items_visible = False
+            self.disable_drag_n_drop()
 
 class ItemScroll(gtk.ScrolledWindow):
     """
