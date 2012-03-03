@@ -146,7 +146,7 @@ groups:
     coords: [5, 1]
 
   - name: Potions
-    texfile: items.png
+    texfile: special.png
     coords: [0, 14]
 
   - name: Logic
@@ -162,7 +162,7 @@ groups:
     coords: [6, 0]
 
   - name: SpawnEggs
-    texfile: items.png
+    texfile: special.png
     coords: [0, 10]
 
   - name: Music
@@ -194,7 +194,7 @@ groups:
     coords: [11, 1]
 
   - name: SplashPotions
-    texfile: items.png
+    texfile: special.png
     coords: [0, 13]
 
   - name: Transport
@@ -2099,7 +2099,7 @@ items:
 
   - num: 373
     name: Water Bottle
-    texfile: items.png
+    texfile: special.png
     coords: [0, 14]
     data: 0
     max_quantity: 1
@@ -2107,7 +2107,7 @@ items:
 
   - num: 373
     name: Awkward Potion
-    texfile: items.png
+    texfile: special.png
     coords: [1, 14]
     data: 16
     max_quantity: 1
@@ -2115,7 +2115,7 @@ items:
 
   - num: 373
     name: Thick Potion
-    texfile: items.png
+    texfile: special.png
     coords: [1, 14]
     data: 32
     max_quantity: 1
@@ -2123,7 +2123,7 @@ items:
 
   - num: 373
     name: Mundane Potion
-    texfile: items.png
+    texfile: special.png
     coords: [1, 14]
     data: 8192
     max_quantity: 1
@@ -2131,7 +2131,7 @@ items:
 
   - num: 373
     name: Potion of Regeneration (0:45)
-    texfile: items.png
+    texfile: special.png
     coords: [2, 14]
     data: 8193
     max_quantity: 1
@@ -2139,7 +2139,7 @@ items:
 
   - num: 373
     name: Potion of Swiftness (3:00)
-    texfile: items.png
+    texfile: special.png
     coords: [3, 14]
     data: 8194
     max_quantity: 1
@@ -2147,7 +2147,7 @@ items:
 
   - num: 373
     name: Potion of Fire Resistance (3:00)
-    texfile: items.png
+    texfile: special.png
     coords: [4, 14]
     data: 8195
     max_quantity: 1
@@ -2155,7 +2155,7 @@ items:
 
   - num: 373
     name: Potion of Poison (0:45)
-    texfile: items.png
+    texfile: special.png
     coords: [5, 14]
     data: 8196
     max_quantity: 1
@@ -2163,7 +2163,7 @@ items:
 
   - num: 373
     name: Potion of Healing I
-    texfile: items.png
+    texfile: special.png
     coords: [6, 14]
     data: 8197
     max_quantity: 1
@@ -2171,7 +2171,7 @@ items:
 
   - num: 373
     name: Potion of Weakness (1:30)
-    texfile: items.png
+    texfile: special.png
     coords: [7, 14]
     data: 8200
     max_quantity: 1
@@ -2179,7 +2179,7 @@ items:
 
   - num: 373
     name: Potion of Strength (3:00)
-    texfile: items.png
+    texfile: special.png
     coords: [8, 14]
     data: 8201
     max_quantity: 1
@@ -2187,7 +2187,7 @@ items:
 
   - num: 373
     name: Potion of Slowness (1:30)
-    texfile: items.png
+    texfile: special.png
     coords: [9, 14]
     data: 8202
     max_quantity: 1
@@ -2195,7 +2195,7 @@ items:
 
   - num: 373
     name: Potion of Harming I
-    texfile: items.png
+    texfile: special.png
     coords: [10, 14]
     data: 8204
     max_quantity: 1
@@ -2203,7 +2203,7 @@ items:
 
   - num: 373
     name: Potion of Regeneration II
-    texfile: items.png
+    texfile: special.png
     coords: [2, 14]
     data: 8225
     max_quantity: 1
@@ -2211,7 +2211,7 @@ items:
 
   - num: 373
     name: Potion of Swiftness II
-    texfile: items.png
+    texfile: special.png
     coords: [3, 14]
     data: 8226
     max_quantity: 1
@@ -2219,7 +2219,7 @@ items:
 
   - num: 373
     name: Potion of Poison II
-    texfile: items.png
+    texfile: special.png
     coords: [5, 14]
     data: 8228
     max_quantity: 1
@@ -2227,7 +2227,7 @@ items:
 
   - num: 373
     name: Potion of Healing II
-    texfile: items.png
+    texfile: special.png
     coords: [6, 14]
     data: 8229
     max_quantity: 1
@@ -2235,7 +2235,7 @@ items:
 
   - num: 373
     name: Potion of Strength II
-    texfile: items.png
+    texfile: special.png
     coords: [8, 14]
     data: 8233
     max_quantity: 1
@@ -2243,7 +2243,7 @@ items:
 
   - num: 373
     name: Potion of Harming II
-    texfile: items.png
+    texfile: special.png
     coords: [10, 14]
     data: 8236
     max_quantity: 1
@@ -2251,7 +2251,7 @@ items:
 
   - num: 373
     name: Potion of Regeneration (2:00)
-    texfile: items.png
+    texfile: special.png
     coords: [2, 14]
     data: 8257
     max_quantity: 1
@@ -2259,7 +2259,7 @@ items:
 
   - num: 373
     name: Potion of Swiftness (8:00)
-    texfile: items.png
+    texfile: special.png
     coords: [3, 14]
     data: 8258
     max_quantity: 1
@@ -2267,7 +2267,7 @@ items:
 
   - num: 373
     name: Potion of Fire Resistance (8:00)
-    texfile: items.png
+    texfile: special.png
     coords: [4, 14]
     data: 8259
     max_quantity: 1
@@ -2275,7 +2275,7 @@ items:
 
   - num: 373
     name: Potion of Poison (2:00)
-    texfile: items.png
+    texfile: special.png
     coords: [5, 14]
     data: 8260
     max_quantity: 1
@@ -2283,7 +2283,7 @@ items:
 
   - num: 373
     name: Potion of Weakness (4:00)
-    texfile: items.png
+    texfile: special.png
     coords: [7, 14]
     data: 8264
     max_quantity: 1
@@ -2291,7 +2291,7 @@ items:
 
   - num: 373
     name: Potion of Strength (8:00)
-    texfile: items.png
+    texfile: special.png
     coords: [8, 14]
     data: 8265
     max_quantity: 1
@@ -2299,7 +2299,7 @@ items:
 
   - num: 373
     name: Potion of Slowness (4:00)
-    texfile: items.png
+    texfile: special.png
     coords: [9, 14]
     data: 8266
     max_quantity: 1
@@ -2307,7 +2307,7 @@ items:
 
   - num: 373
     name: Splash Potion of Mundane
-    texfile: items.png
+    texfile: special.png
     coords: [1, 13]
     data: 16384
     max_quantity: 1
@@ -2315,7 +2315,7 @@ items:
 
   - num: 373
     name: Splash Potion of Regeneration (0:33)
-    texfile: items.png
+    texfile: special.png
     coords: [2, 13]
     data: 16385
     max_quantity: 1
@@ -2323,7 +2323,7 @@ items:
 
   - num: 373
     name: Splash Potion of Swiftness (2:15)
-    texfile: items.png
+    texfile: special.png
     coords: [3, 13]
     data: 16386
     max_quantity: 1
@@ -2331,7 +2331,7 @@ items:
 
   - num: 373
     name: Splash Potion of Fire Resistance (2:15)
-    texfile: items.png
+    texfile: special.png
     coords: [4, 13]
     data: 16387
     max_quantity: 1
@@ -2339,7 +2339,7 @@ items:
 
   - num: 373
     name: Splash Potion of Poison (0:33)
-    texfile: items.png
+    texfile: special.png
     coords: [5, 13]
     data: 16388
     max_quantity: 1
@@ -2347,7 +2347,7 @@ items:
 
   - num: 373
     name: Splash Potion of Healing I
-    texfile: items.png
+    texfile: special.png
     coords: [6, 13]
     data: 16389
     max_quantity: 1
@@ -2355,7 +2355,7 @@ items:
 
   - num: 373
     name: Splash Potion of Weakness (1:07)
-    texfile: items.png
+    texfile: special.png
     coords: [7, 13]
     data: 16392
     max_quantity: 1
@@ -2363,7 +2363,7 @@ items:
 
   - num: 373
     name: Splash Potion of Strength (2:15)
-    texfile: items.png
+    texfile: special.png
     coords: [8, 13]
     data: 16393
     max_quantity: 1
@@ -2371,7 +2371,7 @@ items:
 
   - num: 373
     name: Splash Potion of Slowness (1:07)
-    texfile: items.png
+    texfile: special.png
     coords: [9, 13]
     data: 16394
     max_quantity: 1
@@ -2379,7 +2379,7 @@ items:
 
   - num: 373
     name: Splash Potion of Harming I
-    texfile: items.png
+    texfile: special.png
     coords: [10, 13]
     data: 16396
     max_quantity: 1
@@ -2387,7 +2387,7 @@ items:
 
   - num: 373
     name: Splash Potion of Regeneration II
-    texfile: items.png
+    texfile: special.png
     coords: [2, 13]
     data: 16417
     max_quantity: 1
@@ -2395,7 +2395,7 @@ items:
 
   - num: 373
     name: Splash Potion of Swiftness II
-    texfile: items.png
+    texfile: special.png
     coords: [3, 13]
     data: 16418
     max_quantity: 1
@@ -2403,7 +2403,7 @@ items:
 
   - num: 373
     name: Splash Potion of Poison II
-    texfile: items.png
+    texfile: special.png
     coords: [5, 13]
     data: 16420
     max_quantity: 1
@@ -2411,7 +2411,7 @@ items:
 
   - num: 373
     name: Splash Potion of Healing II
-    texfile: items.png
+    texfile: special.png
     coords: [6, 13]
     data: 16421
     max_quantity: 1
@@ -2419,7 +2419,7 @@ items:
 
   - num: 373
     name: Splash Potion of Strength II
-    texfile: items.png
+    texfile: special.png
     coords: [8, 13]
     data: 16425
     max_quantity: 1
@@ -2427,7 +2427,7 @@ items:
 
   - num: 373
     name: Splash Potion of Harming II
-    texfile: items.png
+    texfile: special.png
     coords: [10, 13]
     data: 16428
     max_quantity: 1
@@ -2435,7 +2435,7 @@ items:
 
   - num: 373
     name: Splash Potion of Swiftness (6:00)
-    texfile: items.png
+    texfile: special.png
     coords: [3, 13]
     data: 16450
     max_quantity: 1
@@ -2443,7 +2443,7 @@ items:
 
   - num: 373
     name: Splash Potion of Fire Resistance (6:00)
-    texfile: items.png
+    texfile: special.png
     coords: [4, 13]
     data: 16451
     max_quantity: 1
@@ -2451,7 +2451,7 @@ items:
 
   - num: 373
     name: Splash Potion of Poison (1:30)
-    texfile: items.png
+    texfile: special.png
     coords: [5, 13]
     data: 16452
     max_quantity: 1
@@ -2459,7 +2459,7 @@ items:
 
   - num: 373
     name: Splash Potion of Weakness (3:00)
-    texfile: items.png
+    texfile: special.png
     coords: [7, 13]
     data: 16456
     max_quantity: 1
@@ -2467,7 +2467,7 @@ items:
 
   - num: 373
     name: Splash Potion of Strength (6:00)
-    texfile: items.png
+    texfile: special.png
     coords: [8, 13]
     data: 16457
     max_quantity: 1
@@ -2475,7 +2475,7 @@ items:
 
   - num: 373
     name: Splash Potion of Slowness (3:00)
-    texfile: items.png
+    texfile: special.png
     coords: [9, 13]
     data: 16458
     max_quantity: 1
@@ -2483,7 +2483,7 @@ items:
 
   - num: 373
     name: Splash Potion of Regeneration (1:30)
-    texfile: items.png
+    texfile: special.png
     coords: [2, 13]
     data: 16499
     max_quantity: 1
@@ -2546,147 +2546,147 @@ items:
 
   - num: 383
     name: Spawn Creeper
-    texfile: items.png
+    texfile: special.png
     coords: [0, 9]
     data: 50
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Skeleton
-    texfile: items.png
+    texfile: special.png
     coords: [1, 9]
     data: 51
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Spider
-    texfile: items.png
+    texfile: special.png
     coords: [2, 9]
     data: 52
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Zombie
-    texfile: items.png
+    texfile: special.png
     coords: [3, 9]
     data: 54
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Slime
-    texfile: items.png
+    texfile: special.png
     coords: [4, 9]
     data: 55
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Ghast
-    texfile: items.png
+    texfile: special.png
     coords: [0, 10]
     data: 56
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Zombie Pigmen
-    texfile: items.png
+    texfile: special.png
     coords: [1, 10]
     data: 57
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Enderman
-    texfile: items.png
+    texfile: special.png
     coords: [2, 10]
     data: 58
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Cave Spider
-    texfile: items.png
+    texfile: special.png
     coords: [3, 10]
     data: 59
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Silverfish
-    texfile: items.png
+    texfile: special.png
     coords: [4, 10]
     data: 60
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Blaze
-    texfile: items.png
+    texfile: special.png
     coords: [0, 11]
     data: 61
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Magma Cube
-    texfile: items.png
+    texfile: special.png
     coords: [1, 11]
     data: 62
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Pig
-    texfile: items.png
+    texfile: special.png
     coords: [2, 11]
     data: 90
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Sheep
-    texfile: items.png
+    texfile: special.png
     coords: [3, 11]
     data: 91
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Cow
-    texfile: items.png
+    texfile: special.png
     coords: [4, 11]
     data: 92
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Chicken
-    texfile: items.png
+    texfile: special.png
     coords: [0, 12]
     data: 93
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Squid
-    texfile: items.png
+    texfile: special.png
     coords: [1, 12]
     data: 94
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Wolf
-    texfile: items.png
+    texfile: special.png
     coords: [2, 12]
     data: 95
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Mooshroom
-    texfile: items.png
+    texfile: special.png
     coords: [3, 12]
     data: 96
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Ocelot
-    texfile: items.png
+    texfile: special.png
     coords: [5, 12]
     data: 98
     groups: [SpawnEggs]
 
   - num: 383
     name: Spawn Villager
-    texfile: items.png
+    texfile: special.png
     coords: [4, 12]
     data: 120
     groups: [SpawnEggs]
