@@ -918,7 +918,7 @@ items:
     groups: [Natural]
 
   - num: 83
-    name: Sugar cane
+    name: Sugar Cane Block
     texfile: terrain.png
     coords: [9, 4]
 
@@ -1783,7 +1783,7 @@ items:
     groups: [Items]
 
   - num: 338
-    name: Sugar Canes
+    name: Sugar Cane
     texfile: items.png
     coords: [11, 1]
     groups: [Farming]
