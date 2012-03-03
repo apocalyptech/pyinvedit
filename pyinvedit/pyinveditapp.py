@@ -1605,6 +1605,13 @@ class PyInvEdit(gtk.Window):
         self.populate_world_submenu(self.menu_openfrom, self.load_known, avail_worlds)
         self.populate_world_submenu(self.menu_saveto, self.save_known, avail_worlds)
 
+        # Temporarily disable some menus which should only be active
+        # when we've loaded a file
+        self.menu_only_loaded = [self.menu_save, self.menu_saveas, self.menu_saveto,
+                self.menu_revert, self.menu_repair]
+        for menu in self.menu_only_loaded:
+            menu.set_sensitive(False)
+
         # Set up some data
         self.leveldat = None
         self.filename = None
@@ -1655,7 +1662,11 @@ class PyInvEdit(gtk.Window):
         # Separator items, they stop rendering properly.  So here's
         # a very stupid way of getting at what I want
         self.menu_openfrom = menu.get_children()[0].get_submenu().get_children()[1]
+        self.menu_save = menu.get_children()[0].get_submenu().get_children()[3]
+        self.menu_saveas = menu.get_children()[0].get_submenu().get_children()[4]
         self.menu_saveto = menu.get_children()[0].get_submenu().get_children()[5]
+        self.menu_revert = menu.get_children()[0].get_submenu().get_children()[6]
+        self.menu_repair = menu.get_children()[1].get_submenu().get_children()[0]
 
         # Return
         return menu
@@ -1733,6 +1744,9 @@ class PyInvEdit(gtk.Window):
             title = 'Inventory'
         self.worldbook.set_tab_label(self.worldbook.get_nth_page(0), gtk.Label(title))
         self.worldbook.show()
+
+        for menu in self.menu_only_loaded:
+            menu.set_sensitive(True)
 
     def revert(self, widget, data=None):
         """
