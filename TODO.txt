@@ -1,2 +1,4 @@
  * We're probably not saving inventory slots that we don't actually process,
    should fix that in case mods add more slots or something
+
+ * Exception handling on load

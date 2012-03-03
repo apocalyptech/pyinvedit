@@ -788,6 +788,61 @@ class InvImage(gtk.DrawingArea):
         """
         return get_pixbuf_from_surface(self.surf)
 
+class SaveAsDialog(gtk.FileChooserDialog):
+    """
+    A class to support "Save As"
+    """
+    def __init__(self, parent):
+        super(SaveAsDialog, self).__init__('Save As...', parent,
+                gtk.FILE_CHOOSER_ACTION_SAVE,
+                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                gtk.STOCK_SAVE, gtk.RESPONSE_OK))
+        self.set_default_response(gtk.RESPONSE_CANCEL)
+        self.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
+        self.set_filename(parent.filename)
+        self.set_do_overwrite_confirmation(True)
+        self.overwrite_all = False
+        self.connect('confirm-overwrite', self.on_confirm_overwrite)
+        filter = gtk.FileFilter()
+        filter.set_name(".dat files")
+        filter.add_pattern("*.dat")
+        self.add_filter(filter)
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
+        self.add_filter(filter)
+
+    def on_confirm_overwrite(self, chooser, param=None):
+        """
+        Our own custom overwrite-confirm dialog
+        """
+        try:
+            # Try to load it as NBT, and then try to access an Inventory
+            # structure.  If we succeed, then we're trying to save-as
+            # an existing Minecraft level.dat, so we should use our custom
+            # dialog to see if the user wants to overwrite fully, or just
+            # do the inventory stuff.  Otherwise, just use the default
+            # dialog.
+            nbtdata = nbt.load(self.get_filename())
+            test = nbtdata['Data'].value['Player'].value['Inventory'].value
+        except Exception:
+            self.overwrite_all = True
+            return gtk.FILE_CHOOSER_CONFIRMATION_CONFIRM
+        dialog = OverwriteConfirmDialog(self, filename=self.get_filename())
+        result = dialog.run()
+        self.overwrite_all = dialog.is_overwrite_all()
+        dialog.destroy()
+        if result == gtk.RESPONSE_YES:
+            return gtk.FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME
+        else:
+            return gtk.FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN
+
+    def is_overwrite_all(self):
+        """
+        Return whether or not we've overwriting everything
+        """
+        return self.overwrite_all
+
 class LoaderDialog(gtk.FileChooserDialog):
     """
     A class to load a new minecraft save.
@@ -801,8 +856,12 @@ class LoaderDialog(gtk.FileChooserDialog):
         self.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
         self.set_current_folder(os.path.join(os.path.expanduser('~'), '.minecraft', 'saves'))
         filter = gtk.FileFilter()
-        filter.set_name("Minecraft Savefiles")
-        filter.add_pattern("level.dat")
+        filter.set_name(".dat files")
+        filter.add_pattern("*.dat")
+        self.add_filter(filter)
+        filter = gtk.FileFilter()
+        filter.set_name("All files")
+        filter.add_pattern("*")
         self.add_filter(filter)
 
     def load(self):
@@ -1505,7 +1564,7 @@ class OverwriteConfirmDialog(gtk.Dialog):
     Class to confirm overwrite of a level file
     """
 
-    def __init__(self, parentobj, name):
+    def __init__(self, parentobj, name=None, filename=None):
         super(OverwriteConfirmDialog, self).__init__('Confirm Overwrite',
                 parentobj, 
                 gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -1528,7 +1587,12 @@ class OverwriteConfirmDialog(gtk.Dialog):
         align = gtk.Alignment(0, 0, 0, 0)
         align.set_padding(10, 10, 5, 5)
         label = gtk.Label()
-        label.set_markup('Really overwrite the savefile named "%s?"' % (name))
+        if name is not None:
+            label.set_markup('Really overwrite the savefile named "%s"?' % (name))
+        elif filename is not None:
+            label.set_markup('Really overwrite the savefile at "<tt>%s</tt>"?' % (filename))
+        else:
+            label.set_markup('Really overwrite the savefile?')
         align.add(label)
         vbox.pack_start(align, False, True)
 
@@ -1651,7 +1715,7 @@ class PyInvEdit(gtk.Window):
                 ('/File/Open From', None,         None,             0, '<Branch>'),
                 ('/File/sep1',    None,           None,             0, '<Separator>'),
                 ('/File/_Save',   '<control>S',   self.save,        0, '<StockItem>', gtk.STOCK_SAVE),
-                ('/File/Save _As', '<control>A',  self.menu,        0, '<StockItem>', gtk.STOCK_SAVE_AS),
+                ('/File/Save _As', '<control>A',  self.save_as,     0, '<StockItem>', gtk.STOCK_SAVE_AS),
                 ('/File/Save To', None,           None,             0, '<Branch>'),
                 ('/File/_Revert to Saved', None,  self.revert,      0, '<StockItem>', gtk.STOCK_REVERT_TO_SAVED),
                 ('/File/sep2',    None,           None,             0, '<Separator>'),
@@ -1783,6 +1847,23 @@ class PyInvEdit(gtk.Window):
             if resp == gtk.RESPONSE_YES:
                 self.leveldat = nbt.load(self.filename)
                 self.finish_load()
+
+    def save_as(self, widget, data=None):
+        """
+        What do do when our "Save As" is called
+        """
+        if self.loaded:
+            dialog = SaveAsDialog(self)
+            resp = dialog.run()
+            filename = dialog.get_filename()
+            overwrite_all = dialog.is_overwrite_all()
+            dialog.destroy()
+            if resp == gtk.RESPONSE_OK:
+                self.filename = filename
+                if not overwrite_all:
+                    self.leveldat = nbt.load(path)
+                    self.finish_load(False)
+                self.save()
 
     def save_known(self, widget, name, path):
         """
