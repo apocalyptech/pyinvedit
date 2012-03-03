@@ -201,6 +201,10 @@ groups:
     texfile: special.png
     coords: [0, 13]
 
+  - name: Brewing
+    texfile: terrain.png
+    coords: [13, 9]
+
 items:
 
   - num: 1
@@ -1114,7 +1118,7 @@ items:
     groups: [Nether]
 
   - num: 115
-    name: Nether Wart
+    name: Nether Wart Block
     texfile: terrain.png
     coords: [2, 14]
 
@@ -1128,6 +1132,7 @@ items:
     name: Brewing Stand
     texfile: terrain.png
     coords: [13, 9]
+    groups: [Special, Brewing]
 
   - num: 118
     name: Cauldron
@@ -1737,7 +1742,7 @@ items:
     name: Redstone Dust
     texfile: items.png
     coords: [8, 3]
-    groups: [Logic]
+    groups: [Logic, Brewing]
 
   - num: 332
     name: Snowball
@@ -1848,7 +1853,7 @@ items:
     name: Glowstone Dust
     texfile: items.png
     coords: [9, 4]
-    groups: [Nether]
+    groups: [Nether, Brewing]
 
   - num: 349
     name: Raw Fish
@@ -1984,7 +1989,7 @@ items:
     name: Sugar
     texfile: items.png
     coords: [13, 0]
-    groups: [Items]
+    groups: [Items, Brewing]
 
   - num: 354
     name: Cake
@@ -2091,7 +2096,7 @@ items:
     name: Ghast Tear
     texfile: items.png
     coords: [11, 7]
-    groups: [Drops]
+    groups: [Drops, Brewing]
 
   - num: 371
     name: Gold Nugget
@@ -2103,7 +2108,7 @@ items:
     name: Nether Wart
     texfile: items.png
     coords: [13, 7]
-    groups: [Nether]
+    groups: [Nether, Brewing]
 
   - num: 373
     name: Water Bottle
@@ -2111,7 +2116,7 @@ items:
     coords: [0, 14]
     data: 0
     max_quantity: 1
-    groups: [Potions]
+    groups: [Potions, Brewing]
 
   - num: 373
     name: Awkward Potion
@@ -2501,44 +2506,45 @@ items:
     name: Glass Bottle
     texfile: items.png
     coords: [12, 8]
+    groups: [Brewing]
 
   - num: 375
     name: Spider Eye
     texfile: items.png
     coords: [11, 8]
-    groups: [Drops]
+    groups: [Drops, Brewing]
 
   - num: 376
     name: Fermented Spider Eye
     texfile: items.png
     coords: [10, 8]
-    groups: [Drops]
+    groups: [Drops, Brewing]
 
   - num: 377
     name: Blaze Powder
     texfile: items.png
     coords: [13, 9]
-    groups: [Drops]
+    groups: [Drops, Brewing]
 
   - num: 378
     name: Magma Cream
     texfile: items.png
     coords: [13, 10]
-    groups: [Drops]
+    groups: [Drops, Brewing]
 
   - num: 379
     name: Brewing Stand
     texfile: items.png
     coords: [12, 10]
-    max_quantity: 1
+    max_quantity: 64
     groups: [Special]
 
   - num: 380
     name: Cauldron
     texfile: items.png
     coords: [12, 9]
-    max_quantity: 1
-    groups: [Special]
+    max_quantity: 64
+    groups: [Special, Brewing]
 
   - num: 381
     name: Eye of Ender
@@ -2550,7 +2556,7 @@ items:
     name: Glistering Melon
     texfile: items.png
     coords: [9, 8]
-    groups: [Food]
+    groups: [Food, Brewing]
 
   - num: 383
     name: Spawn Creeper
