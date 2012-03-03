@@ -1627,12 +1627,13 @@ class PyInvEdit(gtk.Window):
                 ('/File/_Save',   '<control>S',   self.save,        0, '<StockItem>', gtk.STOCK_SAVE),
                 ('/File/Save _As', '<control>A',  self.menu,        0, '<StockItem>', gtk.STOCK_SAVE_AS),
                 ('/File/Save To', None,           None,             0, '<Branch>'),
+                ('/File/_Revert to Saved', None,  self.revert,      0, '<StockItem>', gtk.STOCK_REVERT_TO_SAVED),
                 ('/File/sep2',    None,           None,             0, '<Separator>'),
                 ('/File/_Quit',   '<control>Q',   self.action_quit, 0, '<StockItem>', gtk.STOCK_QUIT),
                 ('/_Edit',        None,           None,             0, '<Branch>'),
-                ('/Edit/_Undo',   '<control>Z',   self.menu,        0, '<StockItem>', gtk.STOCK_UNDO),
-                ('/Edit/_Redo',   '<control>Y',   self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
-                ('/Edit/sep3',    None,           None,             0, '<Separator>'),
+                #('/Edit/_Undo',   '<control>Z',   self.menu,        0, '<StockItem>', gtk.STOCK_UNDO),
+                #('/Edit/_Redo',   '<control>Y',   self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
+                #('/Edit/sep3',    None,           None,             0, '<Separator>'),
                 ('/Edit/_Repair All', '<control>R', self.repair_all, 0, None),
                 ('/_Help',        None,           None,             0, '<Branch>'),
                 ('/Help/_About',  None,           self.menu,        0, '<StockItem>', gtk.STOCK_ABOUT),
@@ -1732,6 +1733,23 @@ class PyInvEdit(gtk.Window):
             title = 'Inventory'
         self.worldbook.set_tab_label(self.worldbook.get_nth_page(0), gtk.Label(title))
         self.worldbook.show()
+
+    def revert(self, widget, data=None):
+        """
+        Reverts to the data on disk
+        """
+        if self.loaded:
+            dialog = gtk.MessageDialog(self,
+                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_QUESTION,
+                    gtk.BUTTONS_YES_NO,
+                    'Really revert to the on-disk version of this savefile?')
+            dialog.set_title('Revert?')
+            resp = dialog.run()
+            dialog.destroy()
+            if resp == gtk.RESPONSE_YES:
+                self.leveldat = nbt.load(self.filename)
+                self.finish_load()
 
     def save_known(self, widget, name, path):
         """
