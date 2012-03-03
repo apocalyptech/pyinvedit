@@ -1489,7 +1489,7 @@ class PyInvEdit(gtk.Window):
     def __init__(self, yamlfile):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
         self.set_title('PyInvEdit - Minecraft Inventory Editor')
-        self.set_size_request(900, 600)
+        self.set_size_request(900, 700)
         self.connect("destroy", self.action_quit)
         
         # Load our YAML
