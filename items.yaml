@@ -642,6 +642,18 @@ items:
     coords: [0, 1]
     data: 3
 
+  - num: 43
+    name: Double Bricks Slab
+    texfile: terrain.png
+    coords: [7, 0]
+    data: 4
+
+  - num: 43
+    name: Double Stone Bricks Slab
+    texfile: terrain.png
+    coords: [6, 3]
+    data: 5
+
   - num: 44
     name: Stone Slab
     texfile: special.png
