@@ -1481,6 +1481,59 @@ class GroupTable(gtk.Table):
         if self.selector is not None:
             self.selector.filter_group(None)
 
+class OverwriteConfirmDialog(gtk.Dialog):
+    """
+    Class to confirm overwrite of a level file
+    """
+
+    def __init__(self, parentobj, name):
+        super(OverwriteConfirmDialog, self).__init__('Confirm Overwrite',
+                parentobj, 
+                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                (gtk.STOCK_YES, gtk.RESPONSE_YES,
+                    gtk.STOCK_NO, gtk.RESPONSE_NO))
+
+        # Contents
+        hbox = gtk.HBox()
+        self.vbox.add(hbox)
+
+        icon = gtk.image_new_from_stock(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_DIALOG)
+        align = gtk.Alignment(.5, .5, 0, 0)
+        align.set_padding(20, 20, 20, 20)
+        align.add(icon)
+        hbox.pack_start(align, False, True)
+
+        vbox = gtk.VBox()
+        hbox.pack_start(vbox, True, True)
+        
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.set_padding(10, 10, 5, 5)
+        label = gtk.Label()
+        label.set_markup('Really overwrite the savefile named "%s?"' % (name))
+        align.add(label)
+        vbox.pack_start(align, False, True)
+
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.set_padding(0, 0, 20, 0)
+        self.overwrite_inv = gtk.RadioButton(label='Only overwrite the inventory')
+        align.add(self.overwrite_inv)
+        vbox.pack_start(align, False, True)
+
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.set_padding(0, 0, 20, 0)
+        self.overwrite_all = gtk.RadioButton(group=self.overwrite_inv, label='Overwrite entire file <i>(including seed, position, etc)</i>')
+        self.overwrite_all.child.set_use_markup(True)
+        align.add(self.overwrite_all)
+        vbox.pack_start(align, True, True)
+
+        self.show_all()
+
+    def is_overwrite_all(self):
+        """
+        Return whether or not we've overwriting everything
+        """
+        return self.overwrite_all.get_active()
+
 class PyInvEdit(gtk.Window):
     """
     Main PyInvedit class
@@ -1662,13 +1715,14 @@ class PyInvEdit(gtk.Window):
         dialog.destroy()
         self.finish_load()
 
-    def finish_load(self):
+    def finish_load(self, load_inventory=True):
         """
         Finishes our loading process, after having our filename and
         leveldat vars populated
         """
-        self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
-        self.invtable.populate_from(self.inventory)
+        if load_inventory:
+            self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
+            self.invtable.populate_from(self.inventory)
         self.loaded = True
         self.loadmessage.hide()
 
@@ -1683,17 +1737,17 @@ class PyInvEdit(gtk.Window):
         """
         Saves to one of our known singleplayer paths
         """
-        dialog = gtk.MessageDialog(self,
-                gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                gtk.MESSAGE_WARNING,
-                gtk.BUTTONS_YES_NO)
-        dialog.set_title('Confirm Overwrite')
-        dialog.set_markup('Really overwrite the savefile named "%s?"' % (name))
-        result = dialog.run()
-        dialog.destroy()
-        if result == gtk.RESPONSE_YES:
-            self.filename = path
-            self.save()
+        if self.loaded:
+            dialog = OverwriteConfirmDialog(self, name)
+            result = dialog.run()
+            overwrite_all = dialog.is_overwrite_all()
+            dialog.destroy()
+            if result == gtk.RESPONSE_YES:
+                self.filename = path
+                if not overwrite_all:
+                    self.leveldat = nbt.load(path)
+                    self.finish_load(False)
+                self.save()
 
     def save(self, widget=None, data=None):
         """
