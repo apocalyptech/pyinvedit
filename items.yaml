@@ -756,9 +756,9 @@ items:
     groups: [Special]
 
   - num: 55
-    name: Redstone Dust
-    texfile: terrain.png
-    coords: [4, 5]
+    name: Redstone Wire
+    texfile: special.png
+    coords: [0, 6]
 
   - num: 56
     name: Diamond Ore
@@ -1734,7 +1734,7 @@ items:
     groups: [Special]
 
   - num: 331
-    name: Redstone
+    name: Redstone Dust
     texfile: items.png
     coords: [8, 3]
     groups: [Logic]
