@@ -216,7 +216,7 @@ class Item(object):
     """
     Class to hold information about an inventory item.
     """
-    def __init__(self, yamlobj, texfiles, groups):
+    def __init__(self, yamlobj, texfiles, groups, unknown=False):
         """
         Initializes given a YAML dict, a dict of valid texfiles, and a dict
         of valid groups
@@ -229,6 +229,7 @@ class Item(object):
         self.texfile = texfiles[yamlobj['texfile']]
         self.x = yamlobj['coords'][0]
         self.y = yamlobj['coords'][1]
+        self.unknown = unknown
         self.texfile.check_bounds(self.x, self.y)
 
         # See if we belong to any groups.  Note that we're adding ourselves
@@ -1156,7 +1157,7 @@ class ItemView(gtk.TreeView):
                     self.COL_ICON, item.get_pixbuf(),
                     self.COL_NAME, item.name,
                     self.COL_OBJ, item,
-                    self.COL_VISIBLE, True)
+                    self.COL_VISIBLE, not item.unknown)
 
         self.filterobj = self.model.filter_new()
         self.filterobj.set_visible_column(self.COL_VISIBLE)
@@ -1238,25 +1239,43 @@ class ItemView(gtk.TreeView):
         Applies any active filters that we have.
         """
         found_active = False
+        unknown_row = None
+        unknown_item = None
         for row in self.model:
+            item = row[self.COL_OBJ]
+            if item.unknown:
+                unknown_row = row
+                unknown_item = item
             if self.filter_by_group:
-                item = row[self.COL_OBJ]
                 if self.filtergroup not in item.groups:
                     row[self.COL_VISIBLE] = False
                     continue
             if self.filter_by_text:
                 if self.text not in row[self.COL_NAME].lower():
-                    row[self.COL_VISIBLE] = False
-                    continue
-            row[self.COL_VISIBLE] = True
-            found_active = True
+                    if not self.text.isdigit() or int(self.text) != item.num:
+                        row[self.COL_VISIBLE] = False
+                        continue
+            if item.unknown:
+                row[self.COL_VISIBLE] = False
+            else:
+                row[self.COL_VISIBLE] = True
+                found_active = True
 
         if found_active and not self.items_visible:
             self.items_visible = True
             self.enable_drag_n_drop()
         elif not found_active and self.items_visible:
-            self.items_visible = False
-            self.disable_drag_n_drop()
+            if self.filter_by_text and self.text.isdigit():
+                # Substitute our fake "Unknown" item
+                num = int(self.text)
+                if num > 65535:
+                    num = 65535
+                unknown_item.num = num
+                unknown_row[self.COL_NAME] = 'Unknown Item %d' % (num)
+                unknown_row[self.COL_VISIBLE] = True
+            else:
+                self.items_visible = False
+                self.disable_drag_n_drop()
 
 class ItemScroll(gtk.ScrolledWindow):
     """
@@ -1845,6 +1864,16 @@ class PyInvEdit(gtk.Window):
             self.items = ItemCollection()
             for yamlobj in yaml_dict['items']:
                 self.items.add_item(Item(yamlobj, self.texfiles, self.groups))
+
+            # A standin Item which we'll use when someone wants to type in
+            # an arbitrary ID
+            yamlobj = {}
+            yamlobj['num'] = 0
+            yamlobj['name'] = 'Unknown Item'
+            yamlobj['texfile'] = 'gui.png'
+            yamlobj['coords'] = [1, 2]
+            self.items.add_item(Item(yamlobj, self.texfiles, self.groups, True))
+
         else:
             raise Exception('No data found from YAML file %s' %
                     (filename))
