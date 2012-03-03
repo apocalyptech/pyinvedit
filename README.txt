@@ -44,9 +44,6 @@ New/different features:
    etc, via a separate tab.  (May as well, since it's all in the same NBT
    file)
 
-6) Undo/Redo functionality (though we'll see if I've got the patience for
-   that)
-
 Features I'm not going to implement:
 
 1) Only one inventory file will be editable at once (no multiple
