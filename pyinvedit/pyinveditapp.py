@@ -1013,8 +1013,6 @@ class LoaderDialog(gtk.FileChooserDialog):
                             e)
                     dialog.run()
                     dialog.destroy()
-            else:
-                print 'zomg error'
         return (None, None)
 
 class TrashButton(gtk.Button):
