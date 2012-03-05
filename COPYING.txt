@@ -3,7 +3,7 @@ is below.
 
 PyInvEdit redistributes the following components:
 
-  * The NBT Processing libraries from pymclevel
+  * The NBT Processing libraries from pymclevel (and a few other bits of pymclevel code)
     https://github.com/codewarrior0/pymclevel
     https://github.com/mcedit/pymclevel
     http://www.minecraftforum.net/topic/26098-pymclevel-minecraft-levels-for-python/
@@ -12,14 +12,16 @@ PyInvEdit redistributes the following components:
     departure.  It's available under a BSDish license, see LICENSE-pymclevel.txt
     for its full text.
 
+  * WrapLabel class, copyright VMWare
+    http://git.gnome.org/browse/meld/tree/meld/ui/wraplabel.py
+    See LICENSE-wraplabel.txt for the specifics of the licensing.
+
   * Various files from Minecraft's builtin texturepack
     http://www.minecraft.net/
     Specifically: terrain.png and gui/items.png
     Technically this redistribution is in violation of Mojang's stated 
     "Do not distribute anything we've made" rule, but I'm pretty sure that
-    this kind of usage would be acceptible regardless, especially given that
-    the bundled texturepack is only used in extreme corner cases where the
-    user's installed minecraft.jar can't be found on the drive.  Plus, many
+    this kind of usage would be acceptible regardless.  Plus, many
     other prominent community tools have been bundling terrain.png for some
     time now (INVedit, MCEdit, etc).  Ah, the "everyone else was doing it"
     argument!  Anyway, I will of course readily cease using the official
@@ -29,6 +31,11 @@ PyInvEdit redistributes the following components:
     https://github.com/copyboy/INVedit
     http://www.minecraftforum.net/topic/14190-12-invedit-minecraft-inventory-editor/
     The forum link says that it's "public domain."
+
+  * An icon or two from FamFamFam's Silk Icon Set
+    http://famfamfam.com/lab/icons/silk/
+    Available under the Creative Commons Attribution 2.5 License.
+    http://creativecommons.org/licenses/by/2.5/
 
 ----
 

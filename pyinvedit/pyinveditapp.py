@@ -31,6 +31,7 @@ import os
 import sys
 import math
 import yaml
+import traceback
 import cStringIO
 import collections
 from pymclevel import nbt, mclevelbase
@@ -62,6 +63,75 @@ def get_pixbuf_from_surface(surface):
     loader.close()
     df.close()
     return loader.get_pixbuf()
+
+class WrapLabel(gtk.Label):
+
+    # Taken from http://git.gnome.org/browse/meld/tree/meld/ui/wraplabel.py
+    # Re-used here because, as it turns out, regular gtk.Label objects will
+    # *not* resize automatically when the parent changes, which in some
+    # circumstances looks really ugly.  This will fix it right up.
+
+    # Copyright (c) 2005 VMware, Inc.
+    #
+    # Permission is hereby granted, free of charge, to any person obtaining a copy
+    # of this software and associated documentation files (the "Software"), to deal
+    # in the Software without restriction, including without limitation the rights
+    # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    # copies of the Software, and to permit persons to whom the Software is
+    # furnished to do so, subject to the following conditions:
+    #
+    # The above copyright notice and this permission notice shall be included in
+    # all copies or substantial portions of the Software.
+    #
+    # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    # SOFTWARE.
+
+    # Python translation from wrapLabel.{cc|h} by Gian Mario Tagliaretti
+    __gtype_name__ = 'WrapLabel'
+
+    def __init__(self, str=None):
+        gtk.Label.__init__(self)
+
+        self.__wrap_width = 0
+        self.layout = self.get_layout()
+        self.layout.set_wrap(pango.WRAP_WORD)
+
+        if str != None:
+            self.set_markup(str)
+
+        self.set_alignment(0.0, 0.0)
+
+    def do_size_request(self, requisition):
+        layout = self.get_layout()
+        width, height = layout.get_pixel_size()
+        requisition.width = 0
+        requisition.height = height
+
+    def do_size_allocate(self, allocation):
+        gtk.Label.do_size_allocate(self, allocation)
+        self.__set_wrap_width(allocation.width)
+
+    def set_text(self, str):
+        gtk.Label.set_text(self, str)
+        self.__set_wrap_width(self.__wrap_width)
+
+    def set_markup(self, str):
+        gtk.Label.set_markup(self, str)
+        self.__set_wrap_width(self.__wrap_width)
+
+    def __set_wrap_width(self, width):
+        if width == 0:
+            return
+        layout = self.get_layout()
+        layout.set_width(width * pango.SCALE)
+        if self.__wrap_width != width:
+            self.__wrap_width = width
+            self.queue_resize()
 
 class TexFile(object):
     """
@@ -843,11 +913,72 @@ class SaveAsDialog(gtk.FileChooserDialog):
         """
         return self.overwrite_all
 
+class ExceptionDialog(gtk.Dialog):
+    """
+    Dialog to show an exception
+    """
+
+    def __init__(self, parentobj, title, text, exception):
+        super(ExceptionDialog, self).__init__(title,
+                parentobj,
+                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                (gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+        self.set_size_request(650, 300)
+        self.set_default_response(gtk.RESPONSE_OK)
+
+        # Contents
+        hbox = gtk.HBox()
+        self.vbox.add(hbox)
+
+        icon = gtk.image_new_from_stock(gtk.STOCK_DIALOG_ERROR, gtk.ICON_SIZE_DIALOG)
+        align = gtk.Alignment(.5, .5, 0, 0)
+        align.set_padding(20, 20, 20, 20)
+        align.add(icon)
+        hbox.pack_start(align, False, True)
+
+        vbox = gtk.VBox()
+        hbox.pack_start(vbox, True, True)
+
+        align = gtk.Alignment(0, 0, 1, 0)
+        align.set_padding(10, 5, 5, 5)
+        label = WrapLabel()
+        label.set_markup(text)
+        label.set_line_wrap(True)
+        label.set_line_wrap_mode(pango.WRAP_WORD_CHAR)
+        align.add(label)
+        vbox.pack_start(align, False, True)
+
+        align = gtk.Alignment(.5, .5, 0, 0)
+        align.set_padding(5, 10, 5, 5)
+        label = gtk.Label()
+        label.set_markup('<b>%s</b>' % (str(exception)))
+        align.add(label)
+        vbox.pack_start(align, False, True)
+
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(0, 10, 20, 10)
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        exc_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        exbuffer = gtk.TextBuffer()
+        exbuffer.set_text(exc_str)
+        tv = gtk.TextView(exbuffer)
+        tv.set_editable(False)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        sw.set_shadow_type(gtk.SHADOW_IN)
+        sw.add(tv)
+        align.add(sw)
+        vbox.pack_start(align, True, True)
+
+        self.show_all()
+
 class LoaderDialog(gtk.FileChooserDialog):
     """
     A class to load a new minecraft save.
     """
     def __init__(self, parent):
+        self.parentobj = parent
         super(LoaderDialog, self).__init__('Open New Savegame', parent,
                 gtk.FILE_CHOOSER_ACTION_OPEN,
                 (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
@@ -873,7 +1004,15 @@ class LoaderDialog(gtk.FileChooserDialog):
         if resp == gtk.RESPONSE_OK:
             filename = self.get_filename()
             if os.path.exists(filename):
-                return (filename, nbt.load(filename))
+                try:
+                    return (filename, nbt.load(filename))
+                except Exception, e:
+                    dialog = ExceptionDialog(self.parentobj,
+                            'Error Loading File',
+                            "There was an error loading the file:\n<tt>%s</tt>" % (filename),
+                            e)
+                    dialog.run()
+                    dialog.destroy()
             else:
                 print 'zomg error'
         return (None, None)
@@ -1806,9 +1945,12 @@ class PyInvEdit(gtk.Window):
         Load a new savefile
         """
         dialog = LoaderDialog(self)
-        (self.filename, self.leveldat) = dialog.load()
+        (filename, leveldat) = dialog.load()
         dialog.destroy()
-        self.finish_load()
+        if filename is not None and leveldat is not None:
+            self.filename = filename
+            self.leveldat = leveldat
+            self.finish_load()
 
     def finish_load(self, load_inventory=True):
         """
