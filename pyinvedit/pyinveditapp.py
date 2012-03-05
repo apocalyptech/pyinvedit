@@ -461,7 +461,7 @@ class InvDetails(gtk.Table):
 
         cur_row += 1
         self.extrainfo = gtk.Label()
-        self.attach(self.extrainfo, 1, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
+        self.attach(self.extrainfo, 0, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
 
     def _rowlabel(self, row, text):
         """
@@ -857,7 +857,7 @@ class TrashButton(gtk.Button):
             return
 
         if other.get_active():
-            other.set_active_state()
+            other.update_item()
         else:
             other.update_graphics()
 
@@ -920,7 +920,7 @@ class InvButton(gtk.RadioButton):
 
         # Update our graphics and potentially the details area
         if self.get_active():
-            self.set_active_state()
+            self.update_item()
         else:
             self.update_graphics()
 
@@ -1009,14 +1009,15 @@ class InvButton(gtk.RadioButton):
         """
         What to do when we're clicked
         """
-        self.set_active_state()
+        self.update_item()
 
-    def set_active_state(self):
+    def update_item(self):
         """
-        What to do when we become the active button
+        Refreshes both our button graphic, and the detail window (if appropriate)
         """
         self.update_graphics()
-        self.detail.update_from_button(self)
+        if self.get_active():
+            self.detail.update_from_button(self)
 
     def on_mouse(self, widget, event):
         """
@@ -1034,7 +1035,7 @@ class InvButton(gtk.RadioButton):
                         self.inventoryslot.count = item.max_quantity
                         global undo
                         undo.change()
-                self.set_active_state()
+                self.update_item()
 
     def repair(self):
         """
@@ -1098,7 +1099,7 @@ class BaseInvTable(gtk.Table):
         """
         for button in self.buttons.values():
             if button.get_active():
-                button.set_active_state()
+                button.update_item()
                 break
 
     def repair_all(self):
@@ -1107,7 +1108,7 @@ class BaseInvTable(gtk.Table):
         """
         for button in self.buttons.values():
             if button.repair():
-                button.update_graphics()
+                button.update_item()
 
     def export_nbt(self):
         """
