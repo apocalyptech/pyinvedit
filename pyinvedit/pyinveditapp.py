@@ -28,27 +28,16 @@
 
 
 import os
-import sys
+import gtk
 import math
 import yaml
-import traceback
+import cairo
+import pango
 import cStringIO
+import pangocairo
 import collections
 from pymclevel import nbt, mclevelbase
 from pyinvedit import dialogs
-
-# Load GTK
-try:
-    import gtk
-    import gobject
-    import cairo
-    import pango
-    import pangocairo
-except Exception, e:
-    print 'Python GTK Modules not found: %s' % (str(e))
-    print 'Hit enter to exit...'
-    sys.stdin.readline()
-    sys.exit(1)
 
 def get_pixbuf_from_surface(surface):
     """
