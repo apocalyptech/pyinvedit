@@ -54,6 +54,47 @@ def get_pixbuf_from_surface(surface):
     df.close()
     return loader.get_pixbuf()
 
+class Undo(object):
+    """
+    Right now this is a dummy object which only keeps track of
+    whether or not something's been changed since the savefile's been
+    loaded.  We're doing it this way instead of just using a var
+    because that way if we ever DO implement a full undo/redo, we'll
+    have less conversion work.
+    """
+
+    def __init__(self):
+        self.changed = False
+
+    def change(self):
+        """
+        We've changed something in our file
+        """
+        self.changed = True
+
+    def load(self):
+        """
+        We loaded a new file.
+        """
+        self.changed = False
+
+    def save(self):
+        """
+        We saved our file
+        """
+        self.changed = False
+
+    def is_changed(self):
+        """
+        Return whether or not we've been changed
+        """
+        return self.changed
+
+# We'll make this a global var so that any of our classes can access
+# it.  Probably not a very clean way of doing things, but it will
+# probably prevent having to pass a bunch more references around, etc.
+undo = Undo()
+
 class TexFile(object):
     """
     Class to provide information about a specific texture file we have
@@ -546,6 +587,10 @@ class InvDetails(gtk.Table):
         self._update_info()
         self.button.update_graphics()
 
+        # Update our Undo object
+        global undo
+        undo.change()
+
 class InvImage(gtk.DrawingArea):
     """
     Class to show an image inside one of our inventory slot buttons.
@@ -805,11 +850,20 @@ class TrashButton(gtk.Button):
         What to do when we've received a drag request.  (ie: delete the data)
         """
         other = context.get_source_widget()
-        other.clear_item()
+        try:
+            other.clear_item()
+        except AttributeError:
+            # Drag came from the selection list
+            return
+
         if other.get_active():
             other.set_active_state()
         else:
             other.update_graphics()
+
+        # Update our Undo object
+        global undo
+        undo.change()
 
     def target_drag_motion(self, img, context, x, y, time):
         context.drag_status(context.suggested_action, time)
@@ -869,6 +923,10 @@ class InvButton(gtk.RadioButton):
             self.set_active_state()
         else:
             self.update_graphics()
+
+        # Update our Undo object
+        global undo
+        undo.change()
 
     def get_text(self):
         """
@@ -974,6 +1032,8 @@ class InvButton(gtk.RadioButton):
                 if item is not None:
                     if self.inventoryslot.count < item.max_quantity:
                         self.inventoryslot.count = item.max_quantity
+                        global undo
+                        undo.change()
                 self.set_active_state()
 
     def repair(self):
@@ -988,6 +1048,8 @@ class InvButton(gtk.RadioButton):
                 if item.max_damage is not None:
                     if self.inventoryslot.damage != 0:
                         self.inventoryslot.damage = 0
+                        global undo
+                        undo.change()
                         return True
         return False
 
@@ -1469,7 +1531,7 @@ class PyInvEdit(gtk.Window):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
         self.set_title('PyInvEdit - Minecraft Inventory Editor')
         self.set_size_request(900, 700)
-        self.connect("destroy", self.action_quit)
+        self.connect('delete-event', self.action_quit)
         
         # Load our YAML
         self.load_from_yaml(yamlfile)
@@ -1631,30 +1693,59 @@ class PyInvEdit(gtk.Window):
             menu.set_visible(False)
 
     def run(self):
+        """
+        Main run loop
+        """
         gtk.main()
 
+    def confirm_replace(self, action):
+        """
+        Confirm that it's okay to replace our currently-loaded
+        file; used for load, revert, and quit.  The passed-in
+        action should be the text to put in the dialog.
+        """
+        global undo
+        if undo.is_changed():
+            dialog = dialogs.ConfirmReplaceDialog(self, action)
+            response = dialog.run()
+            dialog.destroy()
+            if response == gtk.RESPONSE_YES:
+                return True
+            else:
+                return False
+        else:
+            return True
+
     def action_quit(self, widget, data=None):
-        gtk.main_quit()
+        """
+        Proces our Quit action
+        """
+        if self.confirm_replace('quit'):
+            gtk.main_quit()
+            return False
+        return True
 
     def load_known(self, widget, name, path):
         """
         Load a savefile from our known singleplayer maps
         """
-        self.filename = path
-        self.leveldat = nbt.load(path)
-        self.finish_load()
+        if self.confirm_replace('load'):
+            self.filename = path
+            self.leveldat = nbt.load(path)
+            self.finish_load()
 
     def load(self, widget, data=None):
         """
         Load a new savefile
         """
-        dialog = dialogs.LoaderDialog(self)
-        (filename, leveldat) = dialog.load()
-        dialog.destroy()
-        if filename is not None and leveldat is not None:
-            self.filename = filename
-            self.leveldat = leveldat
-            self.finish_load()
+        if self.confirm_replace('load'):
+            dialog = dialogs.LoaderDialog(self)
+            (filename, leveldat) = dialog.load()
+            dialog.destroy()
+            if filename is not None and leveldat is not None:
+                self.filename = filename
+                self.leveldat = leveldat
+                self.finish_load()
 
     def finish_load(self, load_inventory=True):
         """
@@ -1676,23 +1767,18 @@ class PyInvEdit(gtk.Window):
 
         for menu in self.menu_only_loaded:
             menu.set_sensitive(True)
+            
+        # Update our Undo object
+        global undo
+        undo.load()
 
     def revert(self, widget, data=None):
         """
         Reverts to the data on disk
         """
-        if self.loaded:
-            dialog = gtk.MessageDialog(self,
-                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_QUESTION,
-                    gtk.BUTTONS_YES_NO,
-                    'Really revert to the on-disk version of this savefile?')
-            dialog.set_title('Revert?')
-            resp = dialog.run()
-            dialog.destroy()
-            if resp == gtk.RESPONSE_YES:
-                self.leveldat = nbt.load(self.filename)
-                self.finish_load()
+        if self.loaded and self.confirm_replace('revert'):
+            self.leveldat = nbt.load(self.filename)
+            self.finish_load()
 
     def save_as(self, widget, data=None):
         """
@@ -1742,6 +1828,10 @@ class PyInvEdit(gtk.Window):
             dialog.set_markup("This savefile has been saved to:\n<tt>%s</tt>" % (self.filename))
             dialog.run()
             dialog.destroy()
+
+            # Update our Undo object
+            global undo
+            undo.save()
 
     def repair_all(self, widget, data=None):
         """

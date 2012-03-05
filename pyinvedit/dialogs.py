@@ -30,6 +30,7 @@ import os
 import sys
 import gtk
 import pango
+import string
 import traceback
 from pymclevel import nbt
 from pyinvedit import vmware
@@ -248,3 +249,19 @@ class OverwriteConfirmDialog(gtk.Dialog):
         Return whether or not we've overwriting everything
         """
         return self.overwrite_all.get_active()
+
+class ConfirmReplaceDialog(gtk.MessageDialog):
+    """
+    A dialog we can use to confirm whether or not to replace our
+    currently-loaded file
+    """
+
+    def __init__(self, parentobj, action):
+        super(ConfirmReplaceDialog, self).__init__(parentobj, 
+                gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                gtk.MESSAGE_WARNING,
+                gtk.BUTTONS_YES_NO)
+        self.set_markup('<b>Warning:</b> There are still unsaved changes on the current level.  Really %s?' % (action))
+        self.set_title('Confirm %s' % (string.capwords(action)))
+        self.set_default_response(gtk.RESPONSE_YES)
+
