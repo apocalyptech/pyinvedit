@@ -1027,14 +1027,9 @@ class InvButton(gtk.RadioButton):
         if event.button == 3:
             self.set_active(True)
             # Right-click, fill stack or repair damage
-            self.repair()
-            if self.inventoryslot is not None:
-                item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
-                if item is not None:
-                    if self.inventoryslot.count < item.max_quantity:
-                        self.inventoryslot.count = item.max_quantity
-                        global undo
-                        undo.change()
+            repaired = self.repair()
+            filled = self.fill()
+            if repaired or filled:
                 self.update_item()
 
     def repair(self):
@@ -1052,6 +1047,21 @@ class InvButton(gtk.RadioButton):
                         global undo
                         undo.change()
                         return True
+        return False
+
+    def fill(self):
+        """
+        Fills our item to maximum capacity.  Returns True if we actually
+        performed the fill, and False otherwise.
+        """
+        if self.inventoryslot is not None:
+            item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
+            if item is not None:
+                if self.inventoryslot.count < item.max_quantity:
+                    self.inventoryslot.count = item.max_quantity
+                    global undo
+                    undo.change()
+                    return True
         return False
 
 class BaseInvTable(gtk.Table):
@@ -1108,6 +1118,14 @@ class BaseInvTable(gtk.Table):
         """
         for button in self.buttons.values():
             if button.repair():
+                button.update_item()
+
+    def fill_all(self):
+        """
+        Fills all items
+        """
+        for button in self.buttons.values():
+            if button.fill():
                 button.update_item()
 
     def export_nbt(self):
@@ -1646,6 +1664,13 @@ class InvNotebook(gtk.Notebook):
         self.invtable.repair_all()
         self.extrainvtable.repair_all()
 
+    def fill_all(self):
+        """
+        Fills all items contained in the book to their maximum capacity
+        """
+        self.invtable.fill_all()
+        self.extrainvtable.fill_all()
+
     def update_tabs(self):
         """
         Update our tab labels appropriately
@@ -1721,7 +1746,7 @@ class PyInvEdit(gtk.Window):
         # Temporarily disable some menus which should only be active
         # when we've loaded a file
         self.menu_only_loaded = [self.menu_save, self.menu_saveas, self.menu_saveto,
-                self.menu_revert, self.menu_repair]
+                self.menu_revert, self.menu_repair, self.menu_fill]
         for menu in self.menu_only_loaded:
             menu.set_sensitive(False)
 
@@ -1755,6 +1780,7 @@ class PyInvEdit(gtk.Window):
                 #('/Edit/_Redo',   '<control>Y',   self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
                 #('/Edit/sep3',    None,           None,             0, '<Separator>'),
                 ('/Edit/_Repair All', '<control>R', self.repair_all, 0, None),
+                ('/Edit/_Fill All', '<control>F', self.fill_all,    0, None),
                 ('/_Help',        None,           None,             0, '<Branch>'),
                 ('/Help/_About',  None,           self.menu,        0, '<StockItem>', gtk.STOCK_ABOUT),
             )
@@ -1780,6 +1806,7 @@ class PyInvEdit(gtk.Window):
         self.menu_saveto = menu.get_children()[0].get_submenu().get_children()[5]
         self.menu_revert = menu.get_children()[0].get_submenu().get_children()[6]
         self.menu_repair = menu.get_children()[1].get_submenu().get_children()[0]
+        self.menu_fill = menu.get_children()[1].get_submenu().get_children()[1]
 
         # Return
         return menu
@@ -1961,6 +1988,13 @@ class PyInvEdit(gtk.Window):
         """
         if self.loaded:
             self.worldbook.repair_all()
+
+    def fill_all(self, widget, data=None):
+        """
+        Fills all items to maximum capacity
+        """
+        if self.loaded:
+            self.worldbook.fill_all()
 
     def load_from_yaml(self, filename):
         """
