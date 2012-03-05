@@ -2,7 +2,7 @@
 #
 # YAML Definition for player's inventory
 #
-# There are three sets of lists in here:
+# There are four sets of lists in here:
 # 
 # 1) texfiles
 #    This defines which texture definition files are available to the
@@ -27,7 +27,18 @@
 #
 #       coords - Texture coordinates of the icon in the GUI
 #
-# 2) items
+# 2) enchantments
+#    These are the various enchantments which can be placed on items
+#
+#    Required fields:
+#
+#       name - Name of the enchantment
+#
+#       num - The enchantment number/ID
+#
+#       max_power - Maximum power of the enchantment
+#
+# 3) items
 #    These are the actual items which the GUI will make available
 #
 #    Required fields:
@@ -58,6 +69,9 @@
 #
 #       max_quantity - How many of this item can be stacked.  If not
 #          specified, 64 is assumed.
+#
+#       enchantments - A list of enchantments which are valid for this
+#          item, based on the name of the enchantment.
 #    
 
 texfiles:
@@ -204,6 +218,92 @@ groups:
   - name: Brewing
     texfile: terrain.png
     coords: [13, 9]
+
+enchantments:
+
+  - name: Protection
+    num: 0
+    max_power: 4
+
+  - name: Fire Protection
+    num: 1
+    max_power: 4
+
+  - name: Feather Falling
+    num: 2
+    max_power: 4
+
+  - name: Blast Protection
+    num: 3
+    max_power: 4
+
+  - name: Projectile Protection
+    num: 4
+    max_power: 4
+
+  - name: Respiration
+    num: 5
+    max_power: 3
+
+  - name: Aqua Affinity
+    num: 6
+    max_power: 1
+
+  - name: Sharpness
+    num: 16
+    max_power: 5
+
+  - name: Smite
+    num: 17
+    max_power: 5
+
+  - name: Bane of Arthropods
+    num: 18
+    max_power: 5
+
+  - name: Knockback
+    num: 19
+    max_power: 2
+
+  - name: Fire Aspect
+    num: 20
+    max_power: 2
+
+  - name: Looting
+    num: 21
+    max_power: 3
+
+  - name: Efficiency
+    num: 32
+    max_power: 5
+
+  - name: Silk Touch
+    num: 33
+    max_power: 1
+
+  - name: Unbreaking
+    num: 34
+    max_power: 3
+
+  - name: Fortune
+    num: 35
+    max_power: 3
+
+  - name: Power
+    num: 48
+    max_power: 5
+
+  - name: Punch
+    num: 49
+    max_power: 2
+
+  - name: Flame
+    num: 50
+    max_power: 1
+
+  - name: Infinity
+    num: 51
+    max_power: 1
 
 items:
 
@@ -1182,6 +1282,7 @@ items:
     max_damage: 250
     max_quantity: 1
     groups: [Shovels]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 257
     name: Iron Pickaxe
@@ -1190,6 +1291,7 @@ items:
     max_damage: 250
     max_quantity: 1
     groups: [Pickaxes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 258
     name: Iron Axe
@@ -1198,6 +1300,7 @@ items:
     max_damage: 250
     max_quantity: 1
     groups: [Axes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 259
     name: Flint and Steel
@@ -1221,6 +1324,7 @@ items:
     max_damage: 384
     max_quantity: 1
     groups: [Tools]
+    enchantments: [Power, Punch, Flame, Infinity]
 
   - num: 262
     name: Arrow
@@ -1266,6 +1370,7 @@ items:
     max_damage: 250
     max_quantity: 1
     groups: [Swords]
+    enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 268
     name: Wooden Sword
@@ -1274,6 +1379,7 @@ items:
     max_damage: 59
     max_quantity: 1
     groups: [Swords]
+    enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 269
     name: Wooden Shovel
@@ -1282,6 +1388,7 @@ items:
     max_damage: 59
     max_quantity: 1
     groups: [Shovels]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 270
     name: Wooden Pickaxe
@@ -1290,6 +1397,7 @@ items:
     max_damage: 59
     max_quantity: 1
     groups: [Pickaxes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 271
     name: Wooden Axe
@@ -1298,6 +1406,7 @@ items:
     max_damage: 59
     max_quantity: 1
     groups: [Axes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 272
     name: Stone Sword
@@ -1306,6 +1415,7 @@ items:
     max_damage: 131
     max_quantity: 1
     groups: [Swords]
+    enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 273
     name: Stone Shovel
@@ -1314,6 +1424,7 @@ items:
     max_damage: 131
     max_quantity: 1
     groups: [Shovels]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 274
     name: Stone Pickaxe
@@ -1322,6 +1433,7 @@ items:
     max_damage: 131
     max_quantity: 1
     groups: [Pickaxes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 275
     name: Stone Axe
@@ -1330,6 +1442,7 @@ items:
     max_damage: 131
     max_quantity: 1
     groups: [Axes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 276
     name: Diamond Sword
@@ -1338,6 +1451,7 @@ items:
     max_damage: 1561
     max_quantity: 1
     groups: [Swords]
+    enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 277
     name: Diamond Shovel
@@ -1346,6 +1460,7 @@ items:
     max_damage: 1561
     max_quantity: 1
     groups: [Shovels]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 278
     name: Diamond Pickaxe
@@ -1354,6 +1469,7 @@ items:
     max_damage: 1561
     max_quantity: 1
     groups: [Pickaxes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 279
     name: Diamond Axe
@@ -1362,6 +1478,7 @@ items:
     max_damage: 1561
     max_quantity: 1
     groups: [Axes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 280
     name: Stick
@@ -1390,6 +1507,7 @@ items:
     max_damage: 32
     max_quantity: 1
     groups: [Swords]
+    enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 284
     name: Golden Shovel
@@ -1398,6 +1516,7 @@ items:
     max_damage: 32
     max_quantity: 1
     groups: [Shovels]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 285
     name: Golden Pickaxe
@@ -1406,6 +1525,7 @@ items:
     max_damage: 32
     max_quantity: 1
     groups: [Pickaxes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 286
     name: Golden Axe
@@ -1414,6 +1534,7 @@ items:
     max_damage: 32
     max_quantity: 1
     groups: [Axes]
+    enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 287
     name: String
@@ -1498,6 +1619,7 @@ items:
     max_damage: 34
     max_quantity: 1
     groups: [Head]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 299
     name: Leather Tunic
@@ -1506,6 +1628,7 @@ items:
     max_damage: 48
     max_quantity: 1
     groups: [Chest]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 300
     name: Leather Pants
@@ -1514,6 +1637,7 @@ items:
     max_damage: 46
     max_quantity: 1
     groups: [Legs]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 301
     name: Leather Boots
@@ -1522,6 +1646,7 @@ items:
     max_damage: 40
     max_quantity: 1
     groups: [Feet]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 302
     name: Chainmail Helmet
@@ -1530,6 +1655,7 @@ items:
     max_damage: 68
     max_quantity: 1
     groups: [Head]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 303
     name: Chainmail Chestplate
@@ -1538,6 +1664,7 @@ items:
     max_damage: 96
     max_quantity: 1
     groups: [Chest]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 304
     name: Chainmail Leggings
@@ -1546,6 +1673,7 @@ items:
     max_damage: 92
     max_quantity: 1
     groups: [Legs]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 305
     name: Chainmail Boots
@@ -1554,6 +1682,7 @@ items:
     max_damage: 80
     max_quantity: 1
     groups: [Feet]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 306
     name: Iron Helmet
@@ -1562,6 +1691,7 @@ items:
     max_damage: 136
     max_quantity: 1
     groups: [Head]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 307
     name: Iron Chestplate
@@ -1570,6 +1700,7 @@ items:
     max_damage: 192
     max_quantity: 1
     groups: [Chest]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 308
     name: Iron Leggings
@@ -1578,6 +1709,7 @@ items:
     max_damage: 184
     max_quantity: 1
     groups: [Legs]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 309
     name: Iron Boots
@@ -1586,6 +1718,7 @@ items:
     max_damage: 160
     max_quantity: 1
     groups: [Feet]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 310
     name: Diamond Helmet
@@ -1594,6 +1727,7 @@ items:
     max_damage: 272
     max_quantity: 1
     groups: [Head]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 311
     name: Diamond Chestplate
@@ -1602,6 +1736,7 @@ items:
     max_damage: 384
     max_quantity: 1
     groups: [Chest]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 312
     name: Diamond Leggings
@@ -1610,6 +1745,7 @@ items:
     max_damage: 368
     max_quantity: 1
     groups: [Legs]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 313
     name: Diamond Boots
@@ -1618,6 +1754,7 @@ items:
     max_damage: 320
     max_quantity: 1
     groups: [Feet]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 314
     name: Golden Helmet
@@ -1626,6 +1763,7 @@ items:
     max_damage: 68
     max_quantity: 1
     groups: [Head]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 315
     name: Golden Chestplate
@@ -1634,6 +1772,7 @@ items:
     max_damage: 96
     max_quantity: 1
     groups: [Chest]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 316
     name: Golden Leggings
@@ -1642,6 +1781,7 @@ items:
     max_damage: 92
     max_quantity: 1
     groups: [Legs]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 317
     name: Golden Boots
@@ -1650,6 +1790,7 @@ items:
     max_damage: 80
     max_quantity: 1
     groups: [Feet]
+    enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 318
     name: Flint

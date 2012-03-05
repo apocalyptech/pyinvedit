@@ -244,11 +244,80 @@ class Group(object):
         """
         return self.texfile.get_pixbuf(self.x, self.y)
 
+class Enchantment(object):
+    """
+    Class to hold information about an enchantment
+    """
+    def __init__(self, yamlobj):
+        self.num = yamlobj['num']
+        self.name = yamlobj['name']
+        self.max_power = yamlobj['max_power']
+
+    def __cmp__(self, other):
+        """
+        Comparator for sorting
+        """
+        return cmp(self.name, other.name)
+
+class Enchantments(object):
+    """
+    A class to hold a collection of enchantments
+    """
+    def __init__(self):
+        self.enchantments_id = {}
+        self.enchantments_name = {}
+
+    def add_enchantment(self, yamlobj):
+        """
+        Adds a new enchantment, given a YAML object
+        """
+        ench = Enchantment(yamlobj)
+
+        # Store by ID
+        if ench.num in self.enchantments_id:
+            raise Exception('Enchantment ID %d is defined twice' % (ench.num))
+        else:
+            self.enchantments_id[ench.num] = ench
+
+        # Store by Name
+        lower = ench.name.lower()
+        if lower in self.enchantments_name:
+            raise Exception('Enchantment with a name "%s" is defined twice' % (ench.name))
+        else:
+            self.enchantments_name[lower] = ench
+
+    def get_all(self):
+        """
+        Returns a list of all known enchantments
+        """
+        ench = self.enchantments_id.values()
+        ench.sort()
+        return ench
+
+    def get_by_id(self, num):
+        """
+        Gets an enchantment by ID, if possible
+        """
+        if num in self.enchantments_id:
+            return self.enchantments_id[num]
+        else:
+            return None
+
+    def get_by_name(self, name):
+        """
+        Get an enchantment by name, if possible
+        """
+        lower = name.lower()
+        if lower in self.enchantments_name:
+            return self.enchantments_name[lower]
+        else:
+            return None
+
 class Item(object):
     """
     Class to hold information about an inventory item.
     """
-    def __init__(self, yamlobj, texfiles, groups, unknown=False):
+    def __init__(self, yamlobj, texfiles, groups, enchantment_catalog, unknown=False):
         """
         Initializes given a YAML dict, a dict of valid texfiles, and a dict
         of valid groups
@@ -263,6 +332,7 @@ class Item(object):
         self.y = yamlobj['coords'][1]
         self.unknown = unknown
         self.texfile.check_bounds(self.x, self.y)
+        self.enchantment_catalog = enchantment_catalog
 
         # See if we belong to any groups.  Note that we're adding ourselves
         # into the group object as well
@@ -296,6 +366,16 @@ class Item(object):
         else:
             self.max_quantity = 64
 
+        # See if we have any enchantments
+        self.enchantments = []
+        if 'enchantments' in yamlobj:
+            for ench in yamlobj['enchantments']:
+                enchobj = enchantment_catalog.get_by_name(ench)
+                if enchobj is None:
+                    raise Exception('Enchantment %s for item %s is unknown' % (ench, self.name))
+                else:
+                    self.enchantments.append(enchobj)
+
     def get_image(self, large=False):
         """
         Returns the base cairo ImageSurface for this item
@@ -313,7 +393,7 @@ class Item(object):
         Returns a fresh InventorySlot object based on this abstract item.
         Will fill to max quantity, etc.
         """
-        return InventorySlot(self.num, self.data, self.max_quantity, slot)
+        return InventorySlot(num=self.num, damage=self.data, count=self.max_quantity, slot=slot)
 
     def __cmp__(self, other):
         """
@@ -352,37 +432,154 @@ class ItemCollection(object):
         itemlist.sort()
         return itemlist
 
-class InventorySlot(object):
+class EnchantmentSlot(object):
     """
-    Holds information about a particular inventory slot
+    Holds information about a particular enchantment inside a particular inventory slot
     """
 
-    def __init__(self, num=None, damage=None, count=None, slot=None, extratags=None, other=None):
+    def __init__(self, nbtobj=None, num=None, lvl=None):
         """
-        Initializes a new object.  There are sort of two ways of doing this.
-        1) Pass in all of: num, damage, count, slot, and extratags
-        2) Pass in: slot and "other", other being an InventorySlot item to copy.  The one thing
-           that we won't copy is the slot parameter
+        Initializes a new object.  Either pass in 'nbtobj' or
+        both 'num' and 'lvl'
         """
-        self.slot = slot
-        if other is None:
+        if nbtobj is None:
             self.num = num
-            self.damage = damage
-            self.count = count
-            self.extratags = extratags
+            self.lvl = lvl
+            self.extratags = {}
         else:
-            self.num = other.num
-            self.damage = other.damage
-            self.count = other.count
-            self.extratags = other.extratags
+            self.num = nbtobj.value['id'].value
+            self.lvl = nbtobj.value['lvl'].value
+            self.extratags = {}
+            for tagname, value in nbtobj.value.iteritems():
+                if tagname not in ['id', 'lvl']:
+                    self.extratags[tagname] = value
+
+    def copy(self):
+        """
+        Returns a fresh object with our data
+        """
+        newench = EnchantmentSlot(num=self.num, lvl=self.lvl)
+        newench.extratags = self.extratags
+        return newench
+
+    def export_nbt(self):
+        """
+        Exports ourself as an NBT object
+        """
+        nbtobj = nbt.TAG_Compound()
+        nbtobj['id'] = nbt.TAG_Short(self.num)
+        nbtobj['lvl'] = nbt.TAG_Short(self.lvl)
+        for tagname, tagval in self.extratags.iteritems():
+            nbtobj[tagname] = tagval
+        return nbtobj
+
+class InventorySlot(object):
+    """
+    Holds information about a particular inventory slot.  We make an effort to
+    never lose any data that we don't explicitly understand, and so you'll see
+    two extra dicts in here with the names extratags and extratagtags.  The
+    first holds extra tag information stored right at the "Slot" level of
+    the NBT structure.  Before we enabled explicit support for enchantments,
+    this is the variable which held and saved enchantment information.
+
+    Since adding in Enchantments explicitly, extratagtags is used to store
+    extra tag information found alongside enchantments.  The enchantments
+    themselves are found in an "ench" tag which itself lives inside a tag
+    helpfully labeled "tag," hence the odd naming of "extratagtags."  Alas!
+    """
+
+    def __init__(self, nbtobj=None, other=None, num=None, damage=None, count=None, slot=None):
+        """
+        Initializes a new object.  There are a few different valid ways of doing so:
+
+        1) Pass in only nbtobj, as loaded from level.dat.  Everything will be populated
+           from that one object.  Used on initial loads.
+
+        2) Pass in other and slot, which is another InventorySlot object from which to
+           copy all of our data.
+
+        3) Only pass in "slot" - this will create an empty object.
+
+        4) Pass in num, damage, count, and slot.
+        """
+        if nbtobj is None:
+            if other is None:
+                self.slot = slot
+                self.num = num
+                self.damage = damage
+                self.count = count
+                self.extratags = {}
+                self.extratagtags = {}
+                self.enchantments = []
+            else:
+                self.slot = other.slot
+                self.num = other.num
+                self.damage = other.damage
+                self.count = other.count
+                self.extratags = other.extratags
+                self.extratagtags = other.extratagtags
+                self.enchantments = []
+                for ench in other.enchantments:
+                    self.enchantments.append(ench.copy())
+        else:
+            self.num = nbtobj.value['id'].value
+            self.damage = nbtobj.value['Damage'].value
+            self.count = nbtobj.value['Count'].value
+            self.slot = nbtobj.value['Slot'].value
+            self.enchantments = []
+            self.extratagtags = {}
+            if 'tag' in nbtobj:
+                if 'ench' in nbtobj.value['tag'].value:
+                    for enchtag in nbtobj.value['tag'].value['ench'].value:
+                        self.enchantments.append(EnchantmentSlot(nbtobj=enchtag))
+                for tagname, value in nbtobj.value['tag'].value.iteritems():
+                    if tagname not in ['ench']:
+                        extratagtags[tagname] = value
+            self.extratags = {}
+            for tagname, value in nbtobj.value.iteritems():
+                if tagname not in ['id', 'Damage', 'Count', 'Slot', 'tag']:
+                    self.extratags[tagname] = value
+
+        # Check to see if we're supposed to override the "slot" value
+        if slot is not None:
+            self.slot = slot
+
+        # Doublecheck that we have some vars
         if self.extratags is None:
             self.extratags = {}
+        if self.extratagtags is None:
+            self.extratagtags = {}
+        if self.enchantments is None:
+            self.enchantments = []
 
     def __cmp__(self, other):
         """
         Comparator object for sorting
         """
         return cmp(self.num, other.num)
+
+    def export_nbt(self):
+        """
+        Exports ourself as an NBT object
+        """
+        item_nbt = nbt.TAG_Compound()
+        item_nbt['Count'] = nbt.TAG_Byte(self.count)
+        item_nbt['Slot'] = nbt.TAG_Byte(self.slot)
+        item_nbt['id'] = nbt.TAG_Short(self.num)
+        item_nbt['Damage'] = nbt.TAG_Short(self.damage)
+        for tagname, tagval in self.extratags.iteritems():
+            item_nbt[tagname] = tagval
+        if len(self.enchantments) > 0 or len(self.extratagtags) > 0:
+            tag_nbt = nbt.TAG_Compound()
+            if len(self.enchantments) > 0:
+                ench_tag = nbt.TAG_List()
+                for ench in self.enchantments:
+                    ench_tag.append(ench.export_nbt())
+                tag_nbt['ench'] = ench_tag
+            for tagname, tagval in self.extratagtags.iteritems():
+                tag_nbt[tagname] = tagval
+            item_nbt['tag'] = tag_nbt
+        return item_nbt
 
 class Inventory(object):
     """
@@ -401,15 +598,8 @@ class Inventory(object):
         """
         Imports an item from the given NBT Object
         """
-        num = item.value['id'].value
-        damage = item.value['Damage'].value
-        count = item.value['Count'].value
         slot = item.value['Slot'].value
-        extratags = {}
-        for tagname, value in item.value.iteritems():
-            if tagname not in ['id', 'Damage', 'Count', 'Slot']:
-                extratags[tagname] = value
-        self.inventory[slot] = InventorySlot(num, damage, count, slot, extratags)
+        self.inventory[slot] = InventorySlot(nbtobj=item)
 
     def get_items(self):
         """
@@ -752,6 +942,10 @@ class InvImage(gtk.DrawingArea):
                         self.cr.rectangle(self.DAMAGE_X, self.DAMAGE_Y, self.DAMAGE_W*percent, self.DAMAGE_H)
                         self.cr.fill()
 
+            # Enchantments
+            if len(slotinfo.enchantments) > 0:
+                self._text_at('+', [.7764, .1686, 1, 1], [0, 0, 0, 1], self.CORNER_NE, True)
+
             # Extra tag info
             if len(slotinfo.extratags) > 0:
                 self._text_at('+', [0, 1, 0, 1], [0, 0, 0, 1], self.CORNER_SW, True)
@@ -912,7 +1106,7 @@ class InvButton(gtk.RadioButton):
             if other.inventoryslot is None:
                 self.inventoryslot = None
             else:
-                self.inventoryslot = InventorySlot(slot=self.slot, other=other.inventoryslot)
+                self.inventoryslot = InventorySlot(other=other.inventoryslot, slot=self.slot)
         except AttributeError:
             # Our dragged object is a raw Item
             if other.get_selected_item() is not None:
@@ -1139,14 +1333,7 @@ class BaseInvTable(gtk.Table):
                 slots.append(button.inventoryslot)
         slots.sort()
         for slot in slots:
-            item_nbt = nbt.TAG_Compound()
-            item_nbt['Count'] = nbt.TAG_Byte(slot.count)
-            item_nbt['Slot'] = nbt.TAG_Byte(slot.slot)
-            item_nbt['id'] = nbt.TAG_Short(slot.num)
-            item_nbt['Damage'] = nbt.TAG_Short(slot.damage)
-            for tagname, tagval in slot.extratags.iteritems():
-                item_nbt[tagname] = tagval
-            inv_list.append(item_nbt)
+            inv_list.append(slot.export_nbt())
         return inv_list
 
 class InvTable(BaseInvTable):
@@ -1973,7 +2160,7 @@ class PyInvEdit(gtk.Window):
             dialog.destroy()
             if resp == gtk.RESPONSE_OK:
                 self.filename = filename
-                if not overwrite_all:
+                if os.path.exists(filename) and not overwrite_all:
                     # Load everything but the inventory
                     self.load_from_filename(path, False)
                 self.save()
@@ -1989,7 +2176,7 @@ class PyInvEdit(gtk.Window):
             dialog.destroy()
             if result == gtk.RESPONSE_YES:
                 self.filename = path
-                if not overwrite_all:
+                if os.path.exists(path) and not overwrite_all:
                     # Load everything but the inventory
                     self.load_from_filename(path, False)
                 self.save()
@@ -2031,10 +2218,6 @@ class PyInvEdit(gtk.Window):
     def load_from_yaml(self, filename):
         """
         Loads all of our relevant objects from the given YAML filename.
-        Returns a tuple containing the following:
-           * A texfiles dict
-           * A groups dict
-           * An items dict
 
         Really we should be clever and hook into PyYAML's functions
         for handling the loading-into-objects directly, but frankly I
@@ -2065,10 +2248,15 @@ class PyInvEdit(gtk.Window):
                 group = Group(yamlobj, self.texfiles)
                 self.groups[group.name] = group
 
+            # Now our enchantments
+            self.enchantments = Enchantments()
+            for yamlobj in yaml_dict['enchantments']:
+                self.enchantments.add_enchantment(yamlobj)
+
             # And finally our items
             self.items = ItemCollection()
             for yamlobj in yaml_dict['items']:
-                self.items.add_item(Item(yamlobj, self.texfiles, self.groups))
+                self.items.add_item(Item(yamlobj, self.texfiles, self.groups, self.enchantments))
 
             # A standin Item which we'll use when someone wants to type in
             # an arbitrary ID
@@ -2077,7 +2265,7 @@ class PyInvEdit(gtk.Window):
             yamlobj['name'] = 'Unknown Item'
             yamlobj['texfile'] = 'gui.png'
             yamlobj['coords'] = [1, 2]
-            self.items.add_item(Item(yamlobj, self.texfiles, self.groups, True))
+            self.items.add_item(Item(yamlobj, self.texfiles, self.groups, self.enchantments, True))
 
         else:
             raise Exception('No data found from YAML file %s' %
