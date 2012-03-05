@@ -2042,7 +2042,7 @@ class PyInvEdit(gtk.Window):
         """
 
         data = None
-        with open('items.yaml', 'r') as df:
+        with open('pyinvedit.yaml', 'r') as df:
             data = df.read()
 
         if data:
