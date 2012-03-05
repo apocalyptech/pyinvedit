@@ -1,4 +1,2 @@
- * We're probably not saving inventory slots that we don't actually process,
-   should fix that in case mods add more slots or something
-
- * Exception handling on load
+ * Enchantment Editing
+ * Non-inventory data editing (game type, player position, etc)

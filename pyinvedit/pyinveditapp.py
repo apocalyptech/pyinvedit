@@ -1053,37 +1053,21 @@ class InvButton(gtk.RadioButton):
                         return True
         return False
 
-class InvTable(gtk.Table):
+class BaseInvTable(gtk.Table):
     """
-    Table to store inventory info
+    The class from which our inventory tables derive
     """
 
-    def __init__(self, items, detail, gui_sheet):
-        super(InvTable, self).__init__(5, 9)
+    def __init__(self, rows, cols, items, detail, gui_sheet):
+        super(BaseInvTable, self).__init__(rows, cols)
 
         self.buttons = {}
         self.group = None
         self.items = items
         self.detail = detail
 
-        # Armor slots
-        self._new_button(0, 0, 103, 7, empty=gui_sheet.get_tex(0, 0, True))
-        self._new_button(1, 0, 102, 7, empty=gui_sheet.get_tex(0, 1, True))
-        self._new_button(2, 0, 101, 7, empty=gui_sheet.get_tex(0, 2, True))
-        self._new_button(3, 0, 100, 7, empty=gui_sheet.get_tex(0, 3, True))
-
-        # Ordinary inventory slots
-        for i in range(9):
-            self._new_button(i, 1, 9+i)
-            self._new_button(i, 2, 18+i)
-            self._new_button(i, 3, 27+i)
-            self._new_button(i, 4, i, 7)
-
         # Trash button
         self.attach(TrashButton(gui_sheet.get_tex(1, 0, True)), 8, 9, 0, 1, gtk.FILL, gtk.FILL, ypadding=7)
-        
-        # Make sure that all is well here
-        self.update_active_button()
 
     def _new_button(self, x, y, slot, ypadding=0, empty=None):
         """
@@ -1107,16 +1091,6 @@ class InvTable(gtk.Table):
         for button in self.buttons.values():
             button.clear()
 
-    def populate_from(self, inventory):
-        """
-        Populates all of our buttons from the given inventory object.
-        """
-        self.clear_buttons()
-        for item in inventory.get_items():
-            if item.slot in self.buttons:
-                self.buttons[item.slot].update_slot(item)
-        self.update_active_button()
-
     def update_active_button(self):
         """
         Loops through all our buttons and makes sure that the proper one is
@@ -1126,6 +1100,14 @@ class InvTable(gtk.Table):
             if button.get_active():
                 button.set_active_state()
                 break
+
+    def repair_all(self):
+        """
+        Repairs all items
+        """
+        for button in self.buttons.values():
+            if button.repair():
+                button.update_graphics()
 
     def export_nbt(self):
         """
@@ -1148,13 +1130,100 @@ class InvTable(gtk.Table):
             inv_list.append(item_nbt)
         return inv_list
 
-    def repair_all(self):
+class InvTable(BaseInvTable):
+    """
+    Table to store our basic inventory info that we know about For Sure
+    """
+
+    def __init__(self, items, detail, gui_sheet):
+        super(InvTable, self).__init__(5, 9, items, detail, gui_sheet)
+
+        # Armor slots
+        self._new_button(0, 0, 103, 7, empty=gui_sheet.get_tex(0, 0, True))
+        self._new_button(1, 0, 102, 7, empty=gui_sheet.get_tex(0, 1, True))
+        self._new_button(2, 0, 101, 7, empty=gui_sheet.get_tex(0, 2, True))
+        self._new_button(3, 0, 100, 7, empty=gui_sheet.get_tex(0, 3, True))
+
+        # Ordinary inventory slots
+        for i in range(9):
+            self._new_button(i, 1, 9+i)
+            self._new_button(i, 2, 18+i)
+            self._new_button(i, 3, 27+i)
+            self._new_button(i, 4, i, 7)
+        
+        # Make sure that all is well here
+        self.update_active_button()
+
+    def populate_from(self, inventory):
         """
-        Repairs all items
+        Populates all of our buttons from the given inventory object.  Returns
+        any extra inventory slots that this object doesn't cover.
         """
+        extra_items = []
+        self.clear_buttons()
+        for item in inventory.get_items():
+            if item.slot in self.buttons:
+                self.buttons[item.slot].update_slot(item)
+            else:
+                extra_items.append(item)
+        self.update_active_button()
+        return extra_items
+
+class ExtraInvTable(BaseInvTable):
+    """
+    Table to store extra inventory slots which the main InvTable doesn't
+    support.  (So basically this is just to support mods, or possibly
+    much earlier versions of Minecraft which would let you store items
+    in your 2x2 crafting area, etc.)
+    """
+
+    button_cols = 9
+
+    def __init__(self, items, detail, gui_sheet):
+        """
+        There's very little to do here, since all our contents are
+        created dynamically via populate_from()
+        """
+        super(ExtraInvTable, self).__init__(9, 1, items, detail, gui_sheet)
+
+    def populate_from(self, items):
+        """
+        Populates from a list of "extra" items that need to be stored
+        and displayed somewhere.
+        """
+        
+        # First, totally clear out anything which might be in here
+        # Note that this will leave the Trash icon alone
+        self.clear_buttons()
         for button in self.buttons.values():
-            if button.repair():
-                button.update_graphics()
+            self.remove(button)
+        self.buttons = {}
+        self.group = None
+
+        # Start anew!
+        if len(items) > 0:
+            # Figure out how many rows we'll have.
+            rows = len(items)/self.button_cols
+            if (len(items) % self.button_cols) > 0:
+                rows += 1
+            rows += 1
+            self.resize(9, rows)
+
+            # And now go and create our bunch of buttons, and load in the
+            # items
+            cur_x = 0
+            cur_y = 1
+            for item in items:
+                self._new_button(cur_x, cur_y, item.slot)
+                self.buttons[item.slot].update_slot(item)
+                cur_x += 1
+                if cur_x == self.button_cols:
+                    cur_x = 0
+                    cur_y += 1
+            self.update_active_button()
+
+            # Make sure things are visible
+            self.show_all()
 
 class ItemView(gtk.TreeView):
     """
@@ -1522,6 +1591,74 @@ class GroupTable(gtk.Table):
         if self.selector is not None:
             self.selector.filter_group(None)
 
+class InvNotebook(gtk.Notebook):
+    """
+    Our main inventory notebook
+    """
+
+    def __init__(self, items, texfiles, app):
+        super(InvNotebook, self).__init__()
+        self.set_size_request(600, 350)
+        self.app = app
+
+        # First page: usual group of items
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 110, 110)
+        itemdetails = InvDetails(items)
+        align.add(itemdetails)
+        self.invtable = InvTable(items, itemdetails, texfiles['gui.png'])
+        worldvbox = gtk.VBox()
+        worldvbox.pack_start(self.invtable, False, True)
+        worldvbox.pack_start(gtk.HSeparator(), False, True)
+        worldvbox.pack_start(align, True, True)
+        self.append_page(worldvbox, gtk.Label('Inventory'))
+
+        # Second page: overflow items we don't support directly
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 110, 110)
+        itemdetails2 = InvDetails(items)
+        align.add(itemdetails2)
+        self.extrainvtable = ExtraInvTable(items, itemdetails2, texfiles['gui.png'])
+        worldvbox = gtk.VBox()
+        worldvbox.pack_start(self.extrainvtable, False, True)
+        worldvbox.pack_start(gtk.HSeparator(), False, True)
+        worldvbox.pack_start(align, True, True)
+        self.append_page(worldvbox, gtk.Label('Extra Slots'))
+
+    def populate_from(self, inventory):
+        """
+        Populates from the given inventory set.
+        """
+        extra_items = self.invtable.populate_from(inventory)
+        self.extrainvtable.populate_from(extra_items)
+
+    def export_inv_nbt(self):
+        """
+        Exports our inventory data as a fresh NBT file
+        """
+        return self.invtable.export_nbt() + self.extrainvtable.export_nbt()
+
+    def repair_all(self):
+        """
+        Repairs all items contained in the book
+        """
+        self.invtable.repair_all()
+        self.extrainvtable.repair_all()
+
+    def update_tabs(self):
+        """
+        Update our tab labels appropriately
+        """
+        if self.app.leveldat['Data'].value['LevelName'] is not None:
+            title = '%s Inventory' % (self.app.leveldat['Data'].value['LevelName'].value)
+        else:
+            title = 'Inventory'
+        self.set_tab_label(self.get_nth_page(0), gtk.Label(title))
+        if (len(self.extrainvtable.buttons) > 0):
+            self.get_nth_page(1).show()
+        else:
+            self.get_nth_page(1).hide()
+
 class PyInvEdit(gtk.Window):
     """
     Main PyInvedit class
@@ -1561,26 +1698,13 @@ class PyInvEdit(gtk.Window):
         # World Notebook
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 5, 5)
-        self.worldbook = gtk.Notebook()
-        self.worldbook.set_size_request(600, 350)
+        self.worldbook = InvNotebook(self.items, self.texfiles, self)
         align.add(self.worldbook)
         mainhbox.pack_start(align, False, False)
 
         # And finally our actual item area (rightmost pane)
         self.itembox = ItemSelector(self.items, self.groups.values())
         mainhbox.add(self.itembox)
-
-        # The first world page
-        align = gtk.Alignment(0, 0, 1, 1)
-        align.set_padding(5, 5, 110, 110)
-        self.itemdetails = InvDetails(self.items)
-        align.add(self.itemdetails)
-        self.invtable = InvTable(self.items, self.itemdetails, self.texfiles['gui.png'])
-        worldvbox = gtk.VBox()
-        worldvbox.pack_start(self.invtable, False, True)
-        worldvbox.pack_start(gtk.HSeparator(), False, True)
-        worldvbox.pack_start(align, True, True)
-        self.worldbook.append_page(worldvbox, gtk.Label('Inventory'))
 
         # Make sure everything's shown
         self.show_all()
@@ -1754,15 +1878,12 @@ class PyInvEdit(gtk.Window):
         """
         if load_inventory:
             self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
-            self.invtable.populate_from(self.inventory)
+            self.worldbook.populate_from(self.inventory)
         self.loaded = True
         self.loadmessage.hide()
 
-        if self.leveldat['Data'].value['LevelName'] is not None:
-            title = '%s Inventory' % (self.leveldat['Data'].value['LevelName'].value)
-        else:
-            title = 'Inventory'
-        self.worldbook.set_tab_label(self.worldbook.get_nth_page(0), gtk.Label(title))
+        # Make sure our main notebook is all good to go.
+        self.worldbook.update_tabs()
         self.worldbook.show()
 
         for menu in self.menu_only_loaded:
@@ -1818,7 +1939,7 @@ class PyInvEdit(gtk.Window):
         Save our data
         """
         if self.loaded:
-            self.leveldat['Data'].value['Player'].value['Inventory'].value = self.invtable.export_nbt()
+            self.leveldat['Data'].value['Player'].value['Inventory'].value = self.worldbook.export_inv_nbt()
             self.leveldat.saveGzipped(self.filename)
             dialog = gtk.MessageDialog(self,
                     gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
@@ -1838,7 +1959,7 @@ class PyInvEdit(gtk.Window):
         Repairs all items
         """
         if self.loaded:
-            self.invtable.repair_all()
+            self.worldbook.repair_all()
 
     def load_from_yaml(self, filename):
         """
