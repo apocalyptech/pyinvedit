@@ -174,23 +174,15 @@ class LoaderDialog(gtk.FileChooserDialog):
 
     def load(self):
         """
-        Runs our dialog and loads the NBT, if possible.  Returns a tuple
-        with the filename and the NBT structure.
+        Runs our dialog and loads the NBT, if possible.  Returns the
+        filename, or None
         """
         resp = self.run()
         if resp == gtk.RESPONSE_OK:
             filename = self.get_filename()
             if os.path.exists(filename):
-                try:
-                    return (filename, nbt.load(filename))
-                except Exception, e:
-                    dialog = ExceptionDialog(self.parentobj,
-                            'Error Loading File',
-                            "There was an error loading the file:\n<tt>%s</tt>" % (filename),
-                            e)
-                    dialog.run()
-                    dialog.destroy()
-        return (None, None)
+                return filename
+        return None
 
 class OverwriteConfirmDialog(gtk.Dialog):
     """

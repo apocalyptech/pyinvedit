@@ -1882,9 +1882,7 @@ class PyInvEdit(gtk.Window):
         Load a savefile from our known singleplayer maps
         """
         if self.confirm_replace('load'):
-            self.filename = path
-            self.leveldat = nbt.load(path)
-            self.finish_load()
+            self.load_from_filename(path)
 
     def load(self, widget, data=None):
         """
@@ -1892,18 +1890,49 @@ class PyInvEdit(gtk.Window):
         """
         if self.confirm_replace('load'):
             dialog = dialogs.LoaderDialog(self)
-            (filename, leveldat) = dialog.load()
+            filename = dialog.load()
             dialog.destroy()
-            if filename is not None and leveldat is not None:
-                self.filename = filename
-                self.leveldat = leveldat
-                self.finish_load()
+            if filename is not None:
+                self.load_from_filename(filename)
 
-    def finish_load(self, load_inventory=True):
+    def load_from_filename(self, path, load_inventory=True):
         """
-        Finishes our loading process, after having our filename and
-        leveldat vars populated
+        Loads a level given a filename.  Returns True or False depending
+        on if we were successful, though I don't think anything actually
+        checks it (or really needs to, given that we throw a dialog in
+        here if there were problems).
         """
+
+        # First, do the actual load
+        leveldat = None
+        try:
+            leveldat = nbt.load(path)
+        except Exception, e:
+            dialog = dialogs.ExceptionDialog(self,
+                    'Error Loading File',
+                    "There was an error loading the file:\n<tt>%s</tt>" % (filename),
+                    e)
+            dialog.run()
+            dialog.destroy()
+            return False
+
+        # Doublecheck leveldat
+        if leveldat is None:
+            dialog = gtk.MessageDialog(self,
+                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_ERROR,
+                    gtk.BUTTONS_OK)
+            dialog.set_title('No Data Loaded')
+            dialog.set_markup('No data could be loaded from the specified file!')
+            dialog.run()
+            dialog.destroy()
+            return False
+
+        # Store our values
+        self.filename = path
+        self.leveldat = leveldat
+
+        # Now get to work
         if load_inventory:
             self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
             self.worldbook.populate_from(self.inventory)
@@ -1914,6 +1943,7 @@ class PyInvEdit(gtk.Window):
         self.worldbook.update_tabs()
         self.worldbook.show()
 
+        # Activate any menus that need to be activated
         for menu in self.menu_only_loaded:
             menu.set_sensitive(True)
             
@@ -1921,13 +1951,15 @@ class PyInvEdit(gtk.Window):
         global undo
         undo.load()
 
+        # And return True, for that warm fuzzy feeling
+        return True
+
     def revert(self, widget, data=None):
         """
         Reverts to the data on disk
         """
         if self.loaded and self.confirm_replace('revert'):
-            self.leveldat = nbt.load(self.filename)
-            self.finish_load()
+            self.load_from_filename(self.filename)
 
     def save_as(self, widget, data=None):
         """
@@ -1942,8 +1974,8 @@ class PyInvEdit(gtk.Window):
             if resp == gtk.RESPONSE_OK:
                 self.filename = filename
                 if not overwrite_all:
-                    self.leveldat = nbt.load(path)
-                    self.finish_load(False)
+                    # Load everything but the inventory
+                    self.load_from_filename(path, False)
                 self.save()
 
     def save_known(self, widget, name, path):
@@ -1958,8 +1990,8 @@ class PyInvEdit(gtk.Window):
             if result == gtk.RESPONSE_YES:
                 self.filename = path
                 if not overwrite_all:
-                    self.leveldat = nbt.load(path)
-                    self.finish_load(False)
+                    # Load everything but the inventory
+                    self.load_from_filename(path, False)
                 self.save()
 
     def save(self, widget=None, data=None):
