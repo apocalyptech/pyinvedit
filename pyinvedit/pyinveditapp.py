@@ -263,6 +263,12 @@ class Enchantments(object):
     """
     A class to hold a collection of enchantments
     """
+
+    numeral_map = zip(
+        (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1),
+        ('M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I')
+    )
+
     def __init__(self):
         self.enchantments_id = {}
         self.enchantments_name = {}
@@ -312,6 +318,31 @@ class Enchantments(object):
             return self.enchantments_name[lower]
         else:
             return None
+
+    def get_text(self, num, level):
+        """
+        Gets a text representation of a given enchantment
+        """
+        ench = self.get_by_id(num)
+        if ench is None:
+            title = 'Unknown Enchantment'
+        else:
+            title = ench.name
+        return '%s %s' % (title, self.int_to_roman(level))
+
+    def int_to_roman(self, i):
+        """
+        This version taken from one of the suggestions at
+        http://code.activestate.com/recipes/81611-roman-numerals/
+
+        I've only actually tested it out to 20, so YMMV.
+        """
+        result = []
+        for integer, numeral in self.numeral_map:
+            count = int(i / integer)
+            result.append(numeral * count)
+            i -= integer * count
+        return ''.join(result)
 
 class Item(object):
     """
@@ -473,6 +504,12 @@ class EnchantmentSlot(object):
             nbtobj[tagname] = tagval
         return nbtobj
 
+    def has_extra_info(self):
+        """
+        Returns whether or not we have any extra information
+        """
+        return (len(self.extratags) > 0)
+
 class InventorySlot(object):
     """
     Holds information about a particular inventory slot.  We make an effort to
@@ -580,6 +617,19 @@ class InventorySlot(object):
                 tag_nbt[tagname] = tagval
             item_nbt['tag'] = tag_nbt
         return item_nbt
+
+    def has_extra_info(self):
+        """
+        Returns whether or not we have any extra info in our tags
+        """
+        if len(self.extratags) > 0:
+            return True
+        if len(self.extratagtags) > 0:
+            return True
+        for ench in self.enchantments:
+            if ench.has_extra_info():
+                return True
+        return False
 
 class Inventory(object):
     """
@@ -748,7 +798,7 @@ class InvDetails(gtk.Table):
                 self._get_var('item').set_markup('<i>Unknown Item</i>')
                 self._get_var('damage_ext').set_text('')
                 self._get_var('count_ext').set_text('')
-            if len(self.button.inventoryslot.extratags) > 0:
+            if len(self.button.inventoryslot.has_extra_info()) > 0:
                 self.extrainfo.set_markup('<i>Contains extra tag info</i>')
             else:
                 self.extrainfo.set_text('')
@@ -1068,7 +1118,7 @@ class InvButton(gtk.RadioButton):
     Class for an individual button on our inventory screen
     """
 
-    def __init__(self, slot, items, detail, empty=None):
+    def __init__(self, slot, items, enchantments, detail, empty=None):
         super(InvButton, self).__init__()
         self.set_mode(False)
         # TODO: Get the button size down properly
@@ -1078,6 +1128,7 @@ class InvButton(gtk.RadioButton):
         self.set_active(False)
         self.slot = slot
         self.items = items
+        self.enchantments = enchantments
         self.detail = detail
         self.inventoryslot = None
         self.image = InvImage(self, empty)
@@ -1149,7 +1200,11 @@ class InvButton(gtk.RadioButton):
                     suffix = ' (has extra tag info)'
                 else:
                     suffix = ''
-                return '%s%s%s' % (prefix, name, suffix)
+                lines = []
+                lines.append('%s%s%s' % (prefix, name, suffix))
+                for ench in slot.enchantments:
+                    lines.append(self.enchantments.get_text(ench.num, ench.lvl))
+                return "\n".join(lines)
             else:
                 return None
         else:
@@ -1263,12 +1318,13 @@ class BaseInvTable(gtk.Table):
     The class from which our inventory tables derive
     """
 
-    def __init__(self, rows, cols, items, detail, gui_sheet):
+    def __init__(self, rows, cols, items, enchantments, detail, gui_sheet):
         super(BaseInvTable, self).__init__(rows, cols)
 
         self.buttons = {}
         self.group = None
         self.items = items
+        self.enchantments = enchantments
         self.detail = detail
 
         # Trash button
@@ -1281,7 +1337,7 @@ class BaseInvTable(gtk.Table):
         """
         if slot in self.buttons:
             raise Exception("Inventory slot %d already exists" % (slot))
-        button = InvButton(slot, self.items, self.detail, empty)
+        button = InvButton(slot, self.items, self.enchantments, self.detail, empty)
         if self.group is None:
             self.group = button
         else:
@@ -1341,8 +1397,8 @@ class InvTable(BaseInvTable):
     Table to store our basic inventory info that we know about For Sure
     """
 
-    def __init__(self, items, detail, gui_sheet):
-        super(InvTable, self).__init__(5, 9, items, detail, gui_sheet)
+    def __init__(self, items, enchantments, detail, gui_sheet):
+        super(InvTable, self).__init__(5, 9, items, enchantments, detail, gui_sheet)
 
         # Armor slots
         self._new_button(0, 0, 103, 7, empty=gui_sheet.get_tex(0, 0, True))
@@ -1385,12 +1441,12 @@ class ExtraInvTable(BaseInvTable):
 
     button_cols = 9
 
-    def __init__(self, items, detail, gui_sheet):
+    def __init__(self, items, enchantments, detail, gui_sheet):
         """
         There's very little to do here, since all our contents are
         created dynamically via populate_from()
         """
-        super(ExtraInvTable, self).__init__(9, 1, items, detail, gui_sheet)
+        super(ExtraInvTable, self).__init__(9, 1, items, enchantments, detail, gui_sheet)
 
     def populate_from(self, items):
         """
@@ -1802,7 +1858,7 @@ class InvNotebook(gtk.Notebook):
     Our main inventory notebook
     """
 
-    def __init__(self, items, texfiles, app):
+    def __init__(self, items, enchantments, texfiles, app):
         super(InvNotebook, self).__init__()
         self.set_size_request(600, 350)
         self.app = app
@@ -1812,7 +1868,7 @@ class InvNotebook(gtk.Notebook):
         align.set_padding(5, 5, 110, 110)
         itemdetails = InvDetails(items)
         align.add(itemdetails)
-        self.invtable = InvTable(items, itemdetails, texfiles['gui.png'])
+        self.invtable = InvTable(items, enchantments, itemdetails, texfiles['gui.png'])
         worldvbox = gtk.VBox()
         worldvbox.pack_start(self.invtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
@@ -1824,7 +1880,7 @@ class InvNotebook(gtk.Notebook):
         align.set_padding(5, 5, 110, 110)
         itemdetails2 = InvDetails(items)
         align.add(itemdetails2)
-        self.extrainvtable = ExtraInvTable(items, itemdetails2, texfiles['gui.png'])
+        self.extrainvtable = ExtraInvTable(items, enchantments, itemdetails2, texfiles['gui.png'])
         worldvbox = gtk.VBox()
         worldvbox.pack_start(self.extrainvtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
@@ -1911,7 +1967,7 @@ class PyInvEdit(gtk.Window):
         # World Notebook
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 5, 5)
-        self.worldbook = InvNotebook(self.items, self.texfiles, self)
+        self.worldbook = InvNotebook(self.items, self.enchantments, self.texfiles, self)
         align.add(self.worldbook)
         mainhbox.pack_start(align, False, False)
 
