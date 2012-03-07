@@ -661,10 +661,12 @@ class InvDetails(gtk.Table):
     """
     Class to show our inventory item details
     """
-    def __init__(self, items):
+    def __init__(self, parentwin, items, enchantments):
         super(InvDetails, self).__init__(3, 6)
 
+        self.parentwin = parentwin
         self.items = items
+        self.enchantments = enchantments
         self.button = None
         self.updating = True
         self.var_cache = {}
@@ -698,6 +700,39 @@ class InvDetails(gtk.Table):
         self._rowlabel(cur_row, 'Count')
         self._rowspinner(cur_row, 'count', 1, 255)
         self._rowextra(cur_row, 'count_ext')
+
+        cur_row += 1
+        label = gtk.Label()
+        label.set_markup('<b>Enchantments:</b>')
+        align = gtk.Alignment(1, 0, 0, 0)
+        align.set_padding(5, 0, 0, 0)
+        self.ench_add_button = gtk.Button('Add')
+        self.ench_add_button.set_image(gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON))
+        self.ench_add_button.set_tooltip_text('Add new enchantment to this item')
+        self.ench_add_button.connect('clicked', self.add_enchantment)
+        align.add(self.ench_add_button)
+        vbox = gtk.VBox()
+        vbox.pack_start(label, False, True)
+        vbox.pack_start(align, False, True)
+
+        # The spacing we're computing here with tempbutton is hardly accurate under
+        # all circumstances, and is only approximately accurate on my screen anyway.
+        # But, it does look better than without...
+        tempbutton = gtk.Button()
+        tempbutton.set_image(gtk.image_new_from_stock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_MENU))
+        templabel = gtk.Label('Fortune II')
+        button_height = tempbutton.size_request()[1]
+        label_height = templabel.size_request()[1]
+        align = gtk.Alignment(1, 0, 0, 0)
+        align.set_padding((button_height-label_height)/2, 0, 0, 0)
+        align.add(vbox)
+        self.attach(align, 0, 1, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
+
+        self.enchbox = gtk.Table(1, 1)
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.set_padding(3, 3, 5, 0)
+        align.add(self.enchbox)
+        self.attach(align, 1, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
 
         cur_row += 1
         self.extrainfo = gtk.Label()
@@ -779,7 +814,9 @@ class InvDetails(gtk.Table):
             self._get_var('count_ext').set_text('')
             self._get_var('damage').set_sensitive(False)
             self._get_var('count').set_sensitive(False)
+            self.ench_add_button.set_sensitive(False)
             self.extrainfo.set_text('')
+            self.enchbox.set_visible(False)
         else:
             self._get_var('damage').set_sensitive(True)
             self._get_var('count').set_sensitive(True)
@@ -802,6 +839,41 @@ class InvDetails(gtk.Table):
                 self.extrainfo.set_markup('<i>Contains extra tag info</i>')
             else:
                 self.extrainfo.set_text('')
+
+            # Enchantments
+            for contents in self.enchbox.get_children():
+                self.enchbox.remove(contents)
+            if len(self.button.inventoryslot.enchantments) > 0:
+                self.enchbox.resize(3, len(self.button.inventoryslot.enchantments))
+            for idx, ench in enumerate(self.button.inventoryslot.enchantments):
+                ench_text = self.enchantments.get_text(ench.num, ench.lvl)
+                if ench.has_extra_info():
+                    ench_text = '%s <i>(has extra tag info)</i>' % (ench_text)
+                align = gtk.Alignment(0, .5, 0, 0)
+                align.set_padding(0, 0, 0, 5)
+                label = gtk.Label()
+                label.set_markup(ench_text)
+                align.add(label)
+                self.enchbox.attach(align, 0, 1, idx, idx+1, gtk.FILL, gtk.FILL)
+                
+                ench_obj = self.enchantments.get_by_id(ench.num)
+                if ench_obj is not None:
+                    if ench.lvl < ench_obj.max_power:
+                        button = gtk.Button()
+                        button.set_image(gtk.image_new_from_stock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_MENU))
+                        button.set_tooltip_text('Maximize Enchantment Level')
+                        button.connect('clicked', self.ench_max_level, idx)
+                        self.enchbox.attach(button, 1, 2, idx, idx+1, gtk.FILL, gtk.FILL)
+                
+                button = gtk.Button()
+                button.set_image(gtk.image_new_from_stock(gtk.STOCK_CUT, gtk.ICON_SIZE_MENU))
+                button.set_tooltip_text('Delete Enchantment')
+                button.connect('clicked', self.ench_delete, idx)
+                self.enchbox.attach(button, 2, 3, idx, idx+1, gtk.FILL, gtk.FILL)
+
+            self.ench_add_button.set_sensitive(True)
+            self.enchbox.set_visible(True)
+            self.enchbox.show_all()
         self.updating = False
 
     def new_values(self, button, param=None):
@@ -830,6 +902,45 @@ class InvDetails(gtk.Table):
         # Update our Undo object
         global undo
         undo.change()
+
+    def add_enchantment(self, button, param=None):
+        """
+        Adds a new enchantment to this window
+        """
+        dialog = dialogs.NewEnchantmentDialog(self.parentwin, self, self.button.inventoryslot, self.items, self.enchantments)
+        resp = dialog.run()
+        new_num = dialog.ench_id.get_value()
+        new_lvl = dialog.ench_lvl.get_value()
+        dialog.destroy()
+        if resp == gtk.RESPONSE_OK:
+            if new_num >= 0 and new_lvl >= 0:
+                if self.button.inventoryslot is not None:
+                    slot = EnchantmentSlot(num=new_num, lvl=new_lvl)
+                    self.button.inventoryslot.enchantments.append(slot)
+                    self._update_info()
+                    self.button.update_graphics()
+
+    def ench_max_level(self, button, index):
+        """
+        Brings an enchantment up to its maximum level
+        """
+        if self.button.inventoryslot is not None:
+            if index < len(self.button.inventoryslot.enchantments):
+                ench_slot = self.button.inventoryslot.enchantments[index]
+                ench = self.enchantments.get_by_id(ench_slot.num)
+                if ench:
+                    ench_slot.lvl = ench.max_power
+                    self._update_info()
+
+    def ench_delete(self, button, index):
+        """
+        Deletes the given enchantment
+        """
+        if self.button.inventoryslot is not None:
+            if index < len(self.button.inventoryslot.enchantments):
+                self.button.inventoryslot.enchantments.pop(index)
+                self._update_info()
+                self.button.update_graphics()
 
 class InvImage(gtk.DrawingArea):
     """
@@ -1858,7 +1969,7 @@ class InvNotebook(gtk.Notebook):
     Our main inventory notebook
     """
 
-    def __init__(self, items, enchantments, texfiles, app):
+    def __init__(self, parentwin, items, enchantments, texfiles, app):
         super(InvNotebook, self).__init__()
         self.set_size_request(600, 350)
         self.app = app
@@ -1866,7 +1977,7 @@ class InvNotebook(gtk.Notebook):
         # First page: usual group of items
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 110, 110)
-        itemdetails = InvDetails(items)
+        itemdetails = InvDetails(parentwin, items, enchantments)
         align.add(itemdetails)
         self.invtable = InvTable(items, enchantments, itemdetails, texfiles['gui.png'])
         worldvbox = gtk.VBox()
@@ -1878,7 +1989,7 @@ class InvNotebook(gtk.Notebook):
         # Second page: overflow items we don't support directly
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 110, 110)
-        itemdetails2 = InvDetails(items)
+        itemdetails2 = InvDetails(parentwin, items, enchantments)
         align.add(itemdetails2)
         self.extrainvtable = ExtraInvTable(items, enchantments, itemdetails2, texfiles['gui.png'])
         worldvbox = gtk.VBox()
@@ -1936,7 +2047,7 @@ class PyInvEdit(gtk.Window):
     def __init__(self, yamlfile):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
         self.set_title('PyInvEdit - Minecraft Inventory Editor')
-        self.set_size_request(900, 700)
+        self.set_size_request(900, 800)
         self.connect('delete-event', self.action_quit)
         
         # Load our YAML
@@ -1967,7 +2078,7 @@ class PyInvEdit(gtk.Window):
         # World Notebook
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 5, 5)
-        self.worldbook = InvNotebook(self.items, self.enchantments, self.texfiles, self)
+        self.worldbook = InvNotebook(self, self.items, self.enchantments, self.texfiles, self)
         align.add(self.worldbook)
         mainhbox.pack_start(align, False, False)
 

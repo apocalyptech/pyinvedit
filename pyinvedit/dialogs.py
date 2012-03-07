@@ -283,3 +283,257 @@ class InvAboutDialog(gtk.AboutDialog):
                     self.set_license(df.read())
             except Exception:
                 pass
+
+class NewEnchantmentDialog(gtk.Dialog):
+    """
+    A dialog to add a new enchantment to an item
+    """
+    
+    (COL_NAME, COL_OBJ, COL_SELECTABLE) = range(3)
+
+    def __init__(self, parentobj, invdetail, slot, items, enchantments):
+        super(NewEnchantmentDialog, self).__init__('Add New Enchantment',
+                parentobj,
+                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+        self.set_default_response(gtk.RESPONSE_OK)
+
+        self.invdetail = invdetail
+        self.slot = slot
+        self.items = items
+        self.enchantments = enchantments
+        self.updating = True
+
+        if slot is None:
+            raise Exception('No valid inventory slot found')
+
+        self.item = items.get_item(slot.num, slot.damage)
+        if self.item:
+            self.item_name = self.item.name
+        else:
+            self.item_name = 'Unknown Item %d' % (slot.num)
+
+        # Some contents
+        vbox = gtk.VBox()
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 5, 5)
+        align.add(vbox)
+        self.vbox.pack_start(align, True, True)
+
+        # Main title
+        align = gtk.Alignment(.5, 0, 0, 0)
+        align.set_padding(0, 10, 0, 0)
+        label = gtk.Label()
+        label.set_markup('<big><b>Add Enchantment for %s</b></big>' % (self.item_name))
+        align.add(label)
+        vbox.pack_start(align, False, True)
+
+        # A frame for our enchantment selection
+        frame = gtk.Frame('Specify Enchantment')
+        align = gtk.Alignment(0, 0, 1, 0)
+        align.set_padding(5, 5, 10, 10)
+        align.add(frame)
+        vbox.pack_start(align, False, True)
+
+        # And an HBox to show what we've selected
+        hbox = gtk.HBox()
+        align = gtk.Alignment(.5, 0, 0, 0)
+        align.set_padding(15, 5, 5, 5)
+        align.add(hbox)
+        vbox.pack_start(align, False, True)
+        label = gtk.Label()
+        label.set_markup('<b>Selected:</b>')
+        hbox.pack_start(label, False, True, 5)
+        self.selected_text = gtk.Label()
+        self.selected_text.set_markup('<i>None</i>')
+        hbox.add(self.selected_text)
+
+        # Table for enchantment selection
+        enchtable = gtk.Table(3, 5)
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(4, 4, 4, 4)
+        align.add(enchtable)
+        frame.add(align)
+
+        # Make two separate lists, one for valid enchantments, one for
+        # invalid
+        enchs = enchantments.get_all()
+        valid_ench = []
+        invalid_ench = []
+        for ench in enchs:
+            if self.item and ench in self.item.enchantments:
+                valid_ench.append(ench)
+            else:
+                invalid_ench.append(ench)
+
+        # ListStore for all our enchantments that we'll present
+        store = gtk.ListStore(str, object, bool)
+        self._add_to_store(store, 'Valid Enchantments', valid_ench)
+        if len(invalid_ench) > 0 and len (valid_ench) > 0:
+                iterench = store.append()
+                store.set(iterench,
+                        self.COL_NAME, '',
+                        self.COL_OBJ, None,
+                        self.COL_SELECTABLE, False)
+        self._add_to_store(store, 'Invalid Enchantments', invalid_ench, True)
+
+        # ComboBox for these presets
+        self.ench_combo = gtk.ComboBox(store)
+        self.ench_combo.set_entry_text_column(self.COL_NAME)
+        cell = gtk.CellRendererText()
+        self.ench_combo.pack_start(cell, True)
+        self.ench_combo.add_attribute(cell, 'markup', self.COL_NAME)
+
+        # Now contents
+        cur_row = 0
+        self._rowlabel(enchtable, cur_row, 'Preset')
+        self._rowdata(enchtable, cur_row, self.ench_combo)
+
+        # Separator
+        cur_row += 1
+        self._rowseparator(enchtable, cur_row)
+
+        # Name
+        cur_row += 1
+        self._rowlabel(enchtable, cur_row, 'ID')
+        adjust = gtk.Adjustment(0, -1, 65535, 1, 1)
+        self.ench_id = gtk.SpinButton(adjust)
+        self._rowdata(enchtable, cur_row, self.ench_id)
+
+        # ID
+        cur_row += 1
+        self._rowlabel(enchtable, cur_row, 'Name')
+        self.ench_name = gtk.Label()
+        self._rowdata(enchtable, cur_row, self.ench_name)
+
+        # Level
+        cur_row += 1
+        self._rowlabel(enchtable, cur_row, 'Level')
+        adjust = gtk.Adjustment(0, 1, 65535, 1, 1)
+        self.ench_lvl = gtk.SpinButton(adjust)
+        self._rowdata(enchtable, cur_row, self.ench_lvl, False)
+        self.ench_max = gtk.Label()
+        enchtable.attach(self.ench_max, 2, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
+
+        # Connect some signals
+        self.ench_combo.connect('changed', self.choose_preset)
+        self.ench_id.connect('changed', self.spin_changed)
+        self.ench_lvl.connect('changed', self.spin_changed)
+
+        # Make sure everything gets shown
+        self.show_all()
+
+        self.updating = False
+
+    def _add_to_store(self, store, title, enchantments, ital=False):
+        """
+        Adds a list of enchantments to the given store, with the given
+        title above
+        """
+        if len(enchantments) > 0:
+            iterench = store.append()
+            store.set(iterench,
+                    self.COL_NAME, '<b>%s:</b>' % (title),
+                    self.COL_OBJ, None,
+                    self.COL_SELECTABLE, False)
+            for ench in enchantments:
+                if ital:
+                    name = '<i>%s</i>' % (ench.name)
+                else:
+                    name = ench.name
+                iterench = store.append()
+                store.set(iterench,
+                        self.COL_NAME, '   %s' % (name),
+                        self.COL_OBJ, ench,
+                        self.COL_SELECTABLE, True)
+
+    def _rowlabel(self, table, row, text):
+        """
+        A row label
+        """
+        align = gtk.Alignment(1, .5, 0, 0)
+        align.set_padding(0, 0, 0, 5)
+        label = gtk.Label()
+        label.set_markup('<b>%s:</b>' % (text))
+        align.add(label)
+        table.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
+
+    def _rowdata(self, table, row, widget, full=True):
+        """
+        Data
+        """
+        if full:
+            right = 3
+        else:
+            right = 2
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.add(widget)
+        table.attach(align, 1, right, row, row+1, gtk.FILL, gtk.FILL)
+
+    def _rowseparator(self, table, row):
+        """
+        A separator
+        """
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 10, 10)
+        sep = gtk.HSeparator()
+        align.add(sep)
+        table.attach(align, 0, 3, row, row+1, gtk.FILL|gtk.EXPAND, gtk.FILL)
+
+    def choose_preset(self, widget, param=None):
+        """
+        User chose an enchantment from our dropdown
+        """
+        if self.updating:
+            return
+        self.updating = True
+        model = self.ench_combo.get_model()
+        iterench = self.ench_combo.get_active_iter()
+        if iterench is not None:
+            selectable = model.get_value(iterench, self.COL_SELECTABLE)
+            if selectable:
+                ench = model.get_value(iterench, self.COL_OBJ)
+                self.ench_id.set_value(ench.num)
+                self.ench_name.set_text(ench.name)
+                self.ench_lvl.set_value(ench.max_power)
+                self.ench_max.set_markup('<i>(max level: %d)</i>' % (ench.max_power))
+                self.update_chosen()
+            else:
+                self.ench_combo.set_active(-1)
+        self.updating = False
+
+    def spin_changed(self, widget, param=None):
+        """
+        One of our spinbuttons changed
+        """
+        if self.updating:
+            return
+        self.updating = True
+        ench = self.enchantments.get_by_id(self.ench_id.get_value())
+        if ench:
+            self.ench_name.set_text(ench.name)
+            self.ench_lvl.set_value(ench.max_power)
+        found = False
+        for idx, row in enumerate(self.ench_combo.get_model()):
+            obj = row[self.COL_OBJ]
+            if obj:
+                if obj.num == self.ench_id.get_value():
+                    self.ench_combo.set_active(idx)
+                    found = True
+                    break
+        if not found:
+            self.ench_combo.set_active(-1)
+        self.update_chosen()
+        self.updating = False
+
+    def update_chosen(self):
+        """
+        Updates our info about which enchantment we've chosen
+        """
+        if self.ench_id.get_value() >= 0:
+            text = self.enchantments.get_text(self.ench_id.get_value(), self.ench_lvl.get_value())
+        else:
+            text = 'None'
+        self.selected_text.set_markup('<i>%s</i>' % (text))
