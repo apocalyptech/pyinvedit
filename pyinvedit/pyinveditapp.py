@@ -1984,12 +1984,14 @@ class PyInvEdit(gtk.Window):
         # Populate our world submenus (and potentially hide, if we
         # couldn't find any)
         self.populate_world_submenu(self.menu_openfrom, self.load_known, avail_worlds)
+        self.populate_world_submenu(self.menu_importfrom, self.import_known, avail_worlds)
         self.populate_world_submenu(self.menu_saveto, self.save_known, avail_worlds)
 
         # Temporarily disable some menus which should only be active
         # when we've loaded a file
         self.menu_only_loaded = [self.menu_save, self.menu_saveas, self.menu_saveto,
-                self.menu_revert, self.menu_repair, self.menu_fill]
+                self.menu_revert, self.menu_repair, self.menu_fill, self.menu_importfrom,
+                self.menu_import]
         for menu in self.menu_only_loaded:
             menu.set_sensitive(False)
 
@@ -2012,16 +2014,19 @@ class PyInvEdit(gtk.Window):
                 ('/File/_Open',            '<control>O',  self.load,        0, '<StockItem>', gtk.STOCK_OPEN),
                 ('/File/Open From',        None,          None,             0, '<Branch>'),
                 ('/File/sep1',             None,          None,             0, '<Separator>'),
+                ('/File/_Import',          None,          self.importinv,   0, '<StockItem>', gtk.STOCK_GO_FORWARD),
+                ('/File/Import From',      None,          None,             0, '<Branch>'),
+                ('/File/sep2',             None,          None,             0, '<Separator>'),
                 ('/File/_Save',            '<control>S',  self.save,        0, '<StockItem>', gtk.STOCK_SAVE),
                 ('/File/Save _As',         '<control>A',  self.save_as,     0, '<StockItem>', gtk.STOCK_SAVE_AS),
                 ('/File/Save To',          None,          None,             0, '<Branch>'),
                 ('/File/_Revert to Saved', None,          self.revert,      0, '<StockItem>', gtk.STOCK_REVERT_TO_SAVED),
-                ('/File/sep2',             None,          None,             0, '<Separator>'),
+                ('/File/sep3',             None,          None,             0, '<Separator>'),
                 ('/File/_Quit',            '<control>Q',  self.action_quit, 0, '<StockItem>', gtk.STOCK_QUIT),
                 ('/_Edit',                 None,          None,             0, '<Branch>'),
                 #('/Edit/_Undo',            '<control>Z',  self.menu,        0, '<StockItem>', gtk.STOCK_UNDO),
                 #('/Edit/_Redo',            '<control>Y',  self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
-                #('/Edit/sep3',             None,          None,             0, '<Separator>'),
+                #('/Edit/sep4',             None,          None,             0, '<Separator>'),
                 ('/Edit/_Repair All',      '<control>R',  self.repair_all,  0, None),
                 ('/Edit/_Fill All',        '<control>F',  self.fill_all,    0, None),
                 ('/_Help',                 None,          None,             0, '<Branch>'),
@@ -2044,12 +2049,21 @@ class PyInvEdit(gtk.Window):
         # Separator items, they stop rendering properly.  So here's
         # a very stupid way of getting at what I want
         self.menu_openfrom = menu.get_children()[0].get_submenu().get_children()[1]
-        self.menu_save = menu.get_children()[0].get_submenu().get_children()[3]
-        self.menu_saveas = menu.get_children()[0].get_submenu().get_children()[4]
-        self.menu_saveto = menu.get_children()[0].get_submenu().get_children()[5]
-        self.menu_revert = menu.get_children()[0].get_submenu().get_children()[6]
+        self.menu_import = menu.get_children()[0].get_submenu().get_children()[3]
+        self.menu_importfrom = menu.get_children()[0].get_submenu().get_children()[4]
+        self.menu_save = menu.get_children()[0].get_submenu().get_children()[6]
+        self.menu_saveas = menu.get_children()[0].get_submenu().get_children()[7]
+        self.menu_saveto = menu.get_children()[0].get_submenu().get_children()[8]
+        self.menu_revert = menu.get_children()[0].get_submenu().get_children()[9]
         self.menu_repair = menu.get_children()[1].get_submenu().get_children()[0]
         self.menu_fill = menu.get_children()[1].get_submenu().get_children()[1]
+
+        # Tooltips
+        self.menu_import.set_tooltip_markup('Imports the inventory from the specified file, while leaving the rest of the savegame intact <i>(world seed, player position, etc)</i>')
+        self.menu_importfrom.set_tooltip_markup('Imports the inventory from the specified file, while leaving the rest of the savegame intact <i>(world seed, player position, etc)</i>')
+        self.menu_saveto.set_tooltip_markup('Saves our inventory to another file, optionally overwriting the non-inventory data as well <i>(world seed, player position, etc)</i>')
+        self.menu_repair.set_tooltip_text('Repairs all damageable items to full health')
+        self.menu_fill.set_tooltip_text('Fills all slots to their maximum quantity')
 
         # Return
         return menu
@@ -2138,6 +2152,59 @@ class PyInvEdit(gtk.Window):
             if filename is not None:
                 self.load_from_filename(filename)
 
+    def _load_from_filename(self, path):
+        """
+        Loads our NBT data from the given path and returns it, or None
+        if there was an error.  Will throw a dialog for the user if there
+        was an error.
+        """
+        try:
+            leveldat = nbt.load(path)
+
+            # Doublecheck
+            if leveldat is None:
+                dialog = gtk.MessageDialog(self,
+                        gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                        gtk.MESSAGE_ERROR,
+                        gtk.BUTTONS_OK)
+                dialog.set_title('No Data Loaded')
+                dialog.set_markup('No data could be loaded from the specified file!')
+                dialog.run()
+                dialog.destroy()
+                return None
+
+            # More double-checking
+            correct_tags = False
+            try:
+                if 'Data' in leveldat:
+                    if 'Player' in leveldat['Data'].value:
+                        if 'Inventory' in leveldat['Data'].value['Player']:
+                            correct_tags = True
+            except Exception:
+                pass
+
+            if not correct_tags:
+                dialog = gtk.MessageDialog(self,
+                        gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                        gtk.MESSAGE_ERROR,
+                        gtk.BUTTONS_OK)
+                dialog.set_title('Not a valid Minecraft level.dat')
+                dialog.set_markup('The file chosen was a valid NBT file, but did not contain Minecraft inventory data')
+                dialog.run()
+                dialog.destroy()
+                return None
+
+            return leveldat
+
+        except Exception, e:
+            dialog = dialogs.ExceptionDialog(self,
+                    'Error Loading File',
+                    "There was an error loading the file:\n<tt>%s</tt>" % (filename),
+                    e)
+            dialog.run()
+            dialog.destroy()
+            return None
+
     def load_from_filename(self, path, load_inventory=True):
         """
         Loads a level given a filename.  Returns True or False depending
@@ -2147,28 +2214,8 @@ class PyInvEdit(gtk.Window):
         """
 
         # First, do the actual load
-        leveldat = None
-        try:
-            leveldat = nbt.load(path)
-        except Exception, e:
-            dialog = dialogs.ExceptionDialog(self,
-                    'Error Loading File',
-                    "There was an error loading the file:\n<tt>%s</tt>" % (filename),
-                    e)
-            dialog.run()
-            dialog.destroy()
-            return False
-
-        # Doublecheck leveldat
+        leveldat = self._load_from_filename(path)
         if leveldat is None:
-            dialog = gtk.MessageDialog(self,
-                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_ERROR,
-                    gtk.BUTTONS_OK)
-            dialog.set_title('No Data Loaded')
-            dialog.set_markup('No data could be loaded from the specified file!')
-            dialog.run()
-            dialog.destroy()
             return False
 
         # Store our values
@@ -2196,6 +2243,35 @@ class PyInvEdit(gtk.Window):
 
         # And return True, for that warm fuzzy feeling
         return True
+
+    def importinv(self, widget, data=None):
+        """
+        Import the inventory data from an existing map and overwrite it
+        on this savefile (keeping all other data, like seed, player position,
+        etc).
+        """
+        if self.loaded:
+            dialog = dialogs.LoaderDialog(self)
+            filename = dialog.load()
+            dialog.destroy()
+            if filename is not None:
+                self.import_known(widget, None, filename)
+
+    def import_known(self, widget, name, path):
+        """
+        Import the inventory data from an existing map and overwrite it
+        on this savefile (keeping all other data, like seed, player position,
+        etc).
+        """
+        if self.loaded:
+            leveldat = self._load_from_filename(path)
+            if leveldat is None:
+                return
+            self.inventory = Inventory(leveldat['Data'].value['Player'].value['Inventory'].value)
+            self.worldbook.populate_from(self.inventory)
+            global undo
+            undo.change()
+            return
 
     def revert(self, widget, data=None):
         """
