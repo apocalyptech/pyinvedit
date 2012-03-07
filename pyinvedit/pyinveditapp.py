@@ -2001,8 +2001,13 @@ class PyInvEdit(gtk.Window):
         self.inventory = None
         self.loaded = False
 
-    def menu(self, widget, data):
-        print 'hoo'
+    def about(self, widget, data=None):
+        """
+        Sets up our About menu
+        """
+        dialog = dialogs.InvAboutDialog(self)
+        dialog.run()
+        dialog.destroy()
 
     def get_menu(self):
         """
@@ -2030,7 +2035,7 @@ class PyInvEdit(gtk.Window):
                 ('/Edit/_Repair All',      '<control>R',  self.repair_all,  0, None),
                 ('/Edit/_Fill All',        '<control>F',  self.fill_all,    0, None),
                 ('/_Help',                 None,          None,             0, '<Branch>'),
-                ('/Help/_About',           None,          self.menu,        0, '<StockItem>', gtk.STOCK_ABOUT),
+                ('/Help/_About',           None,          self.about,       0, '<StockItem>', gtk.STOCK_ABOUT),
             )
         
         accel_group = gtk.AccelGroup()

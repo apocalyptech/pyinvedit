@@ -34,6 +34,7 @@ import string
 import traceback
 from pymclevel import nbt
 from pyinvedit import vmware
+from pyinvedit import about_name, about_version, about_url, about_authors
 
 class SaveAsDialog(gtk.FileChooserDialog):
     """
@@ -257,3 +258,28 @@ class ConfirmReplaceDialog(gtk.MessageDialog):
         self.set_title('Confirm %s' % (string.capwords(action)))
         self.set_default_response(gtk.RESPONSE_YES)
 
+class InvAboutDialog(gtk.AboutDialog):
+    """
+    Our About dialog
+    """
+
+
+    def __init__(self, parentobj):
+        super(InvAboutDialog, self).__init__()
+
+        global about_name, about_version, about_url, about_authors
+
+        self.set_transient_for(parentobj)
+        self.set_position(gtk.WIN_POS_CENTER_ON_PARENT)
+        self.set_name(about_name)
+        self.set_version(about_version)
+        self.set_website(about_url)
+        self.set_authors(about_authors)
+        self.set_comments('A Minecraft Inventory Editor written in Python')
+        licensepath = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'COPYING.txt')
+        if os.path.isfile(licensepath):
+            try:
+                with open(licensepath, 'r') as df:
+                    self.set_license(df.read())
+            except Exception:
+                pass
