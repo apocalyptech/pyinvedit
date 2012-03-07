@@ -798,7 +798,7 @@ class InvDetails(gtk.Table):
                 self._get_var('item').set_markup('<i>Unknown Item</i>')
                 self._get_var('damage_ext').set_text('')
                 self._get_var('count_ext').set_text('')
-            if len(self.button.inventoryslot.has_extra_info()) > 0:
+            if self.button.inventoryslot.has_extra_info():
                 self.extrainfo.set_markup('<i>Contains extra tag info</i>')
             else:
                 self.extrainfo.set_text('')
@@ -997,7 +997,7 @@ class InvImage(gtk.DrawingArea):
                 self._text_at('+', [.7764, .1686, 1, 1], [0, 0, 0, 1], self.CORNER_NE, True)
 
             # Extra tag info
-            if len(slotinfo.extratags) > 0:
+            if slotinfo.has_extra_info():
                 self._text_at('+', [0, 1, 0, 1], [0, 0, 0, 1], self.CORNER_SW, True)
 
         # Finally, at the very end, copy our stored ImageSurface to our
