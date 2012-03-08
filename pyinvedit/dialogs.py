@@ -330,32 +330,12 @@ class NewEnchantmentDialog(gtk.Dialog):
         align.add(label)
         vbox.pack_start(align, False, True)
 
-        # A frame for our enchantment selection
-        frame = gtk.Frame('Specify Enchantment')
+        # Table for enchantment selection
+        enchtable = gtk.Table(3, 8)
         align = gtk.Alignment(0, 0, 1, 0)
         align.set_padding(5, 5, 10, 10)
-        align.add(frame)
-        vbox.pack_start(align, False, True)
-
-        # And an HBox to show what we've selected
-        hbox = gtk.HBox()
-        align = gtk.Alignment(.5, 0, 0, 0)
-        align.set_padding(15, 5, 5, 5)
-        align.add(hbox)
-        vbox.pack_start(align, False, True)
-        label = gtk.Label()
-        label.set_markup('<b>Selected:</b>')
-        hbox.pack_start(label, False, True, 5)
-        self.selected_text = gtk.Label()
-        self.selected_text.set_markup('<i>None</i>')
-        hbox.add(self.selected_text)
-
-        # Table for enchantment selection
-        enchtable = gtk.Table(3, 5)
-        align = gtk.Alignment(0, 0, 1, 1)
-        align.set_padding(4, 4, 4, 4)
         align.add(enchtable)
-        frame.add(align)
+        vbox.pack_start(align, False, True)
 
         # Make two separate lists, one for valid enchantments, one for
         # invalid
@@ -408,14 +388,36 @@ class NewEnchantmentDialog(gtk.Dialog):
         self.ench_name = gtk.Label()
         self._rowdata(enchtable, cur_row, self.ench_name)
 
+        # Max level identifier
+        cur_row += 1
+        self._rowlabel(enchtable, cur_row, 'Max Level')
+        self.ench_max = gtk.Label()
+        self._rowdata(enchtable, cur_row, self.ench_max)
+
         # Level
         cur_row += 1
         self._rowlabel(enchtable, cur_row, 'Level')
         adjust = gtk.Adjustment(0, 1, 65535, 1, 1)
         self.ench_lvl = gtk.SpinButton(adjust)
-        self._rowdata(enchtable, cur_row, self.ench_lvl, False)
-        self.ench_max = gtk.Label()
-        enchtable.attach(self.ench_max, 2, 3, cur_row, cur_row+1, gtk.FILL|gtk.EXPAND, gtk.FILL)
+        self._rowdata(enchtable, cur_row, self.ench_lvl)
+
+        # Separator
+        cur_row += 1
+        self._rowseparator(enchtable, cur_row)
+
+        # And an HBox to show what we've selected
+        cur_row += 1
+        hbox = gtk.HBox()
+        align = gtk.Alignment(.5, 0, 0, 0)
+        align.set_padding(5, 5, 5, 5)
+        align.add(hbox)
+        enchtable.attach(align, 0, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
+        label = gtk.Label()
+        label.set_markup('<b>Selected:</b>')
+        hbox.pack_start(label, False, True, 5)
+        self.selected_text = gtk.Label()
+        self.selected_text.set_markup('<i>None</i>')
+        hbox.add(self.selected_text)
 
         # Connect some signals
         self.ench_combo.connect('changed', self.choose_preset)
@@ -460,27 +462,23 @@ class NewEnchantmentDialog(gtk.Dialog):
         align.add(label)
         table.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
 
-    def _rowdata(self, table, row, widget, full=True):
+    def _rowdata(self, table, row, widget):
         """
-        Data
+        A data widget, just wrapped up in an Alignment
         """
-        if full:
-            right = 3
-        else:
-            right = 2
         align = gtk.Alignment(0, 0, 0, 0)
         align.add(widget)
-        table.attach(align, 1, right, row, row+1, gtk.FILL, gtk.FILL)
+        table.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
 
     def _rowseparator(self, table, row):
         """
         A separator
         """
         align = gtk.Alignment(0, 0, 1, 1)
-        align.set_padding(5, 5, 10, 10)
+        align.set_padding(15, 15, 10, 10)
         sep = gtk.HSeparator()
         align.add(sep)
-        table.attach(align, 0, 3, row, row+1, gtk.FILL|gtk.EXPAND, gtk.FILL)
+        table.attach(align, 0, 2, row, row+1, gtk.FILL|gtk.EXPAND, gtk.FILL)
 
     def choose_preset(self, widget, param=None):
         """
@@ -498,7 +496,7 @@ class NewEnchantmentDialog(gtk.Dialog):
                 self.ench_id.set_value(ench.num)
                 self.ench_name.set_text(ench.name)
                 self.ench_lvl.set_value(ench.max_power)
-                self.ench_max.set_markup('<i>(max level: %d)</i>' % (ench.max_power))
+                self.ench_max.set_text(str(ench.max_power))
                 self.update_chosen()
             else:
                 self.ench_combo.set_active(-1)
@@ -516,6 +514,9 @@ class NewEnchantmentDialog(gtk.Dialog):
             if ench:
                 self.ench_name.set_text(ench.name)
                 self.ench_lvl.set_value(ench.max_power)
+                self.ench_max.set_text(str(ench.max_power))
+            else:
+                self.ench_name.set_text('Unknown Enchantment %d' % (self.ench_id.get_value()))
             found = False
             for idx, row in enumerate(self.ench_combo.get_model()):
                 obj = row[self.COL_OBJ]
