@@ -1,3 +1,2 @@
- * Enchantment Editing
  * Non-inventory data editing (game type, player position, etc)
  * Perhaps a "help" menu?
