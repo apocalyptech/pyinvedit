@@ -1986,11 +1986,14 @@ class InvNotebook(gtk.Notebook):
         align.set_padding(5, 5, 110, 110)
         itemdetails = InvDetails(parentwin, items, enchantments)
         align.add(itemdetails)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        sw.add_with_viewport(align)
         self.invtable = InvTable(items, enchantments, itemdetails, texfiles['gui.png'])
         worldvbox = gtk.VBox()
         worldvbox.pack_start(self.invtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
-        worldvbox.pack_start(align, True, True)
+        worldvbox.pack_start(sw, True, True)
         self.append_page(worldvbox, gtk.Label('Inventory'))
 
         # Second page: overflow items we don't support directly
@@ -1998,11 +2001,14 @@ class InvNotebook(gtk.Notebook):
         align.set_padding(5, 5, 110, 110)
         itemdetails2 = InvDetails(parentwin, items, enchantments)
         align.add(itemdetails2)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        sw.add_with_viewport(align)
         self.extrainvtable = ExtraInvTable(items, enchantments, itemdetails2, texfiles['gui.png'])
         worldvbox = gtk.VBox()
         worldvbox.pack_start(self.extrainvtable, False, True)
         worldvbox.pack_start(gtk.HSeparator(), False, True)
-        worldvbox.pack_start(align, True, True)
+        worldvbox.pack_start(sw, True, True)
         self.append_page(worldvbox, gtk.Label('Extra Slots'))
 
     def populate_from(self, inventory):
