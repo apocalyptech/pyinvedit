@@ -391,16 +391,16 @@ class NewEnchantmentDialog(gtk.Dialog):
         self._rowlabel(enchtable, cur_row, 'Preset')
         self._rowdata(enchtable, cur_row, self.ench_combo)
 
-        # Separator
-        cur_row += 1
-        self._rowseparator(enchtable, cur_row)
-
         # Name
         cur_row += 1
-        self._rowlabel(enchtable, cur_row, 'ID')
+        self._rowlabel(enchtable, cur_row, 'or ID')
         adjust = gtk.Adjustment(0, -1, 65535, 1, 1)
         self.ench_id = gtk.SpinButton(adjust)
         self._rowdata(enchtable, cur_row, self.ench_id)
+
+        # Separator
+        cur_row += 1
+        self._rowseparator(enchtable, cur_row)
 
         # ID
         cur_row += 1
@@ -415,7 +415,7 @@ class NewEnchantmentDialog(gtk.Dialog):
         self.ench_lvl = gtk.SpinButton(adjust)
         self._rowdata(enchtable, cur_row, self.ench_lvl, False)
         self.ench_max = gtk.Label()
-        enchtable.attach(self.ench_max, 2, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
+        enchtable.attach(self.ench_max, 2, 3, cur_row, cur_row+1, gtk.FILL|gtk.EXPAND, gtk.FILL)
 
         # Connect some signals
         self.ench_combo.connect('changed', self.choose_preset)
