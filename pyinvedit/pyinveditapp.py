@@ -1265,40 +1265,76 @@ class InvButton(gtk.RadioButton):
         self.add(self.image)
         self.connect('clicked', self.on_clicked)
         self.connect('button-release-event', self.on_mouse)
-        self.connect('key-release-event', self.keypress)
+        self.connect('key-release-event', self.key_release)
 
         # Set up drag and drop inbetween items
         target = [ ('', 0, 0) ]
-        self.drag_source_set(gtk.gdk.BUTTON1_MASK, target, gtk.gdk.ACTION_COPY)
+        self.drag_source_set(gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON3_MASK, target, gtk.gdk.ACTION_COPY)
         self.connect('drag_begin', self.drag_begin)
+        self.connect('drag_end', self.drag_end)
         self.drag_dest_set(gtk.DEST_DEFAULT_DROP, target, gtk.gdk.ACTION_COPY)
         self.connect('drag_drop', self.target_drag_drop)
         self.connect('drag_motion', self.target_drag_motion)
+        self.drag_button = 1
+        self.dragging = False
 
-    def keypress(self, widget, event, param=None):
+    def key_release(self, widget, event, param=None):
         """
         Handle a keypress (mostly just 'delete')
         """
-        if gtk.gdk.keyval_name(event.keyval) == 'Delete':
+        key_str = gtk.gdk.keyval_name(event.keyval)
+        if key_str == 'Delete':
             if self.clear():
                 self.update_item()
                 global undo
                 undo.change()
 
     def drag_begin(self, widget, context):
+        """
+        Initiate our drag-n-drop session.  We do two things here:
+        1) Set up the icon shown during the dragging
+        2) Store which mouse button we're using
+        """
+        self.dragging = True
         self.drag_source_set_icon_pixbuf(self.image.get_pixbuf())
+        pointer = self.get_display().get_pointer()
+        mask = pointer[3]
+        if (mask & gtk.gdk.BUTTON1_MASK) == gtk.gdk.BUTTON1_MASK:
+            self.drag_button = 1
+        if (mask & gtk.gdk.BUTTON3_MASK) == gtk.gdk.BUTTON3_MASK:
+            self.drag_button = 3
+
+    def drag_end(self, widget, context):
+        """
+        End a drag-n-drop session
+        """
+        self.dragging = False
 
     def target_drag_drop(self, img, context, x, y, time):
         """
-        What to do when we've received a drag request.  (Mostly just: copy the data)
+        What to do when we've received a drag request, which will either
+        be to copy or swap the data, depending.
         """
         other = context.get_source_widget()
         try:
             # Our dragged object is a fellow InvButton
-            if other.inventoryslot is None:
-                self.inventoryslot = None
+            if other.drag_button == 3:
+                # Overwrite the data
+                if other.inventoryslot is None:
+                    self.inventoryslot = None
+                else:
+                    self.inventoryslot = InventorySlot(other=other.inventoryslot, slot=self.slot)
             else:
-                self.inventoryslot = InventorySlot(other=other.inventoryslot, slot=self.slot)
+                # Move/Swap the data
+                ours = None
+                theirs = None
+                if other.inventoryslot:
+                    ours = InventorySlot(other=other.inventoryslot, slot=self.slot)
+                if self.inventoryslot:
+                    theirs = InventorySlot(other=self.inventoryslot, slot=other.slot)
+                other.inventoryslot = theirs
+                self.inventoryslot = ours
+                other.update_item()
         except AttributeError:
             # Our dragged object is a raw Item
             if other.get_selected_item() is not None:
@@ -1420,7 +1456,7 @@ class InvButton(gtk.RadioButton):
         Process a mouse click (other than our "main" mouse click, which
         will trigger the on_clicked action.
         """
-        if event.button == 3:
+        if not self.dragging and event.button == 3:
             self.set_active(True)
             # Right-click, fill stack or repair damage
             repaired = self.repair()
