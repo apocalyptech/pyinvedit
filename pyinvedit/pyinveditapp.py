@@ -1437,6 +1437,51 @@ class InvButton(gtk.RadioButton):
                     return True
         return False
 
+    def max_ench(self):
+        """
+        Brings all our existing enchantments up to maximum level.  Returns true
+        or false depending on if any data was actually changed.
+        """
+        updated = False
+        if self.inventoryslot is not None:
+            for ench in self.inventoryslot.enchantments:
+                ench_obj = self.enchantments.get_by_id(ench.num)
+                if ench_obj:
+                    if ench.lvl < ench_obj.max_power:
+                        updated = True
+                        ench.lvl = ench_obj.max_power
+        if updated:
+            global undo
+            undo.change()
+        return updated
+
+    def enchant_all(self):
+        """
+        Give our item all available enchantments, and incidentally bring them
+        all up to max level if they're not already.  Returns true or false
+        depending on if any data was actually changed.
+        """
+        updated = False
+        if self.inventoryslot is not None:
+            existing_enchantments = []
+            for ench in self.inventoryslot.enchantments:
+                existing_enchantments.append(ench.num)
+            item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
+            if item:
+                to_add = []
+                for ench_obj in item.enchantments:
+                    if ench_obj.num not in existing_enchantments:
+                        to_add.append(EnchantmentSlot(num=ench_obj.num, lvl=ench_obj.max_power))
+                        updated = True
+                for ench_slot in to_add:
+                    self.inventoryslot.enchantments.append(ench_slot)
+        if self.max_ench():
+            updated = True
+        if updated:
+            global undo
+            undo.change()
+        return updated
+
 class BaseInvTable(gtk.Table):
     """
     The class from which our inventory tables derive
@@ -1500,6 +1545,22 @@ class BaseInvTable(gtk.Table):
         """
         for button in self.buttons.values():
             if button.fill():
+                button.update_item()
+
+    def enchant_all(self):
+        """
+        Enchants all items with all possible enchantments
+        """
+        for button in self.buttons.values():
+            if button.enchant_all():
+                button.update_item()
+
+    def max_ench(self):
+        """
+        Brings all existing enchantments up to their maximum levels
+        """
+        for button in self.buttons.values():
+            if button.max_ench():
                 button.update_item()
 
     def export_nbt(self):
@@ -2044,6 +2105,20 @@ class InvNotebook(gtk.Notebook):
         self.invtable.fill_all()
         self.extrainvtable.fill_all()
 
+    def enchant_all(self):
+        """
+        Enchants all items with all applicable enchantments
+        """
+        self.invtable.enchant_all()
+        self.extrainvtable.enchant_all()
+
+    def max_ench(self):
+        """
+        Brings all existing enchantments up to their maximum values
+        """
+        self.invtable.max_ench()
+        self.extrainvtable.max_ench()
+
     def update_tabs(self):
         """
         Update our tab labels appropriately
@@ -2122,7 +2197,7 @@ class PyInvEdit(gtk.Window):
         # when we've loaded a file
         self.menu_only_loaded = [self.menu_save, self.menu_saveas, self.menu_saveto,
                 self.menu_revert, self.menu_repair, self.menu_fill, self.menu_importfrom,
-                self.menu_import]
+                self.menu_import, self.menu_enchant_all, self.menu_max_ench]
         for menu in self.menu_only_loaded:
             menu.set_sensitive(False)
 
@@ -2165,6 +2240,8 @@ class PyInvEdit(gtk.Window):
                 #('/Edit/sep4',             None,          None,             0, '<Separator>'),
                 ('/Edit/_Repair All',      '<control>R',  self.repair_all,  0, None),
                 ('/Edit/_Fill All',        '<control>F',  self.fill_all,    0, None),
+                ('/Edit/_Enchant All',     '<control>E',  self.enchant_all, 0, None),
+                ('/Edit/_Maximize Enchantments', '<control>M', self.max_ench, 0, None),
                 ('/_Help',                 None,          None,             0, '<Branch>'),
                 ('/Help/_About',           None,          self.about,       0, '<StockItem>', gtk.STOCK_ABOUT),
             )
@@ -2193,6 +2270,8 @@ class PyInvEdit(gtk.Window):
         self.menu_revert = menu.get_children()[0].get_submenu().get_children()[9]
         self.menu_repair = menu.get_children()[1].get_submenu().get_children()[0]
         self.menu_fill = menu.get_children()[1].get_submenu().get_children()[1]
+        self.menu_enchant_all = menu.get_children()[1].get_submenu().get_children()[2]
+        self.menu_max_ench = menu.get_children()[1].get_submenu().get_children()[3]
 
         # Tooltips
         self.menu_import.set_tooltip_markup('Imports the inventory from the specified file, while leaving the rest of the savegame intact <i>(world seed, player position, etc)</i>')
@@ -2200,6 +2279,8 @@ class PyInvEdit(gtk.Window):
         self.menu_saveto.set_tooltip_markup('Saves our inventory to another file, optionally overwriting the non-inventory data as well <i>(world seed, player position, etc)</i>')
         self.menu_repair.set_tooltip_text('Repairs all damageable items to full health')
         self.menu_fill.set_tooltip_text('Fills all slots to their maximum quantity')
+        self.menu_enchant_all.set_tooltip_text('Enchants all items with all available enchantments for that item')
+        self.menu_max_ench.set_tooltip_text('Brings all existing item enchantments up to their maximum level')
 
         # Return
         return menu
@@ -2482,6 +2563,22 @@ class PyInvEdit(gtk.Window):
         """
         if self.loaded:
             self.worldbook.fill_all()
+
+    def enchant_all(self, widget, data=None):
+        """
+        Puts all available enchantments on all items that
+        support it.
+        """
+        if self.loaded:
+            self.worldbook.enchant_all()
+
+    def max_ench(self, widget, data=None):
+        """
+        Brings all existing enchantments on items up to their
+        max levels
+        """
+        if self.loaded:
+            self.worldbook.max_ench()
 
     def load_from_yaml(self, filename):
         """
