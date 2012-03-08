@@ -511,20 +511,21 @@ class NewEnchantmentDialog(gtk.Dialog):
         if self.updating:
             return
         self.updating = True
-        ench = self.enchantments.get_by_id(self.ench_id.get_value())
-        if ench:
-            self.ench_name.set_text(ench.name)
-            self.ench_lvl.set_value(ench.max_power)
-        found = False
-        for idx, row in enumerate(self.ench_combo.get_model()):
-            obj = row[self.COL_OBJ]
-            if obj:
-                if obj.num == self.ench_id.get_value():
-                    self.ench_combo.set_active(idx)
-                    found = True
-                    break
-        if not found:
-            self.ench_combo.set_active(-1)
+        if widget == self.ench_id:
+            ench = self.enchantments.get_by_id(self.ench_id.get_value())
+            if ench:
+                self.ench_name.set_text(ench.name)
+                self.ench_lvl.set_value(ench.max_power)
+            found = False
+            for idx, row in enumerate(self.ench_combo.get_model()):
+                obj = row[self.COL_OBJ]
+                if obj:
+                    if obj.num == self.ench_id.get_value():
+                        self.ench_combo.set_active(idx)
+                        found = True
+                        break
+            if not found:
+                self.ench_combo.set_active(-1)
         self.update_chosen()
         self.updating = False
 

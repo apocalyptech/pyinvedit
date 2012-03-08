@@ -919,6 +919,8 @@ class InvDetails(gtk.Table):
                     self.button.inventoryslot.enchantments.append(slot)
                     self._update_info()
                     self.button.update_graphics()
+                    global undo
+                    undo.change()
 
     def ench_max_level(self, button, index):
         """
@@ -929,8 +931,11 @@ class InvDetails(gtk.Table):
                 ench_slot = self.button.inventoryslot.enchantments[index]
                 ench = self.enchantments.get_by_id(ench_slot.num)
                 if ench:
-                    ench_slot.lvl = ench.max_power
-                    self._update_info()
+                    if ench_slot.lvl != ench.max_power:
+                        ench_slot.lvl = ench.max_power
+                        self._update_info()
+                        global undo
+                        undo.change()
 
     def ench_delete(self, button, index):
         """
@@ -941,6 +946,8 @@ class InvDetails(gtk.Table):
                 self.button.inventoryslot.enchantments.pop(index)
                 self._update_info()
                 self.button.update_graphics()
+                global undo
+                undo.change()
 
 class InvImage(gtk.DrawingArea):
     """
