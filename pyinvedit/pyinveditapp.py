@@ -702,49 +702,32 @@ class InvDetails(gtk.Table):
         self._rowextra(cur_row, 'count_ext')
 
         cur_row += 1
-        label = gtk.Label()
-        label.set_markup('<b>Enchantments:</b>')
-        align = gtk.Alignment(1, 0, 0, 0)
-        align.set_padding(5, 0, 0, 0)
-        self.ench_add_button = gtk.Button('Add')
-        self.ench_add_button.set_image(gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_BUTTON))
-        self.ench_add_button.set_tooltip_text('Add new enchantment to this item')
-        self.ench_add_button.connect('clicked', self.add_enchantment)
-        align.add(self.ench_add_button)
-        vbox = gtk.VBox()
-        vbox.pack_start(label, False, True)
-        vbox.pack_start(align, False, True)
+        self._rowlabel(cur_row, 'Enchantments', True)
 
-        # The spacing we're computing here with tempbutton is hardly accurate under
-        # all circumstances, and is only approximately accurate on my screen anyway.
-        # But, it does look better than without...
-        tempbutton = gtk.Button()
-        tempbutton.set_image(gtk.image_new_from_stock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_MENU))
-        templabel = gtk.Label('Fortune II')
-        button_height = tempbutton.size_request()[1]
-        label_height = templabel.size_request()[1]
-        align = gtk.Alignment(1, 0, 0, 0)
-        align.set_padding((button_height-label_height)/2, 0, 0, 0)
-        align.add(vbox)
-        self.attach(align, 0, 1, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
-
+        self.ench_vport = gtk.Viewport()
+        self.ench_vport.set_shadow_type(gtk.SHADOW_IN)
         self.enchbox = gtk.Table(1, 1)
         align = gtk.Alignment(0, 0, 0, 0)
         align.set_padding(3, 3, 5, 0)
         align.add(self.enchbox)
-        self.attach(align, 1, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
+        self.ench_vport.add(align)
+        self.attach(self.ench_vport, 1, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
 
         cur_row += 1
         self.extrainfo = gtk.Label()
         self.attach(self.extrainfo, 0, 3, cur_row, cur_row+1, gtk.FILL, gtk.FILL)
 
-    def _rowlabel(self, row, text):
+    def _rowlabel(self, row, text, top=False):
         """
         A label on the given row
         """
         label = gtk.Label()
         label.set_markup('<b>%s:</b>' % (text))
-        align = gtk.Alignment(1, .5, 0, 0)
+        if top:
+            align = gtk.Alignment(1, 0, 0, 0)
+            align.set_padding(5, 0, 0, 0)
+        else:
+            align = gtk.Alignment(1, .5, 0, 0)
         align.add(label)
         self.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
 
@@ -814,9 +797,8 @@ class InvDetails(gtk.Table):
             self._get_var('count_ext').set_text('')
             self._get_var('damage').set_sensitive(False)
             self._get_var('count').set_sensitive(False)
-            self.ench_add_button.set_sensitive(False)
             self.extrainfo.set_text('')
-            self.enchbox.set_visible(False)
+            self.ench_vport.set_visible(False)
         else:
             self._get_var('damage').set_sensitive(True)
             self._get_var('count').set_sensitive(True)
@@ -843,9 +825,11 @@ class InvDetails(gtk.Table):
             # Enchantments
             for contents in self.enchbox.get_children():
                 self.enchbox.remove(contents)
-            if len(self.button.inventoryslot.enchantments) > 0:
-                self.enchbox.resize(3, len(self.button.inventoryslot.enchantments))
+            self.enchbox.resize(3, len(self.button.inventoryslot.enchantments)+1)
+            last_idx = -1
             for idx, ench in enumerate(self.button.inventoryslot.enchantments):
+
+                # First the enchantment text itself
                 ench_text = self.enchantments.get_text(ench.num, ench.lvl)
                 if ench.has_extra_info():
                     ench_text = '%s <i>(has extra tag info)</i>' % (ench_text)
@@ -856,6 +840,7 @@ class InvDetails(gtk.Table):
                 align.add(label)
                 self.enchbox.attach(align, 0, 1, idx, idx+1, gtk.FILL, gtk.FILL)
                 
+                # If we're not at (or above) the enchantment's max value, a button to do that
                 ench_obj = self.enchantments.get_by_id(ench.num)
                 if ench_obj is not None:
                     if ench.lvl < ench_obj.max_power:
@@ -865,15 +850,35 @@ class InvDetails(gtk.Table):
                         button.connect('clicked', self.ench_max_level, idx)
                         self.enchbox.attach(button, 1, 2, idx, idx+1, gtk.FILL, gtk.FILL)
                 
+                # And a button to delete
                 button = gtk.Button()
                 button.set_image(gtk.image_new_from_stock(gtk.STOCK_CUT, gtk.ICON_SIZE_MENU))
                 button.set_tooltip_text('Delete Enchantment')
                 button.connect('clicked', self.ench_delete, idx)
                 self.enchbox.attach(button, 2, 3, idx, idx+1, gtk.FILL, gtk.FILL)
 
-            self.ench_add_button.set_sensitive(True)
-            self.enchbox.set_visible(True)
-            self.enchbox.show_all()
+                last_idx = idx
+
+            # Now the enchantment Add button
+            button = gtk.Button()
+            button.set_image(gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU))
+            button.set_tooltip_text('Add new enchantment to this item')
+            button.connect('clicked', self.add_enchantment)
+            align = gtk.Alignment(0, 0, 1, 0)
+            align.add(button)
+            self.enchbox.attach(align, 0, 1, last_idx+1, last_idx+2, 0, gtk.FILL)
+
+
+            # If we have at least one enchantment, draw a border
+            if len(self.button.inventoryslot.enchantments) > 0:
+                self.ench_vport.set_shadow_type(gtk.SHADOW_IN)
+            else:
+                self.ench_vport.set_shadow_type(gtk.SHADOW_NONE)
+
+            # Show everything
+            self.ench_vport.set_visible(True)
+            self.ench_vport.show_all()
+
         self.updating = False
 
     def new_values(self, button, param=None):
