@@ -2123,10 +2123,14 @@ class InvNotebook(gtk.Notebook):
         """
         Update our tab labels appropriately
         """
-        if self.app.leveldat['Data'].value['LevelName'] is not None:
-            title = '%s Inventory' % (self.app.leveldat['Data'].value['LevelName'].value)
+        if self.app.multiplayer:
+            (path, filename) = os.path.split(self.app.filename)
+            title = '%s Inventory' % (filename)
         else:
-            title = 'Inventory'
+            if self.app.leveldat['Data'].value['LevelName'] is not None:
+                title = '%s Inventory' % (self.app.leveldat['Data'].value['LevelName'].value)
+            else:
+                title = 'Inventory'
         self.set_tab_label(self.get_nth_page(0), gtk.Label(title))
         if (len(self.extrainvtable.buttons) > 0):
             self.get_nth_page(1).show()
@@ -2373,7 +2377,10 @@ class PyInvEdit(gtk.Window):
         """
         Loads our NBT data from the given path and returns it, or None
         if there was an error.  Will throw a dialog for the user if there
-        was an error.
+        was an error.  Also sets the var self.last_load_multiplayer as a
+        boolean, if what we loaded was a multiplayer server's player.dat
+        file, as opposed to the singleplayer level.dat (the inventory
+        location is different in those)
         """
         try:
             leveldat = nbt.load(path)
@@ -2396,7 +2403,11 @@ class PyInvEdit(gtk.Window):
                 if 'Data' in leveldat:
                     if 'Player' in leveldat['Data'].value:
                         if 'Inventory' in leveldat['Data'].value['Player']:
+                            self.last_load_multiplayer = False
                             correct_tags = True
+                elif 'Inventory' in leveldat:
+                    self.last_load_multiplayer = True
+                    correct_tags = True
             except Exception:
                 pass
 
@@ -2438,10 +2449,14 @@ class PyInvEdit(gtk.Window):
         # Store our values
         self.filename = path
         self.leveldat = leveldat
+        self.multiplayer = self.last_load_multiplayer
 
         # Now get to work
         if load_inventory:
-            self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
+            if self.multiplayer:
+                self.inventory = Inventory(self.leveldat['Inventory'].value)
+            else:
+                self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
             self.worldbook.populate_from(self.inventory)
         self.loaded = True
         self.loadmessage.hide()
@@ -2484,7 +2499,10 @@ class PyInvEdit(gtk.Window):
             leveldat = self._load_from_filename(path)
             if leveldat is None:
                 return
-            self.inventory = Inventory(leveldat['Data'].value['Player'].value['Inventory'].value)
+            if self.last_load_multiplayer:
+                self.inventory = Inventory(leveldat['Inventory'].value)
+            else:
+                self.inventory = Inventory(leveldat['Data'].value['Player'].value['Inventory'].value)
             self.worldbook.populate_from(self.inventory)
             global undo
             undo.change()
@@ -2535,7 +2553,10 @@ class PyInvEdit(gtk.Window):
         Save our data
         """
         if self.loaded:
-            self.leveldat['Data'].value['Player'].value['Inventory'].value = self.worldbook.export_inv_nbt()
+            if self.multiplayer:
+                self.leveldat['Inventory'].value = self.worldbook.export_inv_nbt()
+            else:
+                self.leveldat['Data'].value['Player'].value['Inventory'].value = self.worldbook.export_inv_nbt()
             self.leveldat.saveGzipped(self.filename)
             dialog = gtk.MessageDialog(self,
                     gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
