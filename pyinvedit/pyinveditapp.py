@@ -398,6 +398,12 @@ class Item(object):
         else:
             self.max_quantity = 64
 
+        # all_data, if we have it
+        if 'all_data' in yamlobj:
+            self.all_data = yamlobj['all_data']
+        else:
+            self.all_data = False
+
         # See if we have any enchantments
         self.enchantments = []
         if 'enchantments' in yamlobj:
@@ -1084,17 +1090,17 @@ class InvImage(gtk.DrawingArea):
                 self._text_at('%d' % (slotinfo.count), [1, 1, 1, 1], outlinecolor, self.CORNER_SE)
 
             # Damage (either bar or number)
-            if slotinfo.damage > 0:
+            if item is not None and item.all_data:
+                # Report on data value, but it's not an error
+                self._text_at('%d' % (slotinfo.damage), [.2, .2, 1, 1], [1, 1, 1, 1], self.CORNER_NW)
+            elif slotinfo.damage > 0:
                 if item is None:
                     # No item data to compare against, assume that it's wrong, I guess
                     self._text_at('%d' % (slotinfo.damage), [1, 0, 0, 1], [0, 0, 0, 1], self.CORNER_NW)
                 elif item.max_damage is None:
                     # No max damage defined, so check for the Unique ID to see if we're a known data
                     # type or not.
-                    if item.data == slotinfo.damage:
-                        # We're good, show nothing
-                        pass
-                    else:
+                    if item.data != slotinfo.damage:
                         # Invalid data, apparently!  Red text.
                         self._text_at('%d' % (slotinfo.damage), [1, 0, 0, 1], [0, 0, 0, 1], self.CORNER_NW)
                 else:
@@ -1314,6 +1320,8 @@ class InvButton(gtk.RadioButton):
                     if item.max_damage is not None and slot.damage > 0:
                         percent = int(100*(slot.damage / float(item.max_damage)))
                         name = '%s, %d%% damaged' % (item.name, percent)
+                    elif item.all_data:
+                        name = '%s %d' % (item.name, slot.damage)
                     else:
                         name = item.name
                 if slot.count > 1:

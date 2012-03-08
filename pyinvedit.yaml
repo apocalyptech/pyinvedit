@@ -72,6 +72,10 @@
 #
 #       enchantments - A list of enchantments which are valid for this
 #          item, based on the name of the enchantment.
+#
+#       all_data - Defaults to "false" - when true, PyInvEdit will consider
+#          all data values valid for this item, and always display the data.
+#          Currently only used for Maps
 #    
 
 texfiles:
@@ -2167,6 +2171,7 @@ items:
     coords: [12, 3]
     max_quantity: 1
     groups: [Tools]
+    all_data: true
 
   - num: 359
     name: Shears
