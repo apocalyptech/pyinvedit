@@ -1118,7 +1118,7 @@ class InvImage(gtk.DrawingArea):
 
             # Enchantments
             if len(slotinfo.enchantments) > 0:
-                self._text_at('+', [.7764, .1686, 1, 1], [0, 0, 0, 1], self.CORNER_NE, True)
+                self._text_at('+%d' % (len(slotinfo.enchantments)), [.7764, .1686, 1, 1], [0, 0, 0, 1], self.CORNER_NE)
 
             # Extra tag info
             if slotinfo.has_extra_info():
