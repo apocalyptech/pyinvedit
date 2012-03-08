@@ -153,7 +153,7 @@ groups:
 
   - name: Wool
     texfile: terrain.png
-    coords: [0, 4]
+    coords: [2, 12]
 
   - name: Logic
     texfile: items.png
