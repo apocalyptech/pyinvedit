@@ -1265,6 +1265,7 @@ class InvButton(gtk.RadioButton):
         self.add(self.image)
         self.connect('clicked', self.on_clicked)
         self.connect('button-release-event', self.on_mouse)
+        self.connect('key-release-event', self.keypress)
 
         # Set up drag and drop inbetween items
         target = [ ('', 0, 0) ]
@@ -1273,6 +1274,16 @@ class InvButton(gtk.RadioButton):
         self.drag_dest_set(gtk.DEST_DEFAULT_DROP, target, gtk.gdk.ACTION_COPY)
         self.connect('drag_drop', self.target_drag_drop)
         self.connect('drag_motion', self.target_drag_motion)
+
+    def keypress(self, widget, event, param=None):
+        """
+        Handle a keypress (mostly just 'delete')
+        """
+        if gtk.gdk.keyval_name(event.keyval) == 'Delete':
+            if self.clear():
+                self.update_item()
+                global undo
+                undo.change()
 
     def drag_begin(self, widget, context):
         self.drag_source_set_icon_pixbuf(self.image.get_pixbuf())
@@ -1364,8 +1375,12 @@ class InvButton(gtk.RadioButton):
         """
         Clears out our stored inventory slot
         """
-        self.inventoryslot = None
-        self.update_graphics()
+        if self.inventoryslot:
+            self.inventoryslot = None
+            self.update_graphics()
+            return True
+        else:
+            return False
 
     def update_slot(self, inventoryslot):
         """
