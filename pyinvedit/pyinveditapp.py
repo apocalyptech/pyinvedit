@@ -38,6 +38,7 @@ import pangocairo
 import collections
 from pymclevel import nbt, mclevelbase
 from pyinvedit import dialogs
+from pyinvedit import about_name, about_version
 
 def get_pixbuf_from_surface(surface):
     """
@@ -2064,7 +2065,8 @@ class PyInvEdit(gtk.Window):
 
     def __init__(self, yamlfile):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
-        self.set_title('PyInvEdit - Minecraft Inventory Editor')
+        global about_name, about_version
+        self.set_title('%s %s - Minecraft Inventory Editor' % (about_name, about_version))
         self.set_size_request(900, 800)
         self.connect('delete-event', self.action_quit)
         
