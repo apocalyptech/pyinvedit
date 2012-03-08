@@ -283,6 +283,12 @@ class InvAboutDialog(gtk.AboutDialog):
                     self.set_license(df.read())
             except Exception:
                 pass
+        iconpath = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'logo.png')
+        if os.path.isfile(iconpath):
+            try:
+                self.set_logo(gtk.gdk.pixbuf_new_from_file(iconpath))
+            except Exception, e:
+                pass
 
 class NewEnchantmentDialog(gtk.Dialog):
     """
