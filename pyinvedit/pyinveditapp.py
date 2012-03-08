@@ -2102,7 +2102,7 @@ class InvNotebook(gtk.Notebook):
     Our main inventory notebook
     """
 
-    def __init__(self, parentwin, items, enchantments, texfiles, app):
+    def __init__(self, app, items, enchantments, texfiles):
         super(InvNotebook, self).__init__()
         self.set_size_request(600, 350)
         self.app = app
@@ -2110,7 +2110,7 @@ class InvNotebook(gtk.Notebook):
         # First page: usual group of items
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 110, 110)
-        itemdetails = InvDetails(parentwin, items, enchantments)
+        itemdetails = InvDetails(app, items, enchantments)
         align.add(itemdetails)
         sw = gtk.ScrolledWindow()
         sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -2125,7 +2125,7 @@ class InvNotebook(gtk.Notebook):
         # Second page: overflow items we don't support directly
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 110, 110)
-        itemdetails2 = InvDetails(parentwin, items, enchantments)
+        itemdetails2 = InvDetails(app, items, enchantments)
         align.add(itemdetails2)
         sw = gtk.ScrolledWindow()
         sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -2236,7 +2236,7 @@ class PyInvEdit(gtk.Window):
         # World Notebook
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 5, 5)
-        self.worldbook = InvNotebook(self, self.items, self.enchantments, self.texfiles, self)
+        self.worldbook = InvNotebook(self, self.items, self.enchantments, self.texfiles)
         align.add(self.worldbook)
         mainhbox.pack_start(align, False, False)
 
