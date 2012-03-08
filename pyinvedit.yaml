@@ -87,45 +87,29 @@ texfiles:
 
 groups:
 
-  - name: Shovels
+  - name: Wood and Leather
     texfile: items.png
-    coords: [2, 5]
+    coords: [0, 1]
 
-  - name: Pickaxes
+  - name: Stone and Chainmail
     texfile: items.png
-    coords: [2, 6]
+    coords: [1, 1]
 
-  - name: Axes
+  - name: Iron
     texfile: items.png
-    coords: [2, 7]
+    coords: [2, 1]
 
-  - name: Hoes
+  - name: Diamond
     texfile: items.png
-    coords: [2, 8]
+    coords: [3, 1]
 
-  - name: Swords
+  - name: Gold
     texfile: items.png
-    coords: [2, 4]
+    coords: [4, 1]
 
   - name: Tools
     texfile: items.png
     coords: [5, 1]
-
-  - name: Head
-    texfile: items.png
-    coords: [15, 0]
-
-  - name: Chest
-    texfile: items.png
-    coords: [15, 1]
-
-  - name: Legs
-    texfile: items.png
-    coords: [15, 2]
-
-  - name: Feet
-    texfile: items.png
-    coords: [15, 3]
 
   - name: Natural
     texfile: terrain.png
@@ -147,7 +131,7 @@ groups:
     texfile: terrain.png
     coords: [7, 6]
 
-  - name: TheEnd
+  - name: The End
     texfile: terrain.png
     coords: [15, 10]
 
@@ -218,6 +202,10 @@ groups:
   - name: Brewing
     texfile: terrain.png
     coords: [13, 9]
+
+  - name: Enchanting
+    texfile: terrain.png
+    coords: [6, 11]
 
 enchantments:
 
@@ -342,25 +330,28 @@ items:
     texfile: terrain.png
     coords: [15, 0]
     data: 0
-    groups: [Plants]
+    groups: [Plants, Farming]
 
   - num: 6
     name: Spruce Sapling
     texfile: terrain.png
     coords: [15, 3]
     data: 1
+    groups: [Plants, Farming]
 
   - num: 6
     name: Birch Sapling
     texfile: terrain.png
     coords: [15, 4]
     data: 2
+    groups: [Plants, Farming]
 
   - num: 6
     name: Jungle Sapling
     texfile: terrain.png
     coords: [14, 1]
     data: 3
+    groups: [Plants, Farming]
 
   - num: 7
     name: Bedrock
@@ -429,18 +420,21 @@ items:
     texfile: terrain.png
     coords: [4, 7]
     data: 1
+    groups: [Wood]
 
   - num: 17
     name: Birch Wood
     texfile: terrain.png
     coords: [5, 7]
     data: 2
+    groups: [Wood]
 
   - num: 17
     name: Jungle Wood
     texfile: terrain.png
     coords: [9, 9]
     data: 3
+    groups: [Wood]
 
   - num: 18
     name: Leaves
@@ -454,18 +448,21 @@ items:
     texfile: special.png
     coords: [5, 1]
     data: 1
+    groups: [Plants]
 
   - num: 18
     name: Birch Leaves
     texfile: special.png
     coords: [5, 2]
     data: 2
+    groups: [Plants]
 
   - num: 18
     name: Jungle Leaves
     texfile: special.png
     coords: [6, 0]
     data: 3
+    groups: [Plants]
 
   - num: 19
     name: Sponge
@@ -542,6 +539,7 @@ items:
     texfile: terrain.png
     data: 0
     coords: [7, 3]
+    groups: [Plants]
 
   - num: 31
     name: Tall Grass
@@ -702,13 +700,13 @@ items:
     name: Brown Mushroom
     texfile: terrain.png
     coords: [13, 1]
-    groups: [Mushroom]
+    groups: [Mushroom, Plants, Farming]
 
   - num: 40
     name: Red Mushroom
     texfile: terrain.png
     coords: [12, 1]
-    groups: [Mushroom]
+    groups: [Mushroom, Plants, Farming]
 
   - num: 41
     name: Block of Gold
@@ -739,6 +737,7 @@ items:
     texfile: terrain.png
     coords: [4, 0]
     data: 2
+    groups: [Wood]
 
   - num: 43
     name: Double Stone Slab
@@ -747,13 +746,13 @@ items:
     data: 3
 
   - num: 43
-    name: Double Bricks Slab
+    name: Double Brick Slab
     texfile: terrain.png
     coords: [7, 0]
     data: 4
 
   - num: 43
-    name: Double Stone Bricks Slab
+    name: Double Stone Brick Slab
     texfile: terrain.png
     coords: [6, 3]
     data: 5
@@ -780,21 +779,21 @@ items:
     groups: [Wood]
 
   - num: 44
-    name: Stone Slab
+    name: Cobblestone Slab
     texfile: special.png
     coords: [1, 0]
     data: 3
     groups: [Stone]
 
   - num: 44
-    name: Bricks Slab
+    name: Brick Slab
     texfile: special.png
     coords: [0, 0]
     data: 4
     groups: [Stone]
 
   - num: 44
-    name: Stone Bricks Slab
+    name: Stone Brick Slab
     texfile: special.png
     coords: [2, 0]
     data: 5
@@ -816,7 +815,7 @@ items:
     name: Bookshelf
     texfile: terrain.png
     coords: [3, 2]
-    groups: [Wood]
+    groups: [Wood, Enchanting]
 
   - num: 48
     name: Moss Stone
@@ -828,7 +827,7 @@ items:
     name: Obsidian
     texfile: terrain.png
     coords: [5, 2]
-    groups: [Ores]
+    groups: [Ores, The End]
 
   - num: 50
     name: Torch
@@ -926,7 +925,7 @@ items:
     groups: [Transport]
 
   - num: 67
-    name: Stone Stairs
+    name: Cobblestone Stairs
     texfile: special.png
     coords: [1, 1]
     groups: [Stone]
@@ -1025,8 +1024,8 @@ items:
   - num: 84
     name: Jukebox
     texfile: terrain.png
-    coords: [10, 4]
-    groups: [Special]
+    coords: [11, 4]
+    groups: [Special, Music]
 
   - num: 85
     name: Fence
@@ -1064,7 +1063,7 @@ items:
     coords: [0, 5]
 
   - num: 91
-    name: Jack-o-lantern
+    name: "Jack-o'-lantern"
     texfile: terrain.png
     coords: [8, 7]
     groups: [Farming]
@@ -1112,28 +1111,33 @@ items:
     texfile: terrain.png
     coords: [4, 6]
     data: 1
+    groups: [Stone]
 
   - num: 98
     name: Damaged Stone Bricks
     texfile: terrain.png
     coords: [5, 6]
     data: 2
+    groups: [Stone]
 
   - num: 98
     name: Circular Stone Bricks
     texfile: terrain.png
     coords: [5, 13]
     data: 3
+    groups: [Stone]
 
   - num: 99
     name: Brown Mushroom Block
     texfile: terrain.png
     coords: [13, 7]
+    groups: [Mushroom]
 
   - num: 100
     name: Red Mushroom Block
     texfile: terrain.png
     coords: [14, 7]
+    groups: [Mushroom]
 
   - num: 101
     name: Iron Bars
@@ -1191,7 +1195,7 @@ items:
     name: Mycelium
     texfile: terrain.png
     coords: [13, 4]
-    groups: [Mushroom]
+    groups: [Mushroom, Plants]
 
   - num: 111
     name: Lily Pad
@@ -1226,13 +1230,12 @@ items:
     name: Enchantment Table
     texfile: terrain.png
     coords: [6, 11]
-    groups: [Special]
+    groups: [Special, Enchanting]
 
   - num: 117
-    name: Brewing Stand
+    name: Brewing Stand Block
     texfile: terrain.png
     coords: [13, 9]
-    groups: [Special, Brewing]
 
   - num: 118
     name: Cauldron
@@ -1243,25 +1246,25 @@ items:
     name: End Portal
     texfile: special.png
     coords: [1, 5]
-    groups: [TheEnd]
+    groups: [The End]
 
   - num: 120
     name: End Portal Frame
     texfile: terrain.png
     coords: [15, 9]
-    groups: [TheEnd]
+    groups: [The End]
 
   - num: 121
     name: End Stone
     texfile: terrain.png
     coords: [15, 10]
-    groups: [TheEnd]
+    groups: [The End]
 
   - num: 122
     name: Dragon Egg
-    texfile: terrain.png
-    coords: [7, 10]
-    groups: [TheEnd]
+    texfile: special.png
+    coords: [2, 5]
+    groups: [The End]
 
   - num: 123
     name: Redstone Lamp (off)
@@ -1281,7 +1284,7 @@ items:
     coords: [2, 5]
     max_damage: 250
     max_quantity: 1
-    groups: [Shovels]
+    groups: [Iron]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 257
@@ -1290,7 +1293,7 @@ items:
     coords: [2, 6]
     max_damage: 250
     max_quantity: 1
-    groups: [Pickaxes]
+    groups: [Iron]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 258
@@ -1299,7 +1302,7 @@ items:
     coords: [2, 7]
     max_damage: 250
     max_quantity: 1
-    groups: [Axes]
+    groups: [Iron]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 259
@@ -1369,7 +1372,7 @@ items:
     coords: [2, 4]
     max_damage: 250
     max_quantity: 1
-    groups: [Swords]
+    groups: [Iron]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 268
@@ -1378,7 +1381,7 @@ items:
     coords: [0, 4]
     max_damage: 59
     max_quantity: 1
-    groups: [Swords]
+    groups: [Wood and Leather]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 269
@@ -1387,7 +1390,7 @@ items:
     coords: [0, 5]
     max_damage: 59
     max_quantity: 1
-    groups: [Shovels]
+    groups: [Wood and Leather]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 270
@@ -1396,7 +1399,7 @@ items:
     coords: [0, 6]
     max_damage: 59
     max_quantity: 1
-    groups: [Pickaxes]
+    groups: [Wood and Leather]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 271
@@ -1405,7 +1408,7 @@ items:
     coords: [0, 7]
     max_damage: 59
     max_quantity: 1
-    groups: [Axes]
+    groups: [Wood and Leather]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 272
@@ -1414,7 +1417,7 @@ items:
     coords: [1, 4]
     max_damage: 131
     max_quantity: 1
-    groups: [Swords]
+    groups: [Stone and Chainmail]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 273
@@ -1423,7 +1426,7 @@ items:
     coords: [1, 5]
     max_damage: 131
     max_quantity: 1
-    groups: [Shovels]
+    groups: [Stone and Chainmail]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 274
@@ -1432,7 +1435,7 @@ items:
     coords: [1, 6]
     max_damage: 131
     max_quantity: 1
-    groups: [Pickaxes]
+    groups: [Stone and Chainmail]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 275
@@ -1441,7 +1444,7 @@ items:
     coords: [1, 7]
     max_damage: 131
     max_quantity: 1
-    groups: [Axes]
+    groups: [Stone and Chainmail]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 276
@@ -1450,7 +1453,7 @@ items:
     coords: [3, 4]
     max_damage: 1561
     max_quantity: 1
-    groups: [Swords]
+    groups: [Diamond]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 277
@@ -1459,7 +1462,7 @@ items:
     coords: [3, 5]
     max_damage: 1561
     max_quantity: 1
-    groups: [Shovels]
+    groups: [Diamond]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 278
@@ -1468,7 +1471,7 @@ items:
     coords: [3, 6]
     max_damage: 1561
     max_quantity: 1
-    groups: [Pickaxes]
+    groups: [Diamond]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 279
@@ -1477,7 +1480,7 @@ items:
     coords: [3, 7]
     max_damage: 1561
     max_quantity: 1
-    groups: [Axes]
+    groups: [Diamond]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 280
@@ -1506,7 +1509,7 @@ items:
     coords: [4, 4]
     max_damage: 32
     max_quantity: 1
-    groups: [Swords]
+    groups: [Gold]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
 
   - num: 284
@@ -1515,7 +1518,7 @@ items:
     coords: [4, 5]
     max_damage: 32
     max_quantity: 1
-    groups: [Shovels]
+    groups: [Gold]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 285
@@ -1524,7 +1527,7 @@ items:
     coords: [4, 6]
     max_damage: 32
     max_quantity: 1
-    groups: [Pickaxes]
+    groups: [Gold]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 286
@@ -1533,7 +1536,7 @@ items:
     coords: [4, 7]
     max_damage: 32
     max_quantity: 1
-    groups: [Axes]
+    groups: [Gold]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
 
   - num: 287
@@ -1560,7 +1563,7 @@ items:
     coords: [0, 8]
     max_damage: 59
     max_quantity: 1
-    groups: [Hoes]
+    groups: [Wood and Leather]
 
   - num: 291
     name: Stone Hoe
@@ -1568,7 +1571,7 @@ items:
     coords: [1, 8]
     max_damage: 131
     max_quantity: 1
-    groups: [Hoes]
+    groups: [Stone and Chainmail]
 
   - num: 292
     name: Iron Hoe
@@ -1576,7 +1579,7 @@ items:
     coords: [2, 8]
     max_damage: 250
     max_quantity: 1
-    groups: [Hoes]
+    groups: [Iron]
 
   - num: 293
     name: Diamond Hoe
@@ -1584,7 +1587,7 @@ items:
     coords: [3, 8]
     max_damage: 1561
     max_quantity: 1
-    groups: [Hoes]
+    groups: [Diamond]
 
   - num: 294
     name: Golden Hoe
@@ -1592,7 +1595,7 @@ items:
     coords: [4, 8]
     max_damage: 32
     max_quantity: 1
-    groups: [Hoes]
+    groups: [Gold]
 
   - num: 295
     name: Seeds
@@ -1618,7 +1621,7 @@ items:
     coords: [0, 0]
     max_damage: 34
     max_quantity: 1
-    groups: [Head]
+    groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 299
@@ -1627,7 +1630,7 @@ items:
     coords: [0, 1]
     max_damage: 48
     max_quantity: 1
-    groups: [Chest]
+    groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 300
@@ -1636,7 +1639,7 @@ items:
     coords: [0, 2]
     max_damage: 46
     max_quantity: 1
-    groups: [Legs]
+    groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 301
@@ -1645,7 +1648,7 @@ items:
     coords: [0, 3]
     max_damage: 40
     max_quantity: 1
-    groups: [Feet]
+    groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 302
@@ -1654,7 +1657,7 @@ items:
     coords: [1, 0]
     max_damage: 68
     max_quantity: 1
-    groups: [Head]
+    groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 303
@@ -1663,7 +1666,7 @@ items:
     coords: [1, 1]
     max_damage: 96
     max_quantity: 1
-    groups: [Chest]
+    groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 304
@@ -1672,7 +1675,7 @@ items:
     coords: [1, 2]
     max_damage: 92
     max_quantity: 1
-    groups: [Legs]
+    groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 305
@@ -1681,7 +1684,7 @@ items:
     coords: [1, 3]
     max_damage: 80
     max_quantity: 1
-    groups: [Feet]
+    groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 306
@@ -1690,7 +1693,7 @@ items:
     coords: [2, 0]
     max_damage: 136
     max_quantity: 1
-    groups: [Head]
+    groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 307
@@ -1699,7 +1702,7 @@ items:
     coords: [2, 1]
     max_damage: 192
     max_quantity: 1
-    groups: [Chest]
+    groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 308
@@ -1708,7 +1711,7 @@ items:
     coords: [2, 2]
     max_damage: 184
     max_quantity: 1
-    groups: [Legs]
+    groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 309
@@ -1717,7 +1720,7 @@ items:
     coords: [2, 3]
     max_damage: 160
     max_quantity: 1
-    groups: [Feet]
+    groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 310
@@ -1726,7 +1729,7 @@ items:
     coords: [3, 0]
     max_damage: 272
     max_quantity: 1
-    groups: [Head]
+    groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 311
@@ -1735,7 +1738,7 @@ items:
     coords: [3, 1]
     max_damage: 384
     max_quantity: 1
-    groups: [Chest]
+    groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 312
@@ -1744,7 +1747,7 @@ items:
     coords: [3, 2]
     max_damage: 368
     max_quantity: 1
-    groups: [Legs]
+    groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 313
@@ -1753,7 +1756,7 @@ items:
     coords: [3, 3]
     max_damage: 320
     max_quantity: 1
-    groups: [Feet]
+    groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 314
@@ -1762,7 +1765,7 @@ items:
     coords: [4, 0]
     max_damage: 68
     max_quantity: 1
-    groups: [Head]
+    groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
 
   - num: 315
@@ -1771,7 +1774,7 @@ items:
     coords: [4, 1]
     max_damage: 96
     max_quantity: 1
-    groups: [Chest]
+    groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 316
@@ -1780,7 +1783,7 @@ items:
     coords: [4, 2]
     max_damage: 92
     max_quantity: 1
-    groups: [Legs]
+    groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
 
   - num: 317
@@ -1789,7 +1792,7 @@ items:
     coords: [4, 3]
     max_damage: 80
     max_quantity: 1
-    groups: [Feet]
+    groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
 
   - num: 318
@@ -1842,21 +1845,21 @@ items:
     texfile: items.png
     coords: [10, 4]
     max_quantity: 1
-    groups: [Buckets]
+    groups: [Tools, Buckets]
 
   - num: 326
     name: Water Bucket
     texfile: items.png
     coords: [11, 4]
     max_quantity: 1
-    groups: [Buckets]
+    groups: [Tools, Buckets]
 
   - num: 327
     name: Lava Bucket
     texfile: items.png
     coords: [12, 4]
     max_quantity: 1
-    groups: [Buckets]
+    groups: [Tools, Buckets]
 
   - num: 328
     name: Minecart
@@ -1883,7 +1886,7 @@ items:
     name: Redstone Dust
     texfile: items.png
     coords: [8, 3]
-    groups: [Logic, Brewing]
+    groups: [Logic, Brewing, Ores]
 
   - num: 332
     name: Snowball
@@ -1909,7 +1912,7 @@ items:
     name: Milk
     texfile: items.png
     coords: [13, 4]
-    groups: [Buckets]
+    groups: [Tools, Buckets]
 
   - num: 336
     name: Brick
@@ -1966,7 +1969,7 @@ items:
     texfile: items.png
     coords: [12, 0]
     max_quantity: 16
-    groups: [Drops]
+    groups: [Drops, Food]
 
   - num: 345
     name: Compass
@@ -2041,7 +2044,7 @@ items:
     texfile: items.png
     coords: [14, 8]
     data: 4
-    groups: [Dye]
+    groups: [Dye, Ores]
 
   - num: 351
     name: Purple Dye
@@ -2460,6 +2463,38 @@ items:
     groups: [Potions]
 
   - num: 373
+    name: Potion of Regeneration II (1:00)
+    texfile: special.png
+    coords: [2, 14]
+    data: 8289
+    max_quantity: 1
+    groups: [Potions]
+
+  - num: 373
+    name: Potion of Swiftness II (4:00)
+    texfile: special.png
+    coords: [3, 14]
+    data: 8290
+    max_quantity: 1
+    groups: [Potions]
+
+  - num: 373
+    name: Potion of Poison II (1:00)
+    texfile: special.png
+    coords: [5, 14]
+    data: 8292
+    max_quantity: 1
+    groups: [Potions]
+
+  - num: 373
+    name: Potion of Strength II (4:00)
+    texfile: special.png
+    coords: [8, 14]
+    data: 8297
+    max_quantity: 1
+    groups: [Potions]
+
+  - num: 373
     name: Splash Potion of Mundane
     texfile: special.png
     coords: [1, 13]
@@ -2636,6 +2671,38 @@ items:
     groups: [SplashPotions]
 
   - num: 373
+    name: Splash Potion of Regeneration II (0:45)
+    texfile: special.png
+    coords: [2, 13]
+    data: 16481
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - num: 373
+    name: Splash Potion of Swiftness II (3:00)
+    texfile: special.png
+    coords: [3, 13]
+    data: 16482
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - num: 373
+    name: Splash Potion of Poison II (0:45)
+    texfile: special.png
+    coords: [5, 13]
+    data: 16484
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - num: 373
+    name: Splash Potion of Strength II (3:00)
+    texfile: special.png
+    coords: [8, 13]
+    data: 16489
+    max_quantity: 1
+    groups: [SplashPotions]
+
+  - num: 373
     name: Splash Potion of Regeneration (1:30)
     texfile: special.png
     coords: [2, 13]
@@ -2678,7 +2745,7 @@ items:
     texfile: items.png
     coords: [12, 10]
     max_quantity: 64
-    groups: [Special]
+    groups: [Special, Brewing]
 
   - num: 380
     name: Cauldron
@@ -2691,7 +2758,7 @@ items:
     name: Eye of Ender
     texfile: items.png
     coords: [11, 9]
-    groups: [Drops]
+    groups: [Drops, The End]
 
   - num: 382
     name: Glistering Melon
@@ -2847,16 +2914,16 @@ items:
     groups: [SpawnEggs]
 
   - num: 384
-    name: Bottle o Enchanting
+    name: "Bottle o' Enchanting"
     texfile: items.png
     coords: [11, 10]
-    groups: [SplashPotions]
+    groups: [Tools, SplashPotions]
 
   - num: 385
     name: Fire Charge
     texfile: items.png
     coords: [14, 2]
-    groups: [Nether]
+    groups: [Tools, Nether]
 
   - num: 2256
     name: C418 - 13
