@@ -2138,7 +2138,7 @@ class InvExtra(gtk.VBox):
 
     (TYPE_NUM, TYPE_STR, TYPE_BOOL) = range(3)
 
-    def __init__(self, app):
+    def __init__(self, app, gui_sheet):
         super(InvExtra, self).__init__()
         self.app = app
         self.varcache = {}
@@ -2200,6 +2200,18 @@ class InvExtra(gtk.VBox):
                 tooltip="0: daytime\n12000: sunset\n13800: night\n22200: sunrise\n<i>(24000: daytime)</i>",
                 callback_set=self.handle_time_data_set,
                 callback_save=self.handle_time_data_save)
+        
+        # A special hbox for time, for setting some presets
+        timehbox = self._getcache('Time', 'hbox')
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.set_padding(0, 0, 5, 0)
+        hbox = gtk.HBox()
+        align.add(hbox)
+        timehbox.pack_start(align, False, True)
+        self._timebutton(hbox, gui_sheet.get_pixbuf(2, 0), 0, 'Daytime')
+        self._timebutton(hbox, gui_sheet.get_pixbuf(3, 0), 12000, 'Sunset')
+        self._timebutton(hbox, gui_sheet.get_pixbuf(4, 0), 13800, 'Nighttime')
+        self._timebutton(hbox, gui_sheet.get_pixbuf(5, 0), 22200, 'Sunrise')
 
         # Structures
         cur_row += 1
@@ -2369,6 +2381,26 @@ class InvExtra(gtk.VBox):
         table.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
         self._storecache(varname, 'clarify', label)
 
+    def set_time(self, widget, time):
+        """
+        Sets our time to the given, er, time.
+        """
+        time_widget = self._getcache('Time', 'input')
+        time_widget.set_value(time)
+
+    def _timebutton(self, box, pixbuf, time, text):
+        """
+        Sets up a time-preset button, to alter our time.
+        """
+        align = gtk.Alignment(0, 0, 0, 0)
+        align.set_padding(0, 0, 2, 0)
+        button = gtk.Button()
+        button.set_image(gtk.image_new_from_pixbuf(pixbuf))
+        button.set_tooltip_text('Set time to %s' % (text))
+        button.connect('clicked', self.set_time, time)
+        align.add(button)
+        box.pack_start(align, False, True)
+
     def handle_time_data_set(self, widget, data):
         """
         Handles setting our time spinbutton
@@ -2519,7 +2551,7 @@ class InvNotebook(gtk.Notebook):
         # Third: extra information also in the level file
         align = gtk.Alignment(0, 0, 1, 1)
         align.set_padding(5, 5, 5, 5)
-        self.extradetails = InvExtra(app)
+        self.extradetails = InvExtra(app, texfiles['gui.png'])
         align.add(self.extradetails)
         self.extradetails_sw = gtk.ScrolledWindow()
         self.extradetails_sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
