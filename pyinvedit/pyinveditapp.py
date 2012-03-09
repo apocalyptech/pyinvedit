@@ -2380,7 +2380,10 @@ class InvExtra(gtk.VBox):
         Handles saving our time data to an NBT structure 
         """
         cur_val = (nbt.value / 24000) * 24000
-        nbt.value = cur_val + widget.get_value()
+        try:
+            nbt.value = cur_val + int(widget.get_text())
+        except ValueError:
+            nbt.value = cur_val + widget.get_value()
 
     def val_changed(self, widget, varname):
         """
@@ -2389,13 +2392,6 @@ class InvExtra(gtk.VBox):
         if not self.populating:
             obj = self._getcache_obj(varname)
             if obj is not None:
-                # Force an update of our SpinButtons - otherwise the actual
-                # value only gets updated when we leave the button or otherwise
-                # do, um, Other Stuff.  This way it updates as we type, so
-                # Ctrl-S in the middle of typing the number will do what the user
-                # expects
-                if obj.objtype == self.TYPE_NUM:
-                    widget.update()
                 obj.changed = True
                 global undo
                 undo.change()
@@ -2418,12 +2414,9 @@ class InvExtra(gtk.VBox):
                 if var.varname in nbt:
                     var.presence = True
                     nbt_val = nbt[var.varname].value
-            for widget in var.get_all():
-                if var.presence:
-                    widget.show()
-                else:
-                    widget.hide()
             if var.presence:
+                for widget in var.get_all():
+                    widget.show()
                 widget = var.get('input')
                 if var.objtype is not None and widget is not None:
                     if var.callback_set is not None:
@@ -2438,6 +2431,16 @@ class InvExtra(gtk.VBox):
                                 widget.set_active(True)
                             else:
                                 widget.set_active(False)
+            else:
+                for widget in var.get_all():
+                    widget.hide()
+
+                # Special case here, ah well.
+                if var.varname == 'Player.XpTotal':
+                    widget = self._getcache('Player.Score', 'extra')
+                    if widget is not None:
+                        widget.hide()
+
         self.populating = False
 
     def save_to(self, nbt):
@@ -2460,7 +2463,10 @@ class InvExtra(gtk.VBox):
                         var.callback_save(widget, nbt_obj)
                     else:
                         if var.objtype == self.TYPE_NUM:
-                            nbt_obj.value = widget.get_value()
+                            try:
+                                nbt_obj.value = int(widget.get_text())
+                            except ValueError:
+                                nbt_obj.value = widget.get_value()
                         elif var.objtype == self.TYPE_STR:
                             nbt_obj.value = widget.get_text()
                         elif var.objtype == self.TYPE_BOOL:
