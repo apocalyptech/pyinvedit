@@ -700,7 +700,7 @@ class InvDetails(gtk.Table):
 
         cur_row += 1
         self._rowlabel(cur_row, 'Damage/Data')
-        self._rowspinner(cur_row, 'damage', 0, 65535)
+        self._rowspinner(cur_row, 'damage', 0, 32767)
         self._rowextra(cur_row, 'damage_ext')
 
         cur_row += 1
@@ -1865,8 +1865,8 @@ class ItemView(gtk.TreeView):
             if self.filter_by_text and self.text.isdigit():
                 # Substitute our fake "Unknown" item
                 num = int(self.text)
-                if num > 65535:
-                    num = 65535
+                if num > 32767:
+                    num = 32767
                 unknown_item.num = num
                 unknown_row[self.COL_NAME] = 'Unknown Item %d' % (num)
                 unknown_row[self.COL_VISIBLE] = True
@@ -2097,6 +2097,305 @@ class GroupTable(gtk.Table):
         if self.selector is not None:
             self.selector.filter_group(None)
 
+class InvExtraVar(object):
+    """
+    A single variable that our Extra Information page cares about
+    """
+    def __init__(self, varname, presence=True):
+        self.varname = varname
+        self.presence = presence
+        self.objtype = None
+        self.callback_set = None
+        self.widgets = {}
+
+    def set_objtype(self, objtype):
+        self.objtype = objtype
+
+    def get_objtype(self):
+        return self.objtype
+
+    def set_presence(self, presence):
+        self.presence = presence
+
+    def get_presence(self):
+        return self.presence
+
+    def add_widget(self, label, widget):
+        """
+        Adds a new widget
+        """
+        self.widgets[label] = widget
+
+    def get(self, label):
+        """
+        Gets a particular widget
+        """
+        if label in self.widgets:
+            return self.widgets[label]
+        else:
+            return None
+
+    def get_all(self):
+        """
+        Gets a list of all widgets
+        """
+        return self.widgets.values()
+
+class InvExtra(gtk.VBox):
+    """
+    Extra information stored in the savefile
+    """
+
+    (TYPE_NUM, TYPE_STR, TYPE_BOOL) = range(3)
+
+    def __init__(self, app):
+        super(InvExtra, self).__init__()
+        self.app = app
+        self.varcache = {}
+
+        # Player Attributes
+        table = self._header('Player Attributes')
+
+        # Health
+        cur_row = 0
+        self._label(table, cur_row, 'Player.Health', 'Health')
+        self._spin(table, cur_row, 'Player.Health', 1, 32767, 20)
+
+        # XP Level
+        cur_row += 1
+        self._label(table, cur_row, 'Player.XpLevel', 'XP Level')
+        self._spin(table, cur_row, 'Player.XpLevel', 0, 2147483647, tooltip='Experience level <i>(important for Enchanting)</i>')
+
+        # XP Total
+        cur_row += 1
+        self._label(table, cur_row, 'Player.XpTotal', 'XP Total')
+        self._spin(table, cur_row, 'Player.XpTotal', 0, 2147483647, tooltip='Total experience acquired by the player')
+        self._set_extra_label('Player.XpTotal', '<i>(unsure how this differs from "Experience / Score")</i>')
+
+        # Experience
+        cur_row += 1
+        self._label(table, cur_row, 'Player.Score', 'Experience / Score')
+        self._spin(table, cur_row, 'Player.Score', 0, 2147483647, tooltip='Total experience acquired by the player')
+        self._set_extra_label('Player.Score', '<i>(unsure how this differs from "XP Total")</i>')
+
+        # Map Attributes
+        table = self._header('Map Attributes')
+
+        # Level Name
+        cur_row = 0
+        self._label(table, cur_row, 'LevelName', 'Level Name')
+        self._entry(table, cur_row, 'LevelName')
+
+        # Game Type
+        cur_row += 1
+        self._label(table, cur_row, 'GameType', 'Game Mode')
+        self._spin(table, cur_row, 'GameType', 0, 20)
+        self._set_extra_label('GameType', '<i>(0: survival, 1: creative)</i>')
+
+        # Hardcore
+        cur_row += 1
+        self._label(table, cur_row, 'hardcore', 'Hardcore Mode')
+        self._checkbox(table, cur_row, 'hardcore')
+
+        # Time
+        cur_row += 1
+        self._label(table, cur_row, 'Time', 'Time')
+        self._spin(table, cur_row, 'Time', 0, 23999,
+                tooltip="0: daytime\n12000: sunset\n13800: night\n22200: sunrise\n<i>(24000: daytime)</i>",
+                callback_set=self.handle_time_data)
+
+        # Structures
+        cur_row += 1
+        self._label(table, cur_row, 'MapFeatures', 'Generate Structures')
+        self._checkbox(table, cur_row, 'MapFeatures')
+
+        # Generator Name
+        cur_row += 1
+        self._label(table, cur_row, 'generatorName', 'Map Generator')
+        self._entry(table, cur_row, 'generatorName')
+        cur_row += 1
+        self._set_extra_clarify(table, cur_row, 'generatorName', '<i>Valid values: flat, default, default_1_1</i>')
+
+        # Show Everything
+        self.show_all()
+
+    def _storecache(self, title, section, obj, objtype=None):
+        """
+        Stores a given var
+        """
+        if title not in self.varcache:
+            self.varcache[title] = InvExtraVar(title)
+        self.varcache[title].add_widget(section, obj)
+        if objtype is not None:
+            self.varcache[title].set_objtype(objtype)
+        return self.varcache[title]
+
+    def _getcache(self, title, section=None):
+        """
+        Get an object from our cache.  If section is
+        specified, we'll return just that widget.  Otherwise,
+        we'll return a list of all of them matching the name.
+        """
+        if title in self.varcache:
+            if section is None:
+                return self.varcache[title].get_all()
+            else:
+                return self.varcache[title].get(section)
+        else:
+            return None
+
+    def _header(self, title):
+        """
+        Header for sections
+        """
+        align = gtk.Alignment(0, 0, 1, 0)
+        align.set_padding(10, 10, 20, 20)
+        label = gtk.Label()
+        label.set_markup('<big><b>%s</b></big>' % (title))
+        align.add(label)
+        self.pack_start(align, False, True)
+
+        # And now the table container
+        align = gtk.Alignment(0, 0, 1, 0)
+        align.set_padding(5, 5, 10, 10)
+        table = gtk.Table(2, 1)
+        align.add(table)
+        self.pack_start(align, False, True)
+
+        return table
+
+    def _label(self, table, row, varname, text):
+        """
+        A label in one of our tables
+        """
+        table.resize(2, row+1)
+        align = gtk.Alignment(1, .5, 0, 0)
+        align.set_padding(0, 0, 0, 5)
+        label = gtk.Label()
+        label.set_markup('<b>%s:</b>' % (text))
+        align.add(label)
+        table.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
+        self._storecache(varname, 'label', label)
+
+    def _data(self, table, row, varname, obj, objtype, tooltip=None, callback_set=None):
+        """
+        Generic data
+        """
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(0, 0, 0, 0)
+        hbox = gtk.HBox()
+        align.add(hbox)
+        hbox.pack_start(obj, False, True)
+        table.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
+
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(0, 0, 5, 0)
+        label = gtk.Label()
+        align.add(label)
+        hbox.pack_start(align, False, True)
+
+        if tooltip is not None:
+            obj.set_tooltip_markup(tooltip)
+
+        cache_obj = self._storecache(varname, 'input', obj, objtype)
+        self._storecache(varname, 'extra', label)
+        self._storecache(varname, 'hbox', hbox)
+
+        if callback_set is not None:
+            cache_obj.callback_set = callback_set
+
+    def _spin(self, table, row, varname, val_min, val_max_real, val_max_game=None, tooltip=None, callback_set=None):
+        """
+        A spinbutton
+        """
+        adjust = gtk.Adjustment(val_min, val_min, val_max_real, 1, 1)
+        spin = gtk.SpinButton(adjust)
+        self._data(table, row, varname, spin, self.TYPE_NUM, tooltip=tooltip, callback_set=callback_set)
+        if val_max_game is not None:
+            self._set_extra_label(varname, '<i>(max value: %d)</i>' % (val_max_game))
+
+    def _entry(self, table, row, varname, tooltip=None, callback_set=None):
+        """
+        A spinbutton
+        """
+        entry = gtk.Entry()
+        self._data(table, row, varname, entry, self.TYPE_STR, tooltip=tooltip, callback_set=callback_set)
+
+    def _checkbox(self, table, row, varname, tooltip=None, callback_set=None):
+        """
+        A checkbox
+        """
+        checkbutton = gtk.CheckButton()
+        self._data(table, row, varname, checkbutton, self.TYPE_BOOL, tooltip=tooltip, callback_set=callback_set)
+
+    def _set_extra_label(self, varname, text):
+        """
+        An extra label, usually to give the theoretical max amount
+        for one of our values
+        """
+        label = self._getcache(varname, 'extra')
+        if label:
+            label.set_markup(text)
+
+    def _set_extra_clarify(self, table, row, varname, markup):
+        """
+        Sets a "clarification" row, which will just be a label where the data field
+        would otherwise be
+        """
+        align = gtk.Alignment(0, .5, 0, 0)
+        align.set_padding(0, 0, 0, 0)
+        label = gtk.Label()
+        label.set_markup(markup)
+        align.add(label)
+        table.resize(2, row+1)
+        table.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
+        self._storecache(varname, 'clarify', label)
+
+    def handle_time_data(self, widget, data):
+        """
+        Handles setting our time spinbutton
+        """
+        widget.set_value(data % 24000)
+
+    def populate_from(self, nbt):
+        """
+        Populates ourselves from the given NBT structure
+        """
+        self.presence = {}
+        for var in self.varcache.values():
+            var.set_presence(False)
+            nbt_val = None
+            if '.' in var.varname:
+                (one, two) = var.varname.split('.')
+                if one in nbt and two in nbt[one].value:
+                    var.set_presence(True)
+                    nbt_val = nbt[one].value[two].value
+            else:
+                if var.varname in nbt:
+                    var.set_presence(True)
+                    nbt_val = nbt[var.varname].value
+            for widget in var.get_all():
+                if var.get_presence():
+                    widget.show()
+                else:
+                    widget.hide()
+            if var.get_presence():
+                objtype = var.get_objtype()
+                widget = var.get('input')
+                if objtype is not None and widget is not None:
+                    if var.callback_set is not None:
+                        var.callback_set(widget, nbt_val)
+                    else:
+                        if objtype == self.TYPE_NUM:
+                            widget.set_value(nbt_val)
+                        elif objtype == self.TYPE_STR:
+                            widget.set_text(nbt_val)
+                        elif objtype == self.TYPE_BOOL:
+                            if nbt_val == 1:
+                                widget.set_active(True)
+                            else:
+                                widget.set_active(False)
+
 class InvNotebook(gtk.Notebook):
     """
     Our main inventory notebook
@@ -2137,12 +2436,28 @@ class InvNotebook(gtk.Notebook):
         worldvbox.pack_start(sw, True, True)
         self.append_page(worldvbox, gtk.Label('Extra Slots'))
 
-    def populate_from(self, inventory):
+        # Third: extra information also in the level file
+        align = gtk.Alignment(0, 0, 1, 1)
+        align.set_padding(5, 5, 5, 5)
+        self.extradetails = InvExtra(app)
+        align.add(self.extradetails)
+        self.extradetails_sw = gtk.ScrolledWindow()
+        self.extradetails_sw.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        self.extradetails_sw.add_with_viewport(align)
+        self.append_page(self.extradetails_sw, gtk.Label('Other Information'))
+
+    def populate_from(self, inventory, nbt=None):
         """
         Populates from the given inventory set.
         """
         extra_items = self.invtable.populate_from(inventory)
         self.extrainvtable.populate_from(extra_items)
+        if self.app.multiplayer:
+            self.extradetails_sw.hide()
+        else:
+            self.extradetails_sw.show()
+            if nbt:
+                self.extradetails.populate_from(nbt['Data'].value)
 
     def export_inv_nbt(self):
         """
@@ -2516,7 +2831,7 @@ class PyInvEdit(gtk.Window):
                 self.inventory = Inventory(self.leveldat['Inventory'].value)
             else:
                 self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
-            self.worldbook.populate_from(self.inventory)
+            self.worldbook.populate_from(self.inventory, self.leveldat)
         self.loaded = True
         self.loadmessage.hide()
 

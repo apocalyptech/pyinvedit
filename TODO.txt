@@ -1,2 +1,3 @@
  * Non-inventory data editing (game type, player position, etc)
  * Perhaps a "help" menu?
+ * Using the "max enchantment" button does not automatically update the tooltip

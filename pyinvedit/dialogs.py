@@ -380,7 +380,7 @@ class NewEnchantmentDialog(gtk.Dialog):
         # Name
         cur_row += 1
         self._rowlabel(enchtable, cur_row, 'or ID')
-        adjust = gtk.Adjustment(0, -1, 65535, 1, 1)
+        adjust = gtk.Adjustment(0, -1, 32767, 1, 1)
         self.ench_id = gtk.SpinButton(adjust)
         self._rowdata(enchtable, cur_row, self.ench_id)
 
@@ -403,7 +403,7 @@ class NewEnchantmentDialog(gtk.Dialog):
         # Level
         cur_row += 1
         self._rowlabel(enchtable, cur_row, 'Level')
-        adjust = gtk.Adjustment(0, 1, 65535, 1, 1)
+        adjust = gtk.Adjustment(0, 1, 32767, 1, 1)
         self.ench_lvl = gtk.SpinButton(adjust)
         self._rowdata(enchtable, cur_row, self.ench_lvl)
 
