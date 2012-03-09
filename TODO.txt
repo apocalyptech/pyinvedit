@@ -1,2 +1,1 @@
  * Perhaps a "help" menu?
- * Using the "max enchantment" button does not automatically update the tooltip

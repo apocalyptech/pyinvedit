@@ -946,6 +946,9 @@ class InvDetails(gtk.Table):
                     if ench_slot.lvl != ench.max_power:
                         ench_slot.lvl = ench.max_power
                         self._update_info()
+                        # Graphics wouldn't need updating, but this also
+                        # updates the tooltip.
+                        self.button.update_graphics()
                         global undo
                         undo.change()
 
