@@ -2101,24 +2101,14 @@ class InvExtraVar(object):
     """
     A single variable that our Extra Information page cares about
     """
-    def __init__(self, varname, presence=True):
+    def __init__(self, varname):
         self.varname = varname
-        self.presence = presence
+        self.presence = False
         self.objtype = None
         self.callback_set = None
+        self.callback_save = None
+        self.changed = False
         self.widgets = {}
-
-    def set_objtype(self, objtype):
-        self.objtype = objtype
-
-    def get_objtype(self):
-        return self.objtype
-
-    def set_presence(self, presence):
-        self.presence = presence
-
-    def get_presence(self):
-        return self.presence
 
     def add_widget(self, label, widget):
         """
@@ -2152,6 +2142,7 @@ class InvExtra(gtk.VBox):
         super(InvExtra, self).__init__()
         self.app = app
         self.varcache = {}
+        self.populating = True
 
         # Player Attributes
         table = self._header('Player Attributes')
@@ -2160,6 +2151,11 @@ class InvExtra(gtk.VBox):
         cur_row = 0
         self._label(table, cur_row, 'Player.Health', 'Health')
         self._spin(table, cur_row, 'Player.Health', 1, 32767, 20)
+
+        # Food
+        cur_row += 1
+        self._label(table, cur_row, 'Player.foodLevel', 'Food')
+        self._spin(table, cur_row, 'Player.foodLevel', 1, 32767, 20)
 
         # XP Level
         cur_row += 1
@@ -2202,7 +2198,8 @@ class InvExtra(gtk.VBox):
         self._label(table, cur_row, 'Time', 'Time')
         self._spin(table, cur_row, 'Time', 0, 23999,
                 tooltip="0: daytime\n12000: sunset\n13800: night\n22200: sunrise\n<i>(24000: daytime)</i>",
-                callback_set=self.handle_time_data)
+                callback_set=self.handle_time_data_set,
+                callback_save=self.handle_time_data_save)
 
         # Structures
         cur_row += 1
@@ -2227,12 +2224,12 @@ class InvExtra(gtk.VBox):
             self.varcache[title] = InvExtraVar(title)
         self.varcache[title].add_widget(section, obj)
         if objtype is not None:
-            self.varcache[title].set_objtype(objtype)
+            self.varcache[title].objtype = objtype
         return self.varcache[title]
 
     def _getcache(self, title, section=None):
         """
-        Get an object from our cache.  If section is
+        Get a widget from our cache.  If section is
         specified, we'll return just that widget.  Otherwise,
         we'll return a list of all of them matching the name.
         """
@@ -2241,6 +2238,15 @@ class InvExtra(gtk.VBox):
                 return self.varcache[title].get_all()
             else:
                 return self.varcache[title].get(section)
+        else:
+            return None
+
+    def _getcache_obj(self, title):
+        """
+        Returns the actual InvExtraVar cache item
+        """
+        if title in self.varcache:
+            return self.varcache[title]
         else:
             return None
 
@@ -2277,7 +2283,7 @@ class InvExtra(gtk.VBox):
         table.attach(align, 0, 1, row, row+1, gtk.FILL, gtk.FILL)
         self._storecache(varname, 'label', label)
 
-    def _data(self, table, row, varname, obj, objtype, tooltip=None, callback_set=None):
+    def _data(self, table, row, varname, obj, objtype, tooltip=None, callback_set=None, callback_save=None):
         """
         Generic data
         """
@@ -2303,30 +2309,42 @@ class InvExtra(gtk.VBox):
 
         if callback_set is not None:
             cache_obj.callback_set = callback_set
+        if callback_save is not None:
+            cache_obj.callback_save = callback_save
 
-    def _spin(self, table, row, varname, val_min, val_max_real, val_max_game=None, tooltip=None, callback_set=None):
+    def _spin(self, table, row, varname, val_min, val_max_real,
+            val_max_game=None, tooltip=None, callback_set=None, callback_save=None):
         """
         A spinbutton
         """
         adjust = gtk.Adjustment(val_min, val_min, val_max_real, 1, 1)
         spin = gtk.SpinButton(adjust)
-        self._data(table, row, varname, spin, self.TYPE_NUM, tooltip=tooltip, callback_set=callback_set)
+        spin.set_update_policy(gtk.UPDATE_IF_VALID)
+        spin.connect('changed', self.val_changed, varname)
+        self._data(table, row, varname, spin, self.TYPE_NUM,
+                tooltip=tooltip, callback_set=callback_set, callback_save=callback_save)
         if val_max_game is not None:
             self._set_extra_label(varname, '<i>(max value: %d)</i>' % (val_max_game))
 
-    def _entry(self, table, row, varname, tooltip=None, callback_set=None):
+    def _entry(self, table, row, varname, tooltip=None,
+            callback_set=None, callback_save=None):
         """
         A spinbutton
         """
         entry = gtk.Entry()
-        self._data(table, row, varname, entry, self.TYPE_STR, tooltip=tooltip, callback_set=callback_set)
+        entry.connect('changed', self.val_changed, varname)
+        self._data(table, row, varname, entry, self.TYPE_STR,
+                tooltip=tooltip, callback_set=callback_set, callback_save=callback_save)
 
-    def _checkbox(self, table, row, varname, tooltip=None, callback_set=None):
+    def _checkbox(self, table, row, varname, tooltip=None,
+            callback_set=None, callback_save=None):
         """
         A checkbox
         """
         checkbutton = gtk.CheckButton()
-        self._data(table, row, varname, checkbutton, self.TYPE_BOOL, tooltip=tooltip, callback_set=callback_set)
+        checkbutton.connect('toggled', self.val_changed, varname)
+        self._data(table, row, varname, checkbutton, self.TYPE_BOOL,
+                tooltip=tooltip, callback_set=callback_set, callback_save=callback_save)
 
     def _set_extra_label(self, varname, text):
         """
@@ -2351,50 +2369,106 @@ class InvExtra(gtk.VBox):
         table.attach(align, 1, 2, row, row+1, gtk.FILL, gtk.FILL)
         self._storecache(varname, 'clarify', label)
 
-    def handle_time_data(self, widget, data):
+    def handle_time_data_set(self, widget, data):
         """
         Handles setting our time spinbutton
         """
         widget.set_value(data % 24000)
 
+    def handle_time_data_save(self, widget, nbt):
+        """
+        Handles saving our time data to an NBT structure 
+        """
+        cur_val = (nbt.value / 24000) * 24000
+        nbt.value = cur_val + widget.get_value()
+
+    def val_changed(self, widget, varname):
+        """
+        One of our data items changed
+        """
+        if not self.populating:
+            obj = self._getcache_obj(varname)
+            if obj is not None:
+                # Force an update of our SpinButtons - otherwise the actual
+                # value only gets updated when we leave the button or otherwise
+                # do, um, Other Stuff.  This way it updates as we type, so
+                # Ctrl-S in the middle of typing the number will do what the user
+                # expects
+                if obj.objtype == self.TYPE_NUM:
+                    widget.update()
+                obj.changed = True
+                global undo
+                undo.change()
+
     def populate_from(self, nbt):
         """
         Populates ourselves from the given NBT structure
         """
+        self.populating = True
         self.presence = {}
         for var in self.varcache.values():
-            var.set_presence(False)
+            var.presence = False
             nbt_val = None
             if '.' in var.varname:
                 (one, two) = var.varname.split('.')
                 if one in nbt and two in nbt[one].value:
-                    var.set_presence(True)
+                    var.presence = True
                     nbt_val = nbt[one].value[two].value
             else:
                 if var.varname in nbt:
-                    var.set_presence(True)
+                    var.presence = True
                     nbt_val = nbt[var.varname].value
             for widget in var.get_all():
-                if var.get_presence():
+                if var.presence:
                     widget.show()
                 else:
                     widget.hide()
-            if var.get_presence():
-                objtype = var.get_objtype()
+            if var.presence:
                 widget = var.get('input')
-                if objtype is not None and widget is not None:
+                if var.objtype is not None and widget is not None:
                     if var.callback_set is not None:
                         var.callback_set(widget, nbt_val)
                     else:
-                        if objtype == self.TYPE_NUM:
+                        if var.objtype == self.TYPE_NUM:
                             widget.set_value(nbt_val)
-                        elif objtype == self.TYPE_STR:
+                        elif var.objtype == self.TYPE_STR:
                             widget.set_text(nbt_val)
-                        elif objtype == self.TYPE_BOOL:
+                        elif var.objtype == self.TYPE_BOOL:
                             if nbt_val == 1:
                                 widget.set_active(True)
                             else:
                                 widget.set_active(False)
+        self.populating = False
+
+    def save_to(self, nbt):
+        """
+        Saves any of our changed objects into the given NBT structure
+        """
+        for var in self.varcache.values():
+            if var.presence and var.changed:
+                widget = var.get('input')
+                nbt_obj = None
+                if '.' in var.varname:
+                    (one, two) = var.varname.split('.')
+                    if one in nbt and two in nbt[one].value:
+                        nbt_obj = nbt[one].value[two]
+                else:
+                    if var.varname in nbt:
+                        nbt_obj = nbt[var.varname]
+                if nbt_obj is not None and var.objtype is not None and widget is not None:
+                    if var.callback_save is not None:
+                        var.callback_save(widget, nbt_obj)
+                    else:
+                        if var.objtype == self.TYPE_NUM:
+                            nbt_obj.value = widget.get_value()
+                        elif var.objtype == self.TYPE_STR:
+                            nbt_obj.value = widget.get_text()
+                        elif var.objtype == self.TYPE_BOOL:
+                            if widget.get_active():
+                                nbt_obj.value = 1
+                            else:
+                                nbt_obj.value = 0
+                var.changed = False
 
 class InvNotebook(gtk.Notebook):
     """
@@ -2464,6 +2538,13 @@ class InvNotebook(gtk.Notebook):
         Exports our inventory data as a fresh NBT file
         """
         return self.invtable.export_nbt() + self.extrainvtable.export_nbt()
+
+    def save_extra_nbt_changes(self, nbt):
+        """
+        Saves any extra changes we might have made to our "other" vars
+        """
+        if not self.app.multiplayer:
+            self.extradetails.save_to(nbt['Data'].value)
 
     def repair_all(self):
         """
@@ -2931,6 +3012,7 @@ class PyInvEdit(gtk.Window):
                 self.leveldat['Inventory'].value = self.worldbook.export_inv_nbt()
             else:
                 self.leveldat['Data'].value['Player'].value['Inventory'].value = self.worldbook.export_inv_nbt()
+                self.worldbook.save_extra_nbt_changes(self.leveldat)
             self.leveldat.saveGzipped(self.filename)
             dialog = gtk.MessageDialog(self,
                     gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
