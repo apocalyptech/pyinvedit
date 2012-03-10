@@ -36,6 +36,9 @@ from pymclevel import nbt
 from pyinvedit import vmware
 from pyinvedit import about_name, about_version, about_url, about_authors
 
+# This file contains all the various popup dialog classes that we use
+# in the main application
+
 class SaveAsDialog(gtk.FileChooserDialog):
     """
     A class to support "Save As"

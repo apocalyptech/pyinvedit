@@ -33,636 +33,15 @@ import math
 import yaml
 import cairo
 import pango
-import cStringIO
 import pangocairo
 import collections
 from pymclevel import nbt, mclevelbase
-from pyinvedit import dialogs
+from pyinvedit import dialogs, util, minecraft, data
 from pyinvedit import about_name, about_version
 
-def get_pixbuf_from_surface(surface):
-    """
-    Returns our currently-displayed image as a gtk.gdk.Pixbuf
-    We ended up needing to call this from various places, and
-    cairo.ImageSurface isn't subclassable, as it turns out.  So,
-    out here as global function it went.
-    """
-    df = cStringIO.StringIO()
-    surface.write_to_png(df)
-    loader = gtk.gdk.PixbufLoader()
-    loader.write(df.getvalue())
-    loader.close()
-    df.close()
-    return loader.get_pixbuf()
-
-class Undo(object):
-    """
-    Right now this is a dummy object which only keeps track of
-    whether or not something's been changed since the savefile's been
-    loaded.  We're doing it this way instead of just using a var
-    because that way if we ever DO implement a full undo/redo, we'll
-    have less conversion work.
-    """
-
-    def __init__(self):
-        self.changed = False
-
-    def change(self):
-        """
-        We've changed something in our file
-        """
-        self.changed = True
-
-    def load(self):
-        """
-        We loaded a new file.
-        """
-        self.changed = False
-
-    def save(self):
-        """
-        We saved our file
-        """
-        self.changed = False
-
-    def is_changed(self):
-        """
-        Return whether or not we've been changed
-        """
-        return self.changed
-
-# We'll make this a global var so that any of our classes can access
-# it.  Probably not a very clean way of doing things, but it will
-# probably prevent having to pass a bunch more references around, etc.
-undo = Undo()
-
-class TexFile(object):
-    """
-    Class to provide information about a specific texture file we have
-    access to.
-    """
-
-    size_small = 16
-    size_large = 32
-    large_full = 50
-
-    def __init__(self, yamlobj):
-        """
-        Initializes given a yaml dict.
-        """
-        self.texfile = yamlobj['texfile']
-        self.x = yamlobj['dimensions'][0]
-        self.y = yamlobj['dimensions'][1]
-        self.grid_large = []
-        self.grid_small = []
-        self.grid_pixbuf = []
-        for x in range(0, self.x):
-            self.grid_large.append([])
-            self.grid_small.append([])
-            self.grid_pixbuf.append([])
-            for y in range(0, self.y):
-                self.grid_large[x].append(None)
-                self.grid_small[x].append(None)
-                self.grid_pixbuf[x].append(None)
-
-        # Make sure the file is present
-        if not os.path.exists(self.texfile):
-            raise Exception('texfile %s not found' % (self.texfile))
-
-        # And while we're at it, load and process it
-        mainsurface = None
-        try:
-            mainsurface = cairo.ImageSurface.create_from_png(self.texfile)
-        except Exception, e:
-            raise Exception('Unable to load texture file %s: %s' %
-                    (self.texfile, str(e)))
-
-        # A couple of sanity checks
-        main_width = int(mainsurface.get_width() / self.x)
-        main_height = int(mainsurface.get_height() / self.y)
-        if main_width != main_height:
-            raise Exception('texfile %s is not composed of square icons' %
-                    (self.texfile))
-        if (main_width % 16) != 0:
-            raise Exception('texfile %s width is not a factor of 16' %
-                    (self.texfile))
-        self.icon_width = main_width
-
-        # Now do the actual picking-apart
-        scale_small = 1
-        scale_large = 1
-        if self.icon_width != self.size_small:
-            scale_small = self.icon_width/float(self.size_small)
-        if self.icon_width != self.size_large:
-            scale_large = self.icon_width/float(self.size_large)
-        pat = cairo.SurfacePattern(mainsurface)
-        for x in range(0, self.x):
-            for y in range(0, self.y):
-
-                # Resize for small icons (in the search pane)
-                ind_surf = cairo.ImageSurface(mainsurface.get_format(), self.size_small, self.size_small)
-                scaler = cairo.Matrix()
-                scaler.translate(x*self.icon_width, y*self.icon_width)
-                scaler.scale(scale_small, scale_small)
-                pat.set_filter(cairo.FILTER_NEAREST)
-                pat.set_matrix(scaler)
-                ctx = cairo.Context(ind_surf)
-                ctx.set_source(pat)
-                ctx.paint()
-                self.grid_small[x][y] = ind_surf
-
-                # Convert "small" to a pixbuf, for ease of putting it in
-                # our item selection area
-                self.grid_pixbuf[x][y] = get_pixbuf_from_surface(ind_surf)
-
-                # Resize for large icons (in the main inventory area)
-                ind_surf = cairo.ImageSurface(mainsurface.get_format(), self.size_large, self.size_large)
-                scaler = cairo.Matrix()
-                scaler.translate(x*self.icon_width, y*self.icon_width)
-                scaler.scale(scale_large, scale_large)
-                pat = cairo.SurfacePattern(mainsurface)
-                pat.set_filter(cairo.FILTER_NEAREST)
-                pat.set_matrix(scaler)
-                ctx = cairo.Context(ind_surf)
-                ctx.set_source(pat)
-                ctx.paint()
-                self.grid_large[x][y] = ind_surf
-
-    def check_bounds(self, x, y):
-        """
-        Checks to make sure that the given coordinates are within our
-        range of possible icons.  Will raise an Exception if not.
-        """
-        if x >= self.x or x < 0 or y >= self.y or y < 0:
-            raise Exception("Texture coordinate (%d, %d) is not valid for %s" %
-                    (x, y, self.texfile))
-
-    def get_tex(self, x, y, large=False):
-        """
-        Returns a cairo ImageSurface of the requested texture.
-        """
-        self.check_bounds(x, y)
-        if large:
-            return self.grid_large[x][y]
-        else:
-            return self.grid_small[x][y]
-
-    def get_pixbuf(self, x, y):
-        """
-        Returns a gtk.gtk.Pixbuf of the requested texture.  Note that
-        this will always be the "small" version
-        """
-        self.check_bounds(x, y)
-        return self.grid_pixbuf[x][y]
-
-class Group(object):
-    """
-    Class to hold information about our item groupings.
-    """
-    def __init__(self, yamlobj, texfiles):
-        """
-        Initializes given a YAML dict and a dict of valid texfiles
-        """
-        self.name = yamlobj['name']
-        if yamlobj['texfile'] not in texfiles.keys():
-            raise Exception('texfile %s not found for group %s' %
-                    (yamlobj['texfile'], self.name))
-        self.texfile = texfiles[yamlobj['texfile']]
-        self.x = yamlobj['coords'][0]
-        self.y = yamlobj['coords'][1]
-        self.texfile.check_bounds(self.x, self.y)
-        self.items = []
-
-    def add_item(self, item):
-        """
-        Adds a new item to this group.
-        """
-        self.items.append(item)
-
-    def get_pixbuf(self):
-        """
-        Returns the small gtk.gdk.Pixbuf corresponding to this item
-        """
-        return self.texfile.get_pixbuf(self.x, self.y)
-
-class Enchantment(object):
-    """
-    Class to hold information about an enchantment
-    """
-    def __init__(self, yamlobj):
-        self.num = yamlobj['num']
-        self.name = yamlobj['name']
-        self.max_power = yamlobj['max_power']
-
-    def __cmp__(self, other):
-        """
-        Comparator for sorting
-        """
-        return cmp(self.name, other.name)
-
-class Enchantments(object):
-    """
-    A class to hold a collection of enchantments
-    """
-
-    numeral_map = zip(
-        (1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1),
-        ('M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I')
-    )
-
-    def __init__(self):
-        self.enchantments_id = {}
-        self.enchantments_name = {}
-
-    def add_enchantment(self, yamlobj):
-        """
-        Adds a new enchantment, given a YAML object
-        """
-        ench = Enchantment(yamlobj)
-
-        # Store by ID
-        if ench.num in self.enchantments_id:
-            raise Exception('Enchantment ID %d is defined twice' % (ench.num))
-        else:
-            self.enchantments_id[ench.num] = ench
-
-        # Store by Name
-        lower = ench.name.lower()
-        if lower in self.enchantments_name:
-            raise Exception('Enchantment with a name "%s" is defined twice' % (ench.name))
-        else:
-            self.enchantments_name[lower] = ench
-
-    def get_all(self):
-        """
-        Returns a list of all known enchantments
-        """
-        ench = self.enchantments_id.values()
-        ench.sort()
-        return ench
-
-    def get_by_id(self, num):
-        """
-        Gets an enchantment by ID, if possible
-        """
-        if num in self.enchantments_id:
-            return self.enchantments_id[num]
-        else:
-            return None
-
-    def get_by_name(self, name):
-        """
-        Get an enchantment by name, if possible
-        """
-        lower = name.lower()
-        if lower in self.enchantments_name:
-            return self.enchantments_name[lower]
-        else:
-            return None
-
-    def get_text(self, num, level):
-        """
-        Gets a text representation of a given enchantment
-        """
-        ench = self.get_by_id(num)
-        if ench is None:
-            title = 'Unknown Enchantment'
-        else:
-            title = ench.name
-        return '%s %s' % (title, self.int_to_roman(level))
-
-    def int_to_roman(self, i):
-        """
-        This version taken from one of the suggestions at
-        http://code.activestate.com/recipes/81611-roman-numerals/
-
-        I've only actually tested it out to 20, so YMMV.
-        """
-        result = []
-        for integer, numeral in self.numeral_map:
-            count = int(i / integer)
-            result.append(numeral * count)
-            i -= integer * count
-        return ''.join(result)
-
-class Item(object):
-    """
-    Class to hold information about an inventory item.
-    """
-    def __init__(self, yamlobj, texfiles, groups, enchantment_catalog, unknown=False):
-        """
-        Initializes given a YAML dict, a dict of valid texfiles, and a dict
-        of valid groups
-        """
-        self.num = yamlobj['num']
-        self.name = yamlobj['name']
-        if yamlobj['texfile'] not in texfiles.keys():
-            raise Exception('texfile %s not found for item %d (%s)' %
-                    (yamlobj['texfile'], self.num, self.name))
-        self.texfile = texfiles[yamlobj['texfile']]
-        self.x = yamlobj['coords'][0]
-        self.y = yamlobj['coords'][1]
-        self.unknown = unknown
-        self.texfile.check_bounds(self.x, self.y)
-        self.enchantment_catalog = enchantment_catalog
-
-        # See if we belong to any groups.  Note that we're adding ourselves
-        # into the group object as well
-        self.groups = []
-        if 'groups' in yamlobj:
-            for group in yamlobj['groups']:
-                if group in groups:
-                    self.groups.append(groups[group])
-                    groups[group].add_item(self)
-                else:
-                    raise Exception('Group %s not found for item %d (%s)' %
-                            (group, self.num, self.name))
-
-        # Data value, if we have it.
-        if 'data' in yamlobj:
-            self.data = yamlobj['data']
-            self.unique_id = '%d~%d' % (self.num, self.data)
-        else:
-            self.data = 0
-            self.unique_id = self.num
-
-        # Maximum damage, if we have it
-        if 'max_damage' in yamlobj:
-            self.max_damage = yamlobj['max_damage']
-        else:
-            self.max_damage = None
-
-        # Maximum quantity, if we have it
-        if 'max_quantity' in yamlobj:
-            self.max_quantity = yamlobj['max_quantity']
-        else:
-            self.max_quantity = 64
-
-        # all_data, if we have it
-        if 'all_data' in yamlobj:
-            self.all_data = yamlobj['all_data']
-        else:
-            self.all_data = False
-
-        # See if we have any enchantments
-        self.enchantments = []
-        if 'enchantments' in yamlobj:
-            for ench in yamlobj['enchantments']:
-                enchobj = enchantment_catalog.get_by_name(ench)
-                if enchobj is None:
-                    raise Exception('Enchantment %s for item %s is unknown' % (ench, self.name))
-                else:
-                    self.enchantments.append(enchobj)
-
-    def get_image(self, large=False):
-        """
-        Returns the base cairo ImageSurface for this item
-        """
-        return self.texfile.get_tex(self.x, self.y, large)
-
-    def get_pixbuf(self):
-        """
-        Returns the small gtk.gdk.Pixbuf corresponding to this item
-        """
-        return self.texfile.get_pixbuf(self.x, self.y)
-
-    def get_new_inventoryslot(self, slot):
-        """
-        Returns a fresh InventorySlot object based on this abstract item.
-        Will fill to max quantity, etc.
-        """
-        return InventorySlot(num=self.num, damage=self.data, count=self.max_quantity, slot=slot)
-
-    def __cmp__(self, other):
-        """
-        Comparator for sorting
-        """
-        return cmp(self.name, other.name)
-
-class ItemCollection(object):
-    """
-    Class to hold our collection of items.  We do this rather than
-    just an OrderedDict so that we can abstract the ridiculous
-    uniqueid stuff, so that we can match on the data values we
-    get from the Minecraft file, or from the user.
-    """
-
-    def __init__(self):
-        self.items = collections.OrderedDict()
-
-    def add_item(self, item):
-        self.items[item.unique_id] = item
-
-    def get_item(self, num, damage):
-        """
-        Gets an item with the given ID and damage
-        """
-        for unique in ['%d~%d' % (num, damage), num]:
-            if unique in self.items:
-                return self.items[unique]
-        return None
-
-    def get_items(self):
-        """
-        Returns a list of all our items, ordered.
-        """
-        itemlist = self.items.values()
-        itemlist.sort()
-        return itemlist
-
-class EnchantmentSlot(object):
-    """
-    Holds information about a particular enchantment inside a particular inventory slot
-    """
-
-    def __init__(self, nbtobj=None, num=None, lvl=None):
-        """
-        Initializes a new object.  Either pass in 'nbtobj' or
-        both 'num' and 'lvl'
-        """
-        if nbtobj is None:
-            self.num = num
-            self.lvl = lvl
-            self.extratags = {}
-        else:
-            self.num = nbtobj.value['id'].value
-            self.lvl = nbtobj.value['lvl'].value
-            self.extratags = {}
-            for tagname, value in nbtobj.value.iteritems():
-                if tagname not in ['id', 'lvl']:
-                    self.extratags[tagname] = value
-
-    def copy(self):
-        """
-        Returns a fresh object with our data
-        """
-        newench = EnchantmentSlot(num=self.num, lvl=self.lvl)
-        newench.extratags = self.extratags
-        return newench
-
-    def export_nbt(self):
-        """
-        Exports ourself as an NBT object
-        """
-        nbtobj = nbt.TAG_Compound()
-        nbtobj['id'] = nbt.TAG_Short(self.num)
-        nbtobj['lvl'] = nbt.TAG_Short(self.lvl)
-        for tagname, tagval in self.extratags.iteritems():
-            nbtobj[tagname] = tagval
-        return nbtobj
-
-    def has_extra_info(self):
-        """
-        Returns whether or not we have any extra information
-        """
-        return (len(self.extratags) > 0)
-
-class InventorySlot(object):
-    """
-    Holds information about a particular inventory slot.  We make an effort to
-    never lose any data that we don't explicitly understand, and so you'll see
-    two extra dicts in here with the names extratags and extratagtags.  The
-    first holds extra tag information stored right at the "Slot" level of
-    the NBT structure.  Before we enabled explicit support for enchantments,
-    this is the variable which held and saved enchantment information.
-
-    Since adding in Enchantments explicitly, extratagtags is used to store
-    extra tag information found alongside enchantments.  The enchantments
-    themselves are found in an "ench" tag which itself lives inside a tag
-    helpfully labeled "tag," hence the odd naming of "extratagtags."  Alas!
-    """
-
-    def __init__(self, nbtobj=None, other=None, num=None, damage=None, count=None, slot=None):
-        """
-        Initializes a new object.  There are a few different valid ways of doing so:
-
-        1) Pass in only nbtobj, as loaded from level.dat.  Everything will be populated
-           from that one object.  Used on initial loads.
-
-        2) Pass in other and slot, which is another InventorySlot object from which to
-           copy all of our data.
-
-        3) Only pass in "slot" - this will create an empty object.
-
-        4) Pass in num, damage, count, and slot.
-        """
-        if nbtobj is None:
-            if other is None:
-                self.slot = slot
-                self.num = num
-                self.damage = damage
-                self.count = count
-                self.extratags = {}
-                self.extratagtags = {}
-                self.enchantments = []
-            else:
-                self.slot = other.slot
-                self.num = other.num
-                self.damage = other.damage
-                self.count = other.count
-                self.extratags = other.extratags
-                self.extratagtags = other.extratagtags
-                self.enchantments = []
-                for ench in other.enchantments:
-                    self.enchantments.append(ench.copy())
-        else:
-            self.num = nbtobj.value['id'].value
-            self.damage = nbtobj.value['Damage'].value
-            self.count = nbtobj.value['Count'].value
-            self.slot = nbtobj.value['Slot'].value
-            self.enchantments = []
-            self.extratagtags = {}
-            if 'tag' in nbtobj:
-                if 'ench' in nbtobj.value['tag'].value:
-                    for enchtag in nbtobj.value['tag'].value['ench'].value:
-                        self.enchantments.append(EnchantmentSlot(nbtobj=enchtag))
-                for tagname, value in nbtobj.value['tag'].value.iteritems():
-                    if tagname not in ['ench']:
-                        extratagtags[tagname] = value
-            self.extratags = {}
-            for tagname, value in nbtobj.value.iteritems():
-                if tagname not in ['id', 'Damage', 'Count', 'Slot', 'tag']:
-                    self.extratags[tagname] = value
-
-        # Check to see if we're supposed to override the "slot" value
-        if slot is not None:
-            self.slot = slot
-
-        # Doublecheck that we have some vars
-        if self.extratags is None:
-            self.extratags = {}
-        if self.extratagtags is None:
-            self.extratagtags = {}
-        if self.enchantments is None:
-            self.enchantments = []
-
-    def __cmp__(self, other):
-        """
-        Comparator object for sorting
-        """
-        return cmp(self.num, other.num)
-
-    def export_nbt(self):
-        """
-        Exports ourself as an NBT object
-        """
-        item_nbt = nbt.TAG_Compound()
-        item_nbt['Count'] = nbt.TAG_Byte(self.count)
-        item_nbt['Slot'] = nbt.TAG_Byte(self.slot)
-        item_nbt['id'] = nbt.TAG_Short(self.num)
-        item_nbt['Damage'] = nbt.TAG_Short(self.damage)
-        for tagname, tagval in self.extratags.iteritems():
-            item_nbt[tagname] = tagval
-        if len(self.enchantments) > 0 or len(self.extratagtags) > 0:
-            tag_nbt = nbt.TAG_Compound()
-            if len(self.enchantments) > 0:
-                ench_tag = nbt.TAG_List()
-                for ench in self.enchantments:
-                    ench_tag.append(ench.export_nbt())
-                tag_nbt['ench'] = ench_tag
-            for tagname, tagval in self.extratagtags.iteritems():
-                tag_nbt[tagname] = tagval
-            item_nbt['tag'] = tag_nbt
-        return item_nbt
-
-    def has_extra_info(self):
-        """
-        Returns whether or not we have any extra info in our tags
-        """
-        if len(self.extratags) > 0:
-            return True
-        if len(self.extratagtags) > 0:
-            return True
-        for ench in self.enchantments:
-            if ench.has_extra_info():
-                return True
-        return False
-
-class Inventory(object):
-    """
-    Holds Information about our inventory as a whole
-    """
-
-    def __init__(self, data):
-        """
-        Loads in memory fro the given NBT Object
-        """
-        self.inventory = {}
-        for item in data:
-            self._import_item(item)
-
-    def _import_item(self, item):
-        """
-        Imports an item from the given NBT Object
-        """
-        slot = item.value['Slot'].value
-        self.inventory[slot] = InventorySlot(nbtobj=item)
-
-    def get_items(self):
-        """
-        Gets a list of all items in this inventory set
-        """
-        return self.inventory.values()
+# This is the bulk of the actual application; the classes here are,
+# by and large, derived from PyGTK widgets, and provide some kind of
+# GUI element to the user.
 
 class InvDetails(gtk.Table):
     """
@@ -920,8 +299,7 @@ class InvDetails(gtk.Table):
         self.button.update_graphics()
 
         # Update our Undo object
-        global undo
-        undo.change()
+        util.undo.change()
 
     def add_enchantment(self, button, param=None):
         """
@@ -935,12 +313,11 @@ class InvDetails(gtk.Table):
         if resp == gtk.RESPONSE_OK:
             if new_num >= 0 and new_lvl >= 0:
                 if self.button.inventoryslot is not None:
-                    slot = EnchantmentSlot(num=new_num, lvl=new_lvl)
+                    slot = minecraft.EnchantmentSlot(num=new_num, lvl=new_lvl)
                     self.button.inventoryslot.enchantments.append(slot)
                     self._update_info()
                     self.button.update_graphics()
-                    global undo
-                    undo.change()
+                    util.undo.change()
 
     def ench_max_level(self, button, index):
         """
@@ -957,8 +334,7 @@ class InvDetails(gtk.Table):
                         # Graphics wouldn't need updating, but this also
                         # updates the tooltip.
                         self.button.update_graphics()
-                        global undo
-                        undo.change()
+                        util.undo.change()
 
     def ench_delete(self, button, index):
         """
@@ -969,8 +345,7 @@ class InvDetails(gtk.Table):
                 self.button.inventoryslot.enchantments.pop(index)
                 self._update_info()
                 self.button.update_graphics()
-                global undo
-                undo.change()
+                util.undo.change()
 
 class InvImage(gtk.DrawingArea):
     """
@@ -1207,7 +582,7 @@ class InvImage(gtk.DrawingArea):
         """
         Returns our currently-displayed image as a gtk.gdk.Pixbuf
         """
-        return get_pixbuf_from_surface(self.surf)
+        return util.get_pixbuf_from_surface(self.surf)
 
 class TrashButton(gtk.Button):
     """
@@ -1220,7 +595,7 @@ class TrashButton(gtk.Button):
         self.set_border_width(0)
         self.set_relief(gtk.RELIEF_HALF)
         self.image = gtk.Image()
-        self.image.set_from_pixbuf(get_pixbuf_from_surface(surf))
+        self.image.set_from_pixbuf(util.get_pixbuf_from_surface(surf))
         self.add(self.image)
         self.set_tooltip_markup('Trash <i>(Drag items here to delete)</i>')
 
@@ -1247,8 +622,7 @@ class TrashButton(gtk.Button):
             other.update_graphics()
 
         # Update our Undo object
-        global undo
-        undo.change()
+        util.undo.change()
 
     def target_drag_motion(self, img, context, x, y, time):
         context.drag_status(context.suggested_action, time)
@@ -1297,8 +671,7 @@ class InvButton(gtk.RadioButton):
         if key_str == 'Delete':
             if self.clear():
                 self.update_item()
-                global undo
-                undo.change()
+                util.undo.change()
 
     def drag_begin(self, widget, context):
         """
@@ -1334,15 +707,15 @@ class InvButton(gtk.RadioButton):
                 if other.inventoryslot is None:
                     self.inventoryslot = None
                 else:
-                    self.inventoryslot = InventorySlot(other=other.inventoryslot, slot=self.slot)
+                    self.inventoryslot = minecraft.InventorySlot(other=other.inventoryslot, slot=self.slot)
             else:
                 # Move/Swap the data
                 ours = None
                 theirs = None
                 if other.inventoryslot:
-                    ours = InventorySlot(other=other.inventoryslot, slot=self.slot)
+                    ours = minecraft.InventorySlot(other=other.inventoryslot, slot=self.slot)
                 if self.inventoryslot:
-                    theirs = InventorySlot(other=self.inventoryslot, slot=other.slot)
+                    theirs = minecraft.InventorySlot(other=self.inventoryslot, slot=other.slot)
                 other.inventoryslot = theirs
                 self.inventoryslot = ours
                 other.update_item()
@@ -1358,8 +731,7 @@ class InvButton(gtk.RadioButton):
             self.update_graphics()
 
         # Update our Undo object
-        global undo
-        undo.change()
+        util.undo.change()
 
     def get_text(self):
         """
@@ -1409,7 +781,7 @@ class InvButton(gtk.RadioButton):
         Adds a blank item to this button; used when creating an item via the details
         area.
         """
-        self.inventoryslot = InventorySlot(slot=self.slot)
+        self.inventoryslot = minecraft.InventorySlot(slot=self.slot)
 
     def clear_item(self):
         """
@@ -1487,8 +859,7 @@ class InvButton(gtk.RadioButton):
                 if item.max_damage is not None:
                     if self.inventoryslot.damage != 0:
                         self.inventoryslot.damage = 0
-                        global undo
-                        undo.change()
+                        util.undo.change()
                         return True
         return False
 
@@ -1502,8 +873,7 @@ class InvButton(gtk.RadioButton):
             if item is not None:
                 if self.inventoryslot.count < item.max_quantity:
                     self.inventoryslot.count = item.max_quantity
-                    global undo
-                    undo.change()
+                    util.undo.change()
                     return True
         return False
 
@@ -1521,8 +891,7 @@ class InvButton(gtk.RadioButton):
                         updated = True
                         ench.lvl = ench_obj.max_power
         if updated:
-            global undo
-            undo.change()
+            util.undo.change()
         return updated
 
     def enchant_all(self):
@@ -1541,15 +910,14 @@ class InvButton(gtk.RadioButton):
                 to_add = []
                 for ench_obj in item.enchantments:
                     if ench_obj.num not in existing_enchantments:
-                        to_add.append(EnchantmentSlot(num=ench_obj.num, lvl=ench_obj.max_power))
+                        to_add.append(minecraft.EnchantmentSlot(num=ench_obj.num, lvl=ench_obj.max_power))
                         updated = True
                 for ench_slot in to_add:
                     self.inventoryslot.enchantments.append(ench_slot)
         if self.max_ench():
             updated = True
         if updated:
-            global undo
-            undo.change()
+            util.undo.change()
         return updated
 
 class BaseInvTable(gtk.Table):
@@ -1817,7 +1185,7 @@ class ItemView(gtk.TreeView):
         if item is None:
             self.drag_source_set_icon_stock(gtk.STOCK_DIALOG_ERROR)
         else:
-            self.drag_source_set_icon_pixbuf(get_pixbuf_from_surface(item.get_image(True)))
+            self.drag_source_set_icon_pixbuf(util.get_pixbuf_from_surface(item.get_image(True)))
 
     def filter_text(self, text):
         """
@@ -2436,8 +1804,7 @@ class InvExtra(gtk.VBox):
             obj = self._getcache_obj(varname)
             if obj is not None:
                 obj.changed = True
-                global undo
-                undo.change()
+                util.undo.change()
 
     def populate_from(self, nbt):
         """
@@ -2838,8 +2205,7 @@ class PyInvEdit(gtk.Window):
         file; used for load, revert, and quit.  The passed-in
         action should be the text to put in the dialog.
         """
-        global undo
-        if undo.is_changed():
+        if util.undo.is_changed():
             dialog = dialogs.ConfirmReplaceDialog(self, action)
             response = dialog.run()
             dialog.destroy()
@@ -2958,9 +2324,9 @@ class PyInvEdit(gtk.Window):
         # Now get to work
         if load_inventory:
             if self.multiplayer:
-                self.inventory = Inventory(self.leveldat['Inventory'].value)
+                self.inventory = minecraft.Inventory(self.leveldat['Inventory'].value)
             else:
-                self.inventory = Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
+                self.inventory = minecraft.Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
             self.worldbook.populate_from(self.inventory, self.leveldat)
         self.loaded = True
         self.loadmessage.hide()
@@ -2974,8 +2340,7 @@ class PyInvEdit(gtk.Window):
             menu.set_sensitive(True)
             
         # Update our Undo object
-        global undo
-        undo.load()
+        util.undo.load()
 
         # And return True, for that warm fuzzy feeling
         return True
@@ -3004,12 +2369,11 @@ class PyInvEdit(gtk.Window):
             if leveldat is None:
                 return
             if self.last_load_multiplayer:
-                self.inventory = Inventory(leveldat['Inventory'].value)
+                self.inventory = minecraft.Inventory(leveldat['Inventory'].value)
             else:
-                self.inventory = Inventory(leveldat['Data'].value['Player'].value['Inventory'].value)
+                self.inventory = minecraft.Inventory(leveldat['Data'].value['Player'].value['Inventory'].value)
             self.worldbook.populate_from(self.inventory)
-            global undo
-            undo.change()
+            util.undo.change()
             return
 
     def revert(self, widget, data=None):
@@ -3073,8 +2437,7 @@ class PyInvEdit(gtk.Window):
             dialog.destroy()
 
             # Update our Undo object
-            global undo
-            undo.save()
+            util.undo.save()
 
     def repair_all(self, widget, data=None):
         """
@@ -3115,39 +2478,39 @@ class PyInvEdit(gtk.Window):
         don't want to take the time to do it.  :)
         """
 
-        data = None
+        filedata = None
         with open('pyinvedit.yaml', 'r') as df:
-            data = df.read()
+            filedata = df.read()
 
-        if data:
-            yaml_dict = yaml.load(data)
+        if filedata:
+            yaml_dict = yaml.load(filedata)
 
             # Load texfiles
             self.texfiles = {}
             for yamlobj in yaml_dict['texfiles']:
-                texfile = TexFile(yamlobj)
+                texfile = data.TexFile(yamlobj)
                 self.texfiles[texfile.texfile] = texfile
 
             # Inject our own GUI yaml file
-            texfile = TexFile({ 'texfile': 'gui.png',
+            texfile = data.TexFile({ 'texfile': 'gui.png',
                     'dimensions': [16, 16] })
             self.texfiles[texfile.texfile] = texfile
 
             # Now our groups
             self.groups = collections.OrderedDict()
             for yamlobj in yaml_dict['groups']:
-                group = Group(yamlobj, self.texfiles)
+                group = data.Group(yamlobj, self.texfiles)
                 self.groups[group.name] = group
 
             # Now our enchantments
-            self.enchantments = Enchantments()
+            self.enchantments = data.Enchantments()
             for yamlobj in yaml_dict['enchantments']:
                 self.enchantments.add_enchantment(yamlobj)
 
             # And finally our items
-            self.items = ItemCollection()
+            self.items = data.ItemCollection()
             for yamlobj in yaml_dict['items']:
-                self.items.add_item(Item(yamlobj, self.texfiles, self.groups, self.enchantments))
+                self.items.add_item(data.Item(yamlobj, self.texfiles, self.groups, self.enchantments))
 
             # A standin Item which we'll use when someone wants to type in
             # an arbitrary ID
@@ -3156,7 +2519,7 @@ class PyInvEdit(gtk.Window):
             yamlobj['name'] = 'Unknown Item'
             yamlobj['texfile'] = 'gui.png'
             yamlobj['coords'] = [1, 2]
-            self.items.add_item(Item(yamlobj, self.texfiles, self.groups, self.enchantments, True))
+            self.items.add_item(data.Item(yamlobj, self.texfiles, self.groups, self.enchantments, True))
 
         else:
             raise Exception('No data found from YAML file %s' %
