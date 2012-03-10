@@ -1134,13 +1134,13 @@ items:
   - num: 99
     name: Brown Mushroom Block
     texfile: terrain.png
-    coords: [13, 7]
+    coords: [14, 7]
     groups: [Mushroom]
 
   - num: 100
     name: Red Mushroom Block
     texfile: terrain.png
-    coords: [14, 7]
+    coords: [13, 7]
     groups: [Mushroom]
 
   - num: 101
