@@ -1,6 +1,8 @@
 PyInvEdit is an alternative to the venerable InvEdit for Minecraft
 
-This is still a work in progress.
+This is a work in progress, but it's basically feature-complete right
+now.  Use at your own risk, though I haven't personally experienced
+any data loss with it.
 
 A pre-emptive I-assume-to-be FAQ:
 
@@ -23,32 +25,31 @@ functional enough by that point that it seemed like a waste to just abandon
 it, and I always have fun tinkering around with Python, so I'm still
 intending to finish it up and push out an official release eventually.
 
-Intended Differences between this and InvEdit
----------------------------------------------
+Differences between PyInvEdit and InvEdit
+-----------------------------------------
 
 New/different features:
 
-1) Blocks/Items are defined in a YAML file, rather than a flat text file.
-   IMO this provides for much better flexibility.
+    1) Blocks/Items are defined in a YAML file, rather than a flat text
+       file.  IMO this provides for much better flexibility.
 
-2) The app is careful not to lose any unknown NBT data.  If there is
-   ever another addition like Enchantments, the goal is to write the app
-   in such a way that no data is lost, even if we don't understand the
-   extra data explicitly.
+    2) The app is careful not to lose any unknown NBT data.  If there is
+       ever another addition like Enchantments, the goal is to write the
+       app in such a way that no data is lost, even if we don't understand
+       the extra data explicitly.
 
-3) Right-click to repair or fill-to-max-quantity
+    3) Right-click to repair or fill-to-max-quantity
 
-4) "Repair All" function
+    4) "Repair All" / "Fill All" / "Enchant All" functions
 
-5) Alteration of world seed, experience level, game mode (creative/survival),
-   etc, via a separate tab.  (May as well, since it's all in the same NBT
-   file)
+    5) Alteration of health, food, XP, game mode, time-of-day, etc.
 
-Features I'm not going to implement:
+    6) "Import" of inventory from another savefile
 
-1) Only one inventory file will be editable at once (no multiple
-   inventory tabs)
+Features from InvEdit that are not present in PyInvEdit:
 
-2) No "new" function
+    1) Multiple inventories open at once
 
-3) No auto-updating
+    2) No "new inventory" function
+
+    3) No auto-updating
