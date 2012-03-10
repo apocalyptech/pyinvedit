@@ -2013,7 +2013,7 @@ class PyInvEdit(gtk.Window):
     Main PyInvedit class
     """
 
-    def __init__(self, yamlfile):
+    def __init__(self):
         super(PyInvEdit, self).__init__(gtk.WINDOW_TOPLEVEL)
         global about_name, about_version
         self.set_title('%s %s - Minecraft Inventory Editor' % (about_name, about_version))
@@ -2021,7 +2021,7 @@ class PyInvEdit(gtk.Window):
         self.connect('delete-event', self.action_quit)
         
         # Load our YAML
-        self.load_from_yaml(yamlfile)
+        self.load_from_yaml()
 
         # Figure out what single-player worlds we have available
         avail_worlds = self.get_avail_worlds()
@@ -2469,7 +2469,7 @@ class PyInvEdit(gtk.Window):
         if self.loaded:
             self.worldbook.max_ench()
 
-    def load_from_yaml(self, filename):
+    def load_from_yaml(self):
         """
         Loads all of our relevant objects from the given YAML filename.
 
@@ -2522,5 +2522,4 @@ class PyInvEdit(gtk.Window):
             self.items.add_item(data.Item(yamlobj, self.texfiles, self.groups, self.enchantments, True))
 
         else:
-            raise Exception('No data found from YAML file %s' %
-                    (filename))
+            raise Exception('No data found from YAML file')

@@ -18,5 +18,5 @@ except Exception, e:
     sys.exit(1)
 
 from pyinvedit import pyinveditapp
-app = pyinveditapp.PyInvEdit('items.yaml')
+app = pyinveditapp.PyInvEdit()
 app.run()
