@@ -789,9 +789,12 @@ class InvDetails(gtk.Table):
         self.button = button
         self._update_info()
 
-    def _update_info(self):
+    def _update_info(self, updated_self=False):
         """
-        Updates all our information with our loaded button
+        Updates all our information with our loaded button.  If updated_self
+        is True, the need to change things was triggered by changing one of
+        our own values via the GUI, so less needs to be redrawn (for instance,
+        the enchantment box, if we're just moving around damage/quantity/etc)
         """
         self.updating = True
         self._get_var('slot').set_text('%d' % (self.button.slot))
@@ -829,62 +832,63 @@ class InvDetails(gtk.Table):
             else:
                 self.extrainfo.set_text('')
 
-            # Enchantments
-            for contents in self.enchbox.get_children():
-                self.enchbox.remove(contents)
-            self.enchbox.resize(3, len(self.button.inventoryslot.enchantments)+1)
-            last_idx = -1
-            for idx, ench in enumerate(self.button.inventoryslot.enchantments):
+            # Things to skip if we can
+            if not updated_self:
+                # Enchantments
+                for contents in self.enchbox.get_children():
+                    self.enchbox.remove(contents)
+                self.enchbox.resize(3, len(self.button.inventoryslot.enchantments)+1)
+                last_idx = -1
+                for idx, ench in enumerate(self.button.inventoryslot.enchantments):
 
-                # First the enchantment text itself
-                ench_text = self.enchantments.get_text(ench.num, ench.lvl)
-                if ench.has_extra_info():
-                    ench_text = '%s <i>(has extra tag info)</i>' % (ench_text)
-                align = gtk.Alignment(0, .5, 0, 0)
-                align.set_padding(0, 0, 0, 5)
-                label = gtk.Label()
-                label.set_markup(ench_text)
-                align.add(label)
-                self.enchbox.attach(align, 0, 1, idx, idx+1, gtk.FILL, gtk.FILL)
-                
-                # If we're not at (or above) the enchantment's max value, a button to do that
-                ench_obj = self.enchantments.get_by_id(ench.num)
-                if ench_obj is not None:
-                    if ench.lvl < ench_obj.max_power:
-                        button = gtk.Button()
-                        button.set_image(gtk.image_new_from_stock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_MENU))
-                        button.set_tooltip_text('Maximize Enchantment Level')
-                        button.connect('clicked', self.ench_max_level, idx)
-                        self.enchbox.attach(button, 1, 2, idx, idx+1, gtk.FILL, gtk.FILL)
-                
-                # And a button to delete
+                    # First the enchantment text itself
+                    ench_text = self.enchantments.get_text(ench.num, ench.lvl)
+                    if ench.has_extra_info():
+                        ench_text = '%s <i>(has extra tag info)</i>' % (ench_text)
+                    align = gtk.Alignment(0, .5, 0, 0)
+                    align.set_padding(0, 0, 0, 5)
+                    label = gtk.Label()
+                    label.set_markup(ench_text)
+                    align.add(label)
+                    self.enchbox.attach(align, 0, 1, idx, idx+1, gtk.FILL, gtk.FILL)
+                    
+                    # If we're not at (or above) the enchantment's max value, a button to do that
+                    ench_obj = self.enchantments.get_by_id(ench.num)
+                    if ench_obj is not None:
+                        if ench.lvl < ench_obj.max_power:
+                            button = gtk.Button()
+                            button.set_image(gtk.image_new_from_stock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_MENU))
+                            button.set_tooltip_text('Maximize Enchantment Level')
+                            button.connect('clicked', self.ench_max_level, idx)
+                            self.enchbox.attach(button, 1, 2, idx, idx+1, gtk.FILL, gtk.FILL)
+                    
+                    # And a button to delete
+                    button = gtk.Button()
+                    button.set_image(gtk.image_new_from_stock(gtk.STOCK_CUT, gtk.ICON_SIZE_MENU))
+                    button.set_tooltip_text('Delete Enchantment')
+                    button.connect('clicked', self.ench_delete, idx)
+                    self.enchbox.attach(button, 2, 3, idx, idx+1, gtk.FILL, gtk.FILL)
+
+                    last_idx = idx
+
+                # Now the enchantment Add button
                 button = gtk.Button()
-                button.set_image(gtk.image_new_from_stock(gtk.STOCK_CUT, gtk.ICON_SIZE_MENU))
-                button.set_tooltip_text('Delete Enchantment')
-                button.connect('clicked', self.ench_delete, idx)
-                self.enchbox.attach(button, 2, 3, idx, idx+1, gtk.FILL, gtk.FILL)
+                button.set_image(gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU))
+                button.set_tooltip_text('Add new enchantment to this item')
+                button.connect('clicked', self.add_enchantment)
+                align = gtk.Alignment(0, 0, 1, 0)
+                align.add(button)
+                self.enchbox.attach(align, 0, 1, last_idx+1, last_idx+2, 0, gtk.FILL)
 
-                last_idx = idx
+                # If we have at least one enchantment, draw a border
+                if len(self.button.inventoryslot.enchantments) > 0:
+                    self.ench_vport.set_shadow_type(gtk.SHADOW_IN)
+                else:
+                    self.ench_vport.set_shadow_type(gtk.SHADOW_NONE)
 
-            # Now the enchantment Add button
-            button = gtk.Button()
-            button.set_image(gtk.image_new_from_stock(gtk.STOCK_ADD, gtk.ICON_SIZE_MENU))
-            button.set_tooltip_text('Add new enchantment to this item')
-            button.connect('clicked', self.add_enchantment)
-            align = gtk.Alignment(0, 0, 1, 0)
-            align.add(button)
-            self.enchbox.attach(align, 0, 1, last_idx+1, last_idx+2, 0, gtk.FILL)
-
-
-            # If we have at least one enchantment, draw a border
-            if len(self.button.inventoryslot.enchantments) > 0:
-                self.ench_vport.set_shadow_type(gtk.SHADOW_IN)
-            else:
-                self.ench_vport.set_shadow_type(gtk.SHADOW_NONE)
-
-            # Show everything
-            self.ench_vport.set_visible(True)
-            self.ench_vport.show_all()
+                # Show everything
+                self.ench_vport.set_visible(True)
+                self.ench_vport.show_all()
 
         self.updating = False
 
@@ -899,16 +903,20 @@ class InvDetails(gtk.Table):
             print 'Error: no button'
             return
 
+        partial_update = True
+
         if self.button.inventoryslot is None:
+            partial_update = False
             self.button.add_item()
 
         if self._get_var('num').get_value() == 0:
             self.button.clear_item()
+            partial_update = False
         else:
             self.button.inventoryslot.num = self._get_var('num').get_value()
             self.button.inventoryslot.damage = self._get_var('damage').get_value()
             self.button.inventoryslot.count = self._get_var('count').get_value()
-        self._update_info()
+        self._update_info(partial_update)
         self.button.update_graphics()
 
         # Update our Undo object
