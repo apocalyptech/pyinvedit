@@ -1,2 +1,6 @@
 *.swp
 *.pyc
+PyInvEdit.egg-info
+build
+dist
+pyinveditlib/pymclevel/_nbt.c

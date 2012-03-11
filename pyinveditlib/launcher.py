@@ -1,5 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # vim: set expandtab tabstop=4 shiftwidth=4:
+
+import sys
 
 # Load GTK
 try:
@@ -17,6 +19,8 @@ except Exception, e:
     sys.stdin.readline()
     sys.exit(1)
 
-from pyinvedit import pyinveditapp
-app = pyinveditapp.PyInvEdit()
-app.run()
+def main(argv=None):
+    from pyinveditlib import pyinveditapp
+    app = pyinveditapp.PyInvEdit()
+    app.run()
+

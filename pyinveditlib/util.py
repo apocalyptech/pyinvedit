@@ -26,7 +26,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import gtk
+import sys
 import cStringIO
 
 # This file contains various helper functions and classes which didn't seem
@@ -46,6 +48,17 @@ def get_pixbuf_from_surface(surface):
     loader.close()
     df.close()
     return loader.get_pixbuf()
+
+def get_datafile_path(prefix, filename):
+    """
+    Gets the path to one of our datafiles, given its directory
+    prefix.
+    """
+    if hasattr(sys, 'frozen'):
+        path = os.path.dirname(unicode(sys.executable, sys.getfilesystemencoding()))
+    else:
+        path = os.path.dirname(os.path.dirname(unicode(__file__, sys.getfilesystemencoding())))
+    return os.path.join(path, prefix, filename)
 
 class Undo(object):
     """

@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+# vim: set expandtab tabstop=4 shiftwidth=4:
+
+from pyinveditlib import launcher
+launcher.main()

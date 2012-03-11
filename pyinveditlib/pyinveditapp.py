@@ -36,8 +36,8 @@ import pango
 import pangocairo
 import collections
 from pymclevel import nbt, mclevelbase
-from pyinvedit import dialogs, util, minecraft, data
-from pyinvedit import about_name, about_version
+from pyinveditlib import dialogs, util, minecraft, data
+from pyinveditlib import about_name, about_version
 
 # This is the bulk of the actual application; the classes here are,
 # by and large, derived from PyGTK widgets, and provide some kind of
@@ -2479,7 +2479,7 @@ class PyInvEdit(gtk.Window):
         """
 
         filedata = None
-        with open('pyinvedit.yaml', 'r') as df:
+        with open(util.get_datafile_path('data', 'pyinvedit.yaml'), 'r') as df:
             filedata = df.read()
 
         if filedata:

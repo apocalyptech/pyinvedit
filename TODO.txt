@@ -1,1 +1,7 @@
  * Perhaps a "help" menu?
+ * It turns out we're incompatible with the pure-Python NBT library
+   we include in here, need to fix that
+ * Drag-and-Drop isn't working on Windows
+ * Finish up setup.py packaging (and, in general, figure out how
+   to do it properly)
+ * OSX support in setup.py

@@ -29,7 +29,7 @@
 import os
 import cairo
 import collections
-from pyinvedit import util, minecraft
+from pyinveditlib import util, minecraft
 
 # This file contains classes that primarily represent the utility data
 # that we store in the main YAML file, in a way that's useful to us.
@@ -49,6 +49,7 @@ class TexFile(object):
         Initializes given a yaml dict.
         """
         self.texfile = yamlobj['texfile']
+        self.filename = util.get_datafile_path('gfx', self.texfile)
         self.x = yamlobj['dimensions'][0]
         self.y = yamlobj['dimensions'][1]
         self.grid_large = []
@@ -64,13 +65,13 @@ class TexFile(object):
                 self.grid_pixbuf[x].append(None)
 
         # Make sure the file is present
-        if not os.path.exists(self.texfile):
+        if not os.path.exists(self.filename):
             raise Exception('texfile %s not found' % (self.texfile))
 
         # And while we're at it, load and process it
         mainsurface = None
         try:
-            mainsurface = cairo.ImageSurface.create_from_png(self.texfile)
+            mainsurface = cairo.ImageSurface.create_from_png(self.filename)
         except Exception, e:
             raise Exception('Unable to load texture file %s: %s' %
                     (self.texfile, str(e)))
