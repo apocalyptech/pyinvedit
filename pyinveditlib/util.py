@@ -52,13 +52,51 @@ def get_pixbuf_from_surface(surface):
 def get_datafile_path(prefix, filename):
     """
     Gets the path to one of our datafiles, given its directory
-    prefix.
+    prefix.  There's a number of possibilities here, which we could
+    simplify by using package_data in our setup.py and pkgutil.get_data().
+    However, I explicitly want our data files easily-accessible by
+    end users for modification, if so desired, so they don't really fit
+    very well into that model.
+
+    Anyway, there are four possibilities, in the order we check them
+    here:
+
+    1) We're frozen into an EXE or whatever.  The datafiles should be
+       right in the same dir as the executable.
+
+    2) We're running from the source tree.  The datafiles will be
+       accessible by hopping one dir up from __file__
+
+    3) We're running from inside an Egg.  The datafiles will be
+       accessible by hopping one dir up from __file__, and then
+       descending first into share/pyinvedit.
+
+    4) We're installed to the filesystem, outside an Egg.  The relative
+       positions of the datafiles will look something like this:
+            lib/python2.7/site-packages/pyinveditlib/util.py
+            share/pyinvedit/prefix/filename
+
+    Whew.
     """
     if hasattr(sys, 'frozen'):
+        # Frozen EXE-or-whatever
         path = os.path.dirname(unicode(sys.executable, sys.getfilesystemencoding()))
+        return os.path.join(path, prefix, filename)
     else:
+        # Try for source directory
         path = os.path.dirname(os.path.dirname(unicode(__file__, sys.getfilesystemencoding())))
-    return os.path.join(path, prefix, filename)
+        fullpath = os.path.join(path, prefix, filename)
+        if os.path.exists(fullpath):
+            return fullpath
+        else:
+            # See if we were in an Egg
+            fullpath = os.path.join(path, 'share', 'pyinvedit', prefix, filename)
+            if os.path.exists(fullpath):
+                return fullpath
+            else:
+                # Fall back to filesystem non-Egg installation
+                fullpath = os.path.join(path, '..', '..', '..', 'share', 'pyinvedit', prefix, filename)
+                return fullpath
 
 class Undo(object):
     """

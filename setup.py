@@ -12,9 +12,10 @@
 ### full Windows bundling.
 ###
 
+import numpy
 from setuptools import setup
 from setuptools.extension import Extension
-from Cython.Distutils import build_ext
+from Cython.Distutils import build_ext as cython_build_ext
 
 version = '1.0.0b1'
 
@@ -24,17 +25,15 @@ version = '1.0.0b1'
 #        'cairo'
 #    ]
 
-nbt_ext_modules = []
-nbt_build_ext = {}
-
-import numpy
-try:
-    from Cython.Distutils import build_ext
-    nbt_ext_modules.append('pyinveditlib/pymclevel/_nbt.pyx')
-    nbt_build_ext['build_ext'] = build_ext
-except ImportError:
-    print 'error'
-    pass
+# External data files we include.  The recommended way to
+# do this is with package_data, but that ends up burying
+# the datafiles deep in difficult-to-find territory.  We
+# want to keep these files easily editable by users, so
+# we're using data_files instead.
+data_files=[('share/pyinvedit/gfx', [ 'gfx/gui.png', 'gfx/items.png',
+                      'gfx/logo.png', 'gfx/special.png',
+                      'gfx/terrain.png' ]),
+    ('share/pyinvedit/data', [ 'data/pyinvedit.yaml' ])]
 
 setup(name='PyInvEdit',
         version=version,
@@ -54,12 +53,9 @@ setup(name='PyInvEdit',
                 'pyinvedit = pyinveditlib.launcher:main',
             ]
         },
-        data_files=[('gfx', [ 'gfx/gui.png', 'gfx/items.png',
-                              'gfx/logo.png', 'gfx/special.png',
-                              'gfx/terrain.png' ]),
-            ('data', [ 'data/pyinvedit.yaml' ])],
-        ext_modules = [Extension('_nbt', nbt_ext_modules)],
-        cmdclass = nbt_build_ext,
+        data_files=data_files,
+        ext_modules = [Extension('_nbt', ['pyinveditlib/pymclevel/_nbt.pyx'])],
+        cmdclass = { 'build_ext': cython_build_ext },
         include_dirs=numpy.get_include()
     )
 
