@@ -600,7 +600,7 @@ class TrashButton(gtk.Button):
         self.set_tooltip_markup('Trash <i>(Drag items here to delete)</i>')
 
         # Set up drag and drop inbetween items
-        target = [ ('', 0, 0) ]
+        target = [ ('pyinvedit', 0, 0) ]
         self.drag_dest_set(gtk.DEST_DEFAULT_DROP, target, gtk.gdk.ACTION_COPY)
         self.connect('drag_drop', self.target_drag_drop)
         self.connect('drag_motion', self.target_drag_motion)
@@ -653,7 +653,7 @@ class InvButton(gtk.RadioButton):
         self.connect('key-release-event', self.key_release)
 
         # Set up drag and drop inbetween items
-        target = [ ('', 0, 0) ]
+        target = [ ('pyinvedit', 0, 0) ]
         self.drag_source_set(gtk.gdk.BUTTON1_MASK|gtk.gdk.BUTTON3_MASK, target, gtk.gdk.ACTION_COPY)
         self.connect('drag_begin', self.drag_begin)
         self.connect('drag_end', self.drag_end)
@@ -1158,7 +1158,7 @@ class ItemView(gtk.TreeView):
         """
         Turns drag-and-drop on
         """
-        self.drag_source_set(gtk.gdk.BUTTON1_MASK, [ ('', 0, 0) ], gtk.gdk.ACTION_COPY)
+        self.drag_source_set(gtk.gdk.BUTTON1_MASK, [ ('pyinvedit', 0, 0) ], gtk.gdk.ACTION_COPY)
 
     def disable_drag_n_drop(self):
         """

@@ -1,5 +1,4 @@
  * Perhaps a "help" menu?
- * Drag-and-Drop isn't working on Windows
  * Finish up setup.py packaging (and, in general, figure out how
    to do it properly)
  * OSX support in setup.py
