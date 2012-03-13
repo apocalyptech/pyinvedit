@@ -1817,9 +1817,9 @@ class InvExtra(gtk.VBox):
             nbt_val = None
             if '.' in var.varname:
                 (one, two) = var.varname.split('.')
-                if one in nbt and two in nbt[one].value:
+                if one in nbt and two in nbt[one]:
                     var.presence = True
-                    nbt_val = nbt[one].value[two].value
+                    nbt_val = nbt[one][two].value
             else:
                 if var.varname in nbt:
                     var.presence = True
@@ -1863,8 +1863,8 @@ class InvExtra(gtk.VBox):
                 nbt_obj = None
                 if '.' in var.varname:
                     (one, two) = var.varname.split('.')
-                    if one in nbt and two in nbt[one].value:
-                        nbt_obj = nbt[one].value[two]
+                    if one in nbt and two in nbt[one]:
+                        nbt_obj = nbt[one][two]
                 else:
                     if var.varname in nbt:
                         nbt_obj = nbt[var.varname]
@@ -1947,7 +1947,7 @@ class InvNotebook(gtk.Notebook):
         else:
             self.extradetails_sw.show()
             if nbt:
-                self.extradetails.populate_from(nbt['Data'].value)
+                self.extradetails.populate_from(nbt['Data'])
 
     def export_inv_nbt(self):
         """
@@ -1960,7 +1960,7 @@ class InvNotebook(gtk.Notebook):
         Saves any extra changes we might have made to our "other" vars
         """
         if not self.app.multiplayer:
-            self.extradetails.save_to(nbt['Data'].value)
+            self.extradetails.save_to(nbt['Data'])
 
     def repair_all(self):
         """
@@ -1998,8 +1998,8 @@ class InvNotebook(gtk.Notebook):
             (path, filename) = os.path.split(self.app.filename)
             title = '%s Inventory' % (filename)
         else:
-            if self.app.leveldat['Data'].value['LevelName'] is not None:
-                title = '%s Inventory' % (self.app.leveldat['Data'].value['LevelName'].value)
+            if self.app.leveldat['Data']['LevelName'] is not None:
+                title = '%s Inventory' % (self.app.leveldat['Data']['LevelName'].value)
             else:
                 title = 'Inventory'
         self.set_tab_label(self.get_nth_page(0), gtk.Label(title))
@@ -2271,8 +2271,8 @@ class PyInvEdit(gtk.Window):
             correct_tags = False
             try:
                 if 'Data' in leveldat:
-                    if 'Player' in leveldat['Data'].value:
-                        if 'Inventory' in leveldat['Data'].value['Player']:
+                    if 'Player' in leveldat['Data']:
+                        if 'Inventory' in leveldat['Data']['Player']:
                             self.last_load_multiplayer = False
                             correct_tags = True
                 elif 'Inventory' in leveldat:
@@ -2324,9 +2324,9 @@ class PyInvEdit(gtk.Window):
         # Now get to work
         if load_inventory:
             if self.multiplayer:
-                self.inventory = minecraft.Inventory(self.leveldat['Inventory'].value)
+                self.inventory = minecraft.Inventory(self.leveldat['Inventory'])
             else:
-                self.inventory = minecraft.Inventory(self.leveldat['Data'].value['Player'].value['Inventory'].value)
+                self.inventory = minecraft.Inventory(self.leveldat['Data']['Player']['Inventory'])
             self.worldbook.populate_from(self.inventory, self.leveldat)
         self.loaded = True
         self.loadmessage.hide()
@@ -2369,9 +2369,9 @@ class PyInvEdit(gtk.Window):
             if leveldat is None:
                 return
             if self.last_load_multiplayer:
-                self.inventory = minecraft.Inventory(leveldat['Inventory'].value)
+                self.inventory = minecraft.Inventory(leveldat['Inventory'])
             else:
-                self.inventory = minecraft.Inventory(leveldat['Data'].value['Player'].value['Inventory'].value)
+                self.inventory = minecraft.Inventory(leveldat['Data']['Player']['Inventory'])
             self.worldbook.populate_from(self.inventory)
             util.undo.change()
             return
@@ -2424,7 +2424,7 @@ class PyInvEdit(gtk.Window):
             if self.multiplayer:
                 self.leveldat['Inventory'].value = self.worldbook.export_inv_nbt()
             else:
-                self.leveldat['Data'].value['Player'].value['Inventory'].value = self.worldbook.export_inv_nbt()
+                self.leveldat['Data']['Player']['Inventory'].value = self.worldbook.export_inv_nbt()
                 self.worldbook.save_extra_nbt_changes(self.leveldat)
             self.leveldat.saveGzipped(self.filename)
             dialog = gtk.MessageDialog(self,

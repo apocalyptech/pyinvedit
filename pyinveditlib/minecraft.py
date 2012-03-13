@@ -47,12 +47,12 @@ class EnchantmentSlot(object):
             self.lvl = lvl
             self.extratags = {}
         else:
-            self.num = nbtobj.value['id'].value
-            self.lvl = nbtobj.value['lvl'].value
+            self.num = nbtobj['id'].value
+            self.lvl = nbtobj['lvl'].value
             self.extratags = {}
-            for tagname, value in nbtobj.value.iteritems():
+            for tagname in nbtobj:
                 if tagname not in ['id', 'lvl']:
-                    self.extratags[tagname] = value
+                    self.extratags[tagname] = nbtobj[tagname]
 
     def copy(self):
         """
@@ -128,23 +128,23 @@ class InventorySlot(object):
                 for ench in other.enchantments:
                     self.enchantments.append(ench.copy())
         else:
-            self.num = nbtobj.value['id'].value
-            self.damage = nbtobj.value['Damage'].value
-            self.count = nbtobj.value['Count'].value
-            self.slot = nbtobj.value['Slot'].value
+            self.num = nbtobj['id'].value
+            self.damage = nbtobj['Damage'].value
+            self.count = nbtobj['Count'].value
+            self.slot = nbtobj['Slot'].value
             self.enchantments = []
             self.extratagtags = {}
             if 'tag' in nbtobj:
-                if 'ench' in nbtobj.value['tag'].value:
-                    for enchtag in nbtobj.value['tag'].value['ench'].value:
+                if 'ench' in nbtobj['tag']:
+                    for enchtag in nbtobj['tag']['ench']:
                         self.enchantments.append(EnchantmentSlot(nbtobj=enchtag))
-                for tagname, value in nbtobj.value['tag'].value.iteritems():
+                for tagname in nbtobj['tag']:
                     if tagname not in ['ench']:
-                        extratagtags[tagname] = value
+                        extratagtags[tagname] = nbtobj['tag'][tagname]
             self.extratags = {}
-            for tagname, value in nbtobj.value.iteritems():
+            for tagname in nbtobj:
                 if tagname not in ['id', 'Damage', 'Count', 'Slot', 'tag']:
-                    self.extratags[tagname] = value
+                    self.extratags[tagname] = nbtobj[tagname]
 
         # Check to see if we're supposed to override the "slot" value
         if slot is not None:
@@ -217,7 +217,7 @@ class Inventory(object):
         """
         Imports an item from the given NBT Object
         """
-        slot = item.value['Slot'].value
+        slot = item['Slot'].value
         self.inventory[slot] = InventorySlot(nbtobj=item)
 
     def get_items(self):
