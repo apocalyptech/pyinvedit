@@ -33,7 +33,7 @@ import pango
 import string
 import traceback
 from pymclevel import nbt
-from pyinveditlib import vmware
+from pyinveditlib import vmware, util
 from pyinveditlib import about_name, about_version, about_url, about_authors
 
 # This file contains all the various popup dialog classes that we use
@@ -279,14 +279,14 @@ class InvAboutDialog(gtk.AboutDialog):
         self.set_website(about_url)
         self.set_authors(about_authors)
         self.set_comments('A Minecraft Inventory Editor written in Python')
-        licensepath = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'COPYING.txt')
+        licensepath = util.get_datafile_path('COPYING.txt')
         if os.path.isfile(licensepath):
             try:
                 with open(licensepath, 'r') as df:
                     self.set_license(df.read())
             except Exception:
                 pass
-        iconpath = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'logo.png')
+        iconpath = util.get_datafile_path('logo.png', 'gfx')
         if os.path.isfile(iconpath):
             try:
                 self.set_logo(gtk.gdk.pixbuf_new_from_file(iconpath))

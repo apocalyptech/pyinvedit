@@ -49,7 +49,7 @@ def get_pixbuf_from_surface(surface):
     df.close()
     return loader.get_pixbuf()
 
-def get_datafile_path(prefix, filename):
+def get_datafile_path(filename, prefix=''):
     """
     Gets the path to one of our datafiles, given its directory
     prefix.  There's a number of possibilities here, which we could

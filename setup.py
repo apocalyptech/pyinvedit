@@ -33,7 +33,9 @@ version = '1.0.0b1'
 data_files=[('share/pyinvedit/gfx', [ 'gfx/gui.png', 'gfx/items.png',
                       'gfx/logo.png', 'gfx/special.png',
                       'gfx/terrain.png' ]),
-    ('share/pyinvedit/data', [ 'data/pyinvedit.yaml' ])]
+    ('share/pyinvedit/data', [ 'data/pyinvedit.yaml' ]),
+    ('share/pyinvedit', [ 'COPYING.txt', 'README.txt',
+        'LICENSE-pymclevel.txt', 'LICENSE-wraplabel.txt'])]
 
 setup(name='PyInvEdit',
         version=version,

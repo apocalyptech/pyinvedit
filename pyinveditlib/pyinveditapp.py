@@ -2528,7 +2528,7 @@ class PyInvEdit(gtk.Window):
         """
 
         filedata = None
-        with open(util.get_datafile_path('data', 'pyinvedit.yaml'), 'r') as df:
+        with open(util.get_datafile_path('pyinvedit.yaml', 'data'), 'r') as df:
             filedata = df.read()
 
         if filedata:

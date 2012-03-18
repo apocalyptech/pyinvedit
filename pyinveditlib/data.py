@@ -49,7 +49,7 @@ class TexFile(object):
         Initializes given a yaml dict.
         """
         self.texfile = yamlobj['texfile']
-        self.filename = util.get_datafile_path('gfx', self.texfile)
+        self.filename = util.get_datafile_path(self.texfile, 'gfx')
         self.x = yamlobj['dimensions'][0]
         self.y = yamlobj['dimensions'][1]
         self.grid_large = []
