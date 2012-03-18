@@ -16,8 +16,7 @@ import numpy
 from setuptools import setup
 from setuptools.extension import Extension
 from Cython.Distutils import build_ext as cython_build_ext
-
-version = '1.0.0b1'
+from pyinveditlib import about_version
 
 #install_requires = [
 #        'yaml',
@@ -38,7 +37,7 @@ data_files=[('share/pyinvedit/gfx', [ 'gfx/gui.png', 'gfx/items.png',
         'LICENSE-pymclevel.txt', 'LICENSE-wraplabel.txt'])]
 
 setup(name='PyInvEdit',
-        version=version,
+        version=about_version,
         description='Minecraft Inventory Editor',
         long_description=open('./README.txt', 'r').read(),
         classifiers=[],

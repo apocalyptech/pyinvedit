@@ -2,7 +2,7 @@
 # vim: set expandtab tabstop=4 shiftwidth=4:
 
 about_name = 'PyInvEdit'
-about_version = '1.0.0-pre'
+about_version = '1.0.0b1'
 about_url = 'http://apocalyptech.com/minecraft/pyinvedit'
 about_authors = [ 'Main Application - CJ Kucera',
         'NBT Processing and other pymclevel includes - David Rio Vierra (codewarrior0)',
