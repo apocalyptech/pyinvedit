@@ -1,0 +1,6 @@
+include *.txt
+include *.exe
+include pyinvedit
+recursive-include data *
+recursive-include gfx *
+recursive-include gimp *
