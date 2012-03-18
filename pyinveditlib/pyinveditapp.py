@@ -847,15 +847,24 @@ class InvButton(gtk.RadioButton):
             if repaired or filled:
                 self.update_item()
 
-    def repair(self):
+    def repair(self, itemlist=None):
         """
         Repairs our item, if we're the sort of item which can be
         repaired.  Returns True if we actually performed a repair, and
-        False otherwise
+        False otherwise.  If itemlist is a list of strings, the
+        item's name will be matched against the list
         """
         if self.inventoryslot is not None:
             item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
             if item is not None:
+                if itemlist is not None:
+                    matched = False
+                    for name in itemlist:
+                        if item.name.endswith(name):
+                            matched = True
+                            break
+                    if not matched:
+                        return False
                 if item.max_damage is not None:
                     if self.inventoryslot.damage != 0:
                         self.inventoryslot.damage = 0
@@ -969,12 +978,12 @@ class BaseInvTable(gtk.Table):
                 button.update_item()
                 break
 
-    def repair_all(self):
+    def repair_all(self, itemlist=None):
         """
         Repairs all items
         """
         for button in self.buttons.values():
-            if button.repair():
+            if button.repair(itemlist):
                 button.update_item()
 
     def fill_all(self):
@@ -1962,12 +1971,12 @@ class InvNotebook(gtk.Notebook):
         if not self.app.multiplayer:
             self.extradetails.save_to(nbt['Data'])
 
-    def repair_all(self):
+    def repair_all(self, itemlist=None):
         """
         Repairs all items contained in the book
         """
-        self.invtable.repair_all()
-        self.extrainvtable.repair_all()
+        self.invtable.repair_all(itemlist)
+        self.extrainvtable.repair_all(itemlist)
 
     def fill_all(self):
         """
@@ -2072,7 +2081,9 @@ class PyInvEdit(gtk.Window):
         # when we've loaded a file
         self.menu_only_loaded = [self.menu_save, self.menu_saveas, self.menu_saveto,
                 self.menu_revert, self.menu_repair, self.menu_fill, self.menu_importfrom,
-                self.menu_import, self.menu_enchant_all, self.menu_max_ench]
+                self.menu_import, self.menu_enchant_all, self.menu_max_ench,
+                self.menu_repair_sub, self.menu_repair_tools, self.menu_repair_armor,
+                self.menu_repair_weapons]
         for menu in self.menu_only_loaded:
             menu.set_sensitive(False)
 
@@ -2114,6 +2125,10 @@ class PyInvEdit(gtk.Window):
                 #('/Edit/_Redo',            '<control>Y',  self.menu,        0, '<StockItem>', gtk.STOCK_REDO),
                 #('/Edit/sep4',             None,          None,             0, '<Separator>'),
                 ('/Edit/_Repair All',      '<control>R',  self.repair_all,  0, None),
+                ('/Edit/Repair All...',    None,          None,             0, '<Branch>'),
+                ('/Edit/Repair All.../Tools', None,       self.repair_all_tools, 0, None),
+                ('/Edit/Repair All.../Armor', None,       self.repair_all_armor, 0, None),
+                ('/Edit/Repair All.../Weapons', None,     self.repair_all_weapons, 0, None),
                 ('/Edit/_Fill All',        '<control>F',  self.fill_all,    0, None),
                 ('/Edit/_Enchant All',     '<control>E',  self.enchant_all, 0, None),
                 ('/Edit/_Maximize Enchantments', '<control>M', self.max_ench, 0, None),
@@ -2135,18 +2150,29 @@ class PyInvEdit(gtk.Window):
         # pull out the relevant items dynamically (based on label) but
         # the instant you call .get_label() on one of our Factory'd
         # Separator items, they stop rendering properly.  So here's
-        # a very stupid way of getting at what I want
-        self.menu_openfrom = menu.get_children()[0].get_submenu().get_children()[1]
-        self.menu_import = menu.get_children()[0].get_submenu().get_children()[3]
-        self.menu_importfrom = menu.get_children()[0].get_submenu().get_children()[4]
-        self.menu_save = menu.get_children()[0].get_submenu().get_children()[6]
-        self.menu_saveas = menu.get_children()[0].get_submenu().get_children()[7]
-        self.menu_saveto = menu.get_children()[0].get_submenu().get_children()[8]
-        self.menu_revert = menu.get_children()[0].get_submenu().get_children()[9]
-        self.menu_repair = menu.get_children()[1].get_submenu().get_children()[0]
-        self.menu_fill = menu.get_children()[1].get_submenu().get_children()[1]
-        self.menu_enchant_all = menu.get_children()[1].get_submenu().get_children()[2]
-        self.menu_max_ench = menu.get_children()[1].get_submenu().get_children()[3]
+        # a rather silly way of getting at what I want.
+        file_menu_children = menu.get_children()[0].get_submenu().get_children()
+        self.menu_openfrom = file_menu_children[1]
+        self.menu_import = file_menu_children[3]
+        self.menu_importfrom = file_menu_children[4]
+        self.menu_save = file_menu_children[6]
+        self.menu_saveas = file_menu_children[7]
+        self.menu_saveto = file_menu_children[8]
+        self.menu_revert = file_menu_children[9]
+
+        # Now the edit menu
+        edit_menu_children = menu.get_children()[1].get_submenu().get_children()
+        self.menu_repair = edit_menu_children[0]
+        self.menu_repair_sub = edit_menu_children[1]
+        self.menu_fill = edit_menu_children[2]
+        self.menu_enchant_all = edit_menu_children[3]
+        self.menu_max_ench = edit_menu_children[4]
+
+        # "Repair All" subs
+        repair_children = self.menu_repair_sub.get_submenu().get_children()
+        self.menu_repair_tools = repair_children[0]
+        self.menu_repair_armor = repair_children[1]
+        self.menu_repair_weapons = repair_children[2]
 
         # Tooltips
         self.menu_import.set_tooltip_markup('Imports the inventory from the specified file, while leaving the rest of the savegame intact <i>(world seed, player position, etc)</i>')
@@ -2445,6 +2471,29 @@ class PyInvEdit(gtk.Window):
         """
         if self.loaded:
             self.worldbook.repair_all()
+
+    def repair_all_tools(self, widget, data=None):
+        """
+        Repairs all tools
+        """
+        if self.loaded:
+            self.worldbook.repair_all([' Axe', ' Hoe', ' Pickaxe',
+                ' Shovel', 'Fishing Rod', 'Shears'])
+
+    def repair_all_armor(self, widget, data=None):
+        """
+        Repairs all armor
+        """
+        if self.loaded:
+            self.worldbook.repair_all([' Boots', ' Cap', ' Pants',
+                ' Tunic', ' Chestplate', ' Helmet', ' Leggings'])
+
+    def repair_all_weapons(self, widget, data=None):
+        """
+        Repairs all weapons
+        """
+        if self.loaded:
+            self.worldbook.repair_all([' Sword', 'Bow'])
 
     def fill_all(self, widget, data=None):
         """
