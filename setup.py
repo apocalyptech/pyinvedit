@@ -45,27 +45,44 @@ data_files=[('share/pyinvedit/gfx', [ 'gfx/gui.png', 'gfx/items.png',
     ('share/pyinvedit', [ 'COPYING.txt', 'README.txt',
         'LICENSE-pymclevel.txt', 'LICENSE-wraplabel.txt'])]
 
-setup(name='PyInvEdit',
-        version=about_version,
-        description='Minecraft Inventory Editor',
-        long_description=open('./README.txt', 'r').read(),
-        classifiers=[],
-        keywords='minecraft',
-        author='Christopher J Kucera',
-        author_email='pez@apocalyptech.com',
-        url='http://apocalyptech.com/minecraft/pyinvedit/',
-        license='BSD License',
-        packages=['pyinveditlib', 'pyinveditlib.pymclevel'],
-        #install_requires=install_requires,
-        zip_safe=False,
-        entry_points = {
-            'gui_scripts': [
-                'pyinvedit = pyinveditlib.launcher:main',
-            ]
-        },
-        data_files=data_files,
-        ext_modules = [Extension('_nbt', nbt_ext_modules)],
-        cmdclass = { 'build_ext': build_ext },
-        include_dirs=numpy.get_include()
+setup_args = dict(
+    name='PyInvEdit',
+    version=about_version,
+    description='Minecraft Inventory Editor',
+    long_description=open('./README.txt', 'r').read(),
+    classifiers=[],
+    keywords='minecraft',
+    author='Christopher J Kucera',
+    author_email='pez@apocalyptech.com',
+    url='http://apocalyptech.com/minecraft/pyinvedit/',
+    license='BSD License',
+    packages=['pyinveditlib', 'pyinveditlib.pymclevel'],
+    #install_requires=install_requires,
+    zip_safe=False,
+    entry_points = {
+        'gui_scripts': [
+            'pyinvedit = pyinveditlib.launcher:main',
+        ]
+    },
+    data_files=data_files,
+    ext_modules = [Extension('_nbt', nbt_ext_modules)],
+    cmdclass = { 'build_ext': build_ext },
+    include_dirs=numpy.get_include(),
     )
 
+try:
+    setup(**setup_args)
+except SystemExit:
+    del setup_args['ext_modules']
+    del setup_args['cmdclass']
+    del setup_args['include_dirs']
+    setup(**setup_args)
+    print
+    print "**************************************************************"
+    print "NOTICE: We were unable to compile the accelerated version"
+    print "of the NBT processing module.  We've just fallen back to"
+    print "including the pure-Python version, which is just as functional"
+    print "but a bit slower.  If you're running a bdist or the like, note"
+    print "that the resulting distfile may not be ideal."
+    print "**************************************************************"
+    print
