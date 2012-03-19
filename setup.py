@@ -2,14 +2,17 @@
 # vim: set expandtab tabstop=4 shiftwidth=4:
 
 ###
-### Warning!  This is a work-in-progress and isn't really
-### suitable for all (or even many) situations.  It works
-### well enough when installing to an Egg on Linux, but
-### fails in various ways for most other installation
-### targets.
+### Warning!  This is a work-in-progress and might not
+### do the right thing in all situations, though it's
+### steadily getting closer.  I think it's pretty generally
+### usable on Linux, at least.
 ###
 ### TODO: cx_Freeze support (or py2exe or whatever) for
 ### full Windows bundling.
+###
+### TODO: Figure out how to get _nbt.pyx in bdist, for
+### if building it fails during setup time but could
+### possibly succeed at some later date with pyximport
 ###
 
 import numpy
@@ -65,7 +68,7 @@ setup_args = dict(
         ]
     },
     data_files=data_files,
-    ext_modules = [Extension('_nbt', nbt_ext_modules)],
+    ext_modules = [Extension('pyinveditlib.pymclevel._nbt', nbt_ext_modules)],
     cmdclass = { 'build_ext': build_ext },
     include_dirs=numpy.get_include(),
     )
