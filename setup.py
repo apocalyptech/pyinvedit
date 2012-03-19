@@ -15,8 +15,17 @@
 import numpy
 from setuptools import setup
 from setuptools.extension import Extension
-from Cython.Distutils import build_ext as cython_build_ext
 from pyinveditlib import about_version
+
+# Use Cython if we can, otherwise just the .c file
+nbt_ext_modules = []
+try:
+    from Cython.Distutils import build_ext
+    nbt_ext_modules.append('pyinveditlib/pymclevel/_nbt.pyx')
+except ImportError:
+    print "Cython not found - using previously-Cython'd .c file instead"
+    from setuptools.command.build_ext import build_ext
+    nbt_ext_modules.append('pyinveditlib/pymclevel/_nbt.c')
 
 #install_requires = [
 #        'yaml',
@@ -55,8 +64,8 @@ setup(name='PyInvEdit',
             ]
         },
         data_files=data_files,
-        ext_modules = [Extension('_nbt', ['pyinveditlib/pymclevel/_nbt.pyx'])],
-        cmdclass = { 'build_ext': cython_build_ext },
+        ext_modules = [Extension('_nbt', nbt_ext_modules)],
+        cmdclass = { 'build_ext': build_ext },
         include_dirs=numpy.get_include()
     )
 
