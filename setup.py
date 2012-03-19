@@ -10,10 +10,6 @@
 ### TODO: cx_Freeze support (or py2exe or whatever) for
 ### full Windows bundling.
 ###
-### TODO: Figure out how to get _nbt.pyx in bdist, for
-### if building it fails during setup time but could
-### possibly succeed at some later date with pyximport
-###
 
 import numpy
 from setuptools import setup
@@ -68,6 +64,13 @@ setup_args = dict(
         ]
     },
     data_files=data_files,
+    package_data = {
+        # Include our source Cython file, on the offchance that for
+        # whatever reason we couldn't compile _nbt now, but will suddenly
+        # gain the ability to do so later (which could happen via
+        # pyximport in nbt.py)
+        '': ['*.pyx'],
+    },
     ext_modules = [Extension('pyinveditlib.pymclevel._nbt', nbt_ext_modules)],
     cmdclass = { 'build_ext': build_ext },
     include_dirs=numpy.get_include(),
