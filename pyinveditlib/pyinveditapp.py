@@ -2478,7 +2478,7 @@ class PyInvEdit(gtk.Window):
         """
         if self.loaded:
             self.worldbook.repair_all([' Axe', ' Hoe', ' Pickaxe',
-                ' Shovel', 'Fishing Rod', 'Shears'])
+                ' Shovel', 'Fishing Rod', 'Shears', 'Flint and Steel'])
 
     def repair_all_armor(self, widget, data=None):
         """
