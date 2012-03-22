@@ -847,24 +847,27 @@ class InvButton(gtk.RadioButton):
             if repaired or filled:
                 self.update_item()
 
-    def repair(self, itemlist=None):
+    def repair(self, tools=False, armor=False, weapons=False):
         """
         Repairs our item, if we're the sort of item which can be
         repaired.  Returns True if we actually performed a repair, and
-        False otherwise.  If itemlist is a list of strings, the
-        item's name will be matched against the list
+        False otherwise.  Pass in any of our booleans and the repair
+        will only happen for items which are of that type.  Note that
+        really we should be passing in an enum-like var instead of
+        a collection of booleans, since we'll discard the item on the
+        first mismatch (ie: if you for some reason set both 'tools'
+        and 'armor', this will only work for items which are BOTH
+        a tool and armor)
         """
         if self.inventoryslot is not None:
             item = self.items.get_item(self.inventoryslot.num, self.inventoryslot.damage)
             if item is not None:
-                if itemlist is not None:
-                    matched = False
-                    for name in itemlist:
-                        if item.name.endswith(name):
-                            matched = True
-                            break
-                    if not matched:
-                        return False
+                if tools and not item.tool:
+                    return False
+                if armor and not item.armor:
+                    return False
+                if weapons and not item.weapon:
+                    return False
                 if item.max_damage is not None:
                     if self.inventoryslot.damage != 0:
                         self.inventoryslot.damage = 0
@@ -978,12 +981,12 @@ class BaseInvTable(gtk.Table):
                 button.update_item()
                 break
 
-    def repair_all(self, itemlist=None):
+    def repair_all(self, tools=False, armor=False, weapons=False):
         """
         Repairs all items
         """
         for button in self.buttons.values():
-            if button.repair(itemlist):
+            if button.repair(tools=tools, armor=armor, weapons=weapons):
                 button.update_item()
 
     def fill_all(self):
@@ -1971,12 +1974,12 @@ class InvNotebook(gtk.Notebook):
         if not self.app.multiplayer:
             self.extradetails.save_to(nbt['Data'])
 
-    def repair_all(self, itemlist=None):
+    def repair_all(self, tools=False, armor=False, weapons=False):
         """
         Repairs all items contained in the book
         """
-        self.invtable.repair_all(itemlist)
-        self.extrainvtable.repair_all(itemlist)
+        self.invtable.repair_all(tools=tools, armor=armor, weapons=weapons)
+        self.extrainvtable.repair_all(tools=tools, armor=armor, weapons=weapons)
 
     def fill_all(self):
         """
@@ -2477,23 +2480,21 @@ class PyInvEdit(gtk.Window):
         Repairs all tools
         """
         if self.loaded:
-            self.worldbook.repair_all([' Axe', ' Hoe', ' Pickaxe',
-                ' Shovel', 'Fishing Rod', 'Shears', 'Flint and Steel'])
+            self.worldbook.repair_all(tools=True)
 
     def repair_all_armor(self, widget, data=None):
         """
         Repairs all armor
         """
         if self.loaded:
-            self.worldbook.repair_all([' Boots', ' Cap', ' Pants',
-                ' Tunic', ' Chestplate', ' Helmet', ' Leggings'])
+            self.worldbook.repair_all(armor=True)
 
     def repair_all_weapons(self, widget, data=None):
         """
         Repairs all weapons
         """
         if self.loaded:
-            self.worldbook.repair_all([' Sword', 'Bow'])
+            self.worldbook.repair_all(weapons=True)
 
     def fill_all(self, widget, data=None):
         """

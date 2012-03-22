@@ -76,6 +76,15 @@
 #       all_data - Defaults to "false" - when true, PyInvEdit will consider
 #          all data values valid for this item, and always display the data.
 #          Currently only used for Maps
+#
+#       tool - "true" or "false", defaults to false.  If set, this item will
+#          be repaired by the "Repair All Tools" menu option
+#
+#       weapon - "true" or "false", defaults to false.  If set, this item will
+#          be repaired by the "Repair All Weapons" menu option
+#
+#       armor - "true" or "false", defaults to false.  If set, this item will
+#          be repaired by the "Repair All Armor" menu option
 #    
 
 texfiles:
@@ -1290,6 +1299,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 257
     name: Iron Pickaxe
@@ -1299,6 +1309,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 258
     name: Iron Axe
@@ -1308,6 +1319,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 259
     name: Flint and Steel
@@ -1316,6 +1328,7 @@ items:
     max_damage: 64
     max_quantity: 1
     groups: [Tools]
+    tool: true
 
   - num: 260
     name: Apple
@@ -1332,6 +1345,7 @@ items:
     max_quantity: 1
     groups: [Tools]
     enchantments: [Power, Punch, Flame, Infinity]
+    weapon: true
 
   - num: 262
     name: Arrow
@@ -1378,6 +1392,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
+    weapon: true
 
   - num: 268
     name: Wooden Sword
@@ -1387,6 +1402,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
+    weapon: true
 
   - num: 269
     name: Wooden Shovel
@@ -1396,6 +1412,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 270
     name: Wooden Pickaxe
@@ -1405,6 +1422,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 271
     name: Wooden Axe
@@ -1414,6 +1432,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 272
     name: Stone Sword
@@ -1423,6 +1442,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
+    weapon: true
 
   - num: 273
     name: Stone Shovel
@@ -1432,6 +1452,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 274
     name: Stone Pickaxe
@@ -1441,6 +1462,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 275
     name: Stone Axe
@@ -1450,6 +1472,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 276
     name: Diamond Sword
@@ -1459,6 +1482,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
+    weapon: true
 
   - num: 277
     name: Diamond Shovel
@@ -1468,6 +1492,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 278
     name: Diamond Pickaxe
@@ -1477,6 +1502,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 279
     name: Diamond Axe
@@ -1486,6 +1512,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 280
     name: Stick
@@ -1515,6 +1542,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Sharpness, Smite, Bane of Arthropods, Knockback, Fire Aspect, Looting]
+    weapon: true
 
   - num: 284
     name: Golden Shovel
@@ -1524,6 +1552,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 285
     name: Golden Pickaxe
@@ -1533,6 +1562,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 286
     name: Golden Axe
@@ -1542,6 +1572,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Efficiency, Silk Touch, Unbreaking, Fortune]
+    tool: true
 
   - num: 287
     name: String
@@ -1568,6 +1599,7 @@ items:
     max_damage: 59
     max_quantity: 1
     groups: [Wood and Leather]
+    tool: true
 
   - num: 291
     name: Stone Hoe
@@ -1576,6 +1608,7 @@ items:
     max_damage: 131
     max_quantity: 1
     groups: [Stone and Chainmail]
+    tool: true
 
   - num: 292
     name: Iron Hoe
@@ -1584,6 +1617,7 @@ items:
     max_damage: 250
     max_quantity: 1
     groups: [Iron]
+    tool: true
 
   - num: 293
     name: Diamond Hoe
@@ -1592,6 +1626,7 @@ items:
     max_damage: 1561
     max_quantity: 1
     groups: [Diamond]
+    tool: true
 
   - num: 294
     name: Golden Hoe
@@ -1600,6 +1635,7 @@ items:
     max_damage: 32
     max_quantity: 1
     groups: [Gold]
+    tool: true
 
   - num: 295
     name: Seeds
@@ -1627,6 +1663,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
+    armor: true
 
   - num: 299
     name: Leather Tunic
@@ -1636,6 +1673,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 300
     name: Leather Pants
@@ -1645,6 +1683,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 301
     name: Leather Boots
@@ -1654,6 +1693,7 @@ items:
     max_quantity: 1
     groups: [Wood and Leather]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
+    armor: true
 
   - num: 302
     name: Chainmail Helmet
@@ -1663,6 +1703,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
+    armor: true
 
   - num: 303
     name: Chainmail Chestplate
@@ -1672,6 +1713,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 304
     name: Chainmail Leggings
@@ -1681,6 +1723,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 305
     name: Chainmail Boots
@@ -1690,6 +1733,7 @@ items:
     max_quantity: 1
     groups: [Stone and Chainmail]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
+    armor: true
 
   - num: 306
     name: Iron Helmet
@@ -1699,6 +1743,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
+    armor: true
 
   - num: 307
     name: Iron Chestplate
@@ -1708,6 +1753,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 308
     name: Iron Leggings
@@ -1717,6 +1763,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 309
     name: Iron Boots
@@ -1726,6 +1773,7 @@ items:
     max_quantity: 1
     groups: [Iron]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
+    armor: true
 
   - num: 310
     name: Diamond Helmet
@@ -1735,6 +1783,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
+    armor: true
 
   - num: 311
     name: Diamond Chestplate
@@ -1744,6 +1793,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 312
     name: Diamond Leggings
@@ -1753,6 +1803,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 313
     name: Diamond Boots
@@ -1762,6 +1813,7 @@ items:
     max_quantity: 1
     groups: [Diamond]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
+    armor: true
 
   - num: 314
     name: Golden Helmet
@@ -1771,6 +1823,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Respiration, Aqua Affinity]
+    armor: true
 
   - num: 315
     name: Golden Chestplate
@@ -1780,6 +1833,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 316
     name: Golden Leggings
@@ -1789,6 +1843,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection]
+    armor: true
 
   - num: 317
     name: Golden Boots
@@ -1798,6 +1853,7 @@ items:
     max_quantity: 1
     groups: [Gold]
     enchantments: [Protection, Fire Protection, Blast Protection, Projectile Protection, Feather Falling]
+    armor: true
 
   - num: 318
     name: Flint
@@ -1989,6 +2045,7 @@ items:
     max_damage: 64
     max_quantity: 1
     groups: [Tools]
+    tool: true
 
   - num: 347
     name: Clock
@@ -2180,6 +2237,7 @@ items:
     max_damage: 238
     max_quantity: 1
     groups: [Tools]
+    tool: true
 
   - num: 360
     name: Melon

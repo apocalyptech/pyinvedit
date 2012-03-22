@@ -353,6 +353,24 @@ class Item(object):
                 else:
                     self.enchantments.append(enchobj)
 
+        # Item categorization - Tool
+        if 'tool' in yamlobj:
+            self.tool = yamlobj['tool']
+        else:
+            self.tool = False
+            
+        # Item categorization - Weapon
+        if 'weapon' in yamlobj:
+            self.weapon = yamlobj['weapon']
+        else:
+            self.weapon = False
+
+        # Item categorization - Armor
+        if 'armor' in yamlobj:
+            self.armor = yamlobj['armor']
+        else:
+            self.armor = False
+
     def get_image(self, large=False):
         """
         Returns the base cairo ImageSurface for this item
